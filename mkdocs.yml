@@ -11,4 +11,5 @@ nav:
   - 2. Data collection: 02_data_collection.md
   - 3. Building the monthly table: 03_monthly_table.md
   - 4. Features: 04_features.md
+  - 5. Exploratory analysis: 05_eda.md
   - Appendix B. The full working record: appendix_b_working_record.md

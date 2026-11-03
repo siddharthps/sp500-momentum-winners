@@ -41,7 +41,7 @@ requires-python = "~=3.12.0"
 line-length = 99
 src = ["sp500_momentum"]
 # tests/ was missing from the template's list, so `ruff check` silently skipped it (found 3 Nov 2026)
-include = ["pyproject.toml", "sp500_momentum/**/*.py", "tests/**/*.py"]
+include = ["pyproject.toml", "sp500_momentum/**/*.py", "tests/**/*.py", "notebooks/**/*.ipynb"]
 
 [tool.ruff.lint]
 extend-select = ["I"]  # Add import sorting

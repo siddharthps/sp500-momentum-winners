@@ -13,7 +13,8 @@ results are backtested against SPY. The test uses **point-in-time membership** (
 *on each date*), including companies that were later acquired, failed or dropped, so the results
 aren't flattered by survivorship bias.
 
-> Status: data, the monthly table and the features are done; exploratory analysis is next. The
+> Status: data, the monthly table, the features and the exploratory analysis are done; the baseline
+> rule grid is next. The
 > Alpha Vantage download of delisted companies runs until ~12–14 Nov 2026. Progress is tracked in
 > [issues](https://github.com/siddharthps/sp500-momentum-winners/issues), by
 > [milestone](https://github.com/siddharthps/sp500-momentum-winners/milestones), and on the
@@ -86,8 +87,35 @@ If something earlier changes, rerun from the first affected step, then everythin
 | Hold periods, the delisting cutoff or the targets (`monthly.py`) | `monthly build` → … |
 | A FRED series or its publication lag (`FRED_SERIES`) | `fred` → `features build` → … |
 | Sectors (`references/removed_sectors.csv`, `SECTOR_ETF`) or any feature (`features.py`) | `features build` → … |
+| Anything above, or the analysis or charts (`eda.py`, `plots.py`) | … → `run_notebooks run` (refreshes the notebooks and `reports/figures/`) |
 
 Raw files are never edited by hand, so every output can be rebuilt from the downloads.
+
+## Notebooks
+
+The notebooks show each step's results. They call the package's functions and hold no logic of their
+own. They're committed **with their outputs**, so the tables and charts can be read on GitHub without
+the data:
+
+| Notebook | What it shows |
+|---|---|
+| [`01_data`](notebooks/01_data.ipynb) | Membership, the survivorship gap, the Alpha Vantage progress, prices, FRED, the monthly table and the feature sets |
+| [`02_features_eda`](notebooks/02_features_eda.ipynb) | The target, each feature's signal (2010–2022 only), its stability, duplicates, market regimes, and a preview of the plain rule |
+
+They're only ever run by this command, top to bottom in a fresh kernel, so the stored outputs always
+match the code. They show summaries, never raw tables (full results are saved under `reports/`).
+After running, the command checks every output and **fails** if:
+- a cell prints more than 50 lines;
+- anything was written to stderr (logs, progress bars, warnings);
+- an output contains a local path, an e-mail address or the API key;
+- a notebook is over 300 KB.
+
+Charts are written to `reports/figures/`:
+
+```bash
+uv run python -m sp500_momentum.run_notebooks run        # all notebooks (after features build)
+uv run python -m sp500_momentum.run_notebooks run 02     # just 02_features_eda
+```
 
 ## Development
 
@@ -116,7 +144,7 @@ or deleting `main` are blocked.
 │   ├── processed      <- Final modelling tables
 │   └── raw            <- Downloads, one folder per source (never edited by hand)
 ├── models             <- Trained models and predictions
-├── notebooks          <- Exploration and the orchestrating notebook
+├── notebooks          <- 01_data, 02_features_eda (executed, with outputs); later 03, 04 and 00_run_all
 ├── references         <- Decision log, brainstorm and dated working journal
 ├── reports/figures    <- Generated charts
 ├── scripts            <- Task Scheduler setup and the daily Alpha Vantage run
@@ -132,8 +160,11 @@ or deleting `main` are blocked.
     ├── membership.py  <- Point-in-time membership and repairs to Wikipedia's changes
     ├── monthly.py     <- The monthly member table: prices, past and forward returns
     ├── features.py    <- Features from monthly bars (TA-Lib, risk, ranks, market, macro) and feature sets
-    ├── modeling/      <- train.py, predict.py (to do)
-    └── plots.py       <- Charts (to do)
+    ├── eda.py         <- Exploratory analysis: summary tables, IC, stability, plain-rule preview
+    ├── plots.py       <- Chart style (validated palette) and the charts
+    ├── run_notebooks.py <- Executes the notebooks in a fresh kernel and checks their outputs
+    ├── nb.py          <- Notebook setup (output caps, quiet logs, chart style) and the output rules
+    └── modeling/      <- train.py, predict.py (to do)
 ```
 
 ## Acknowledgements

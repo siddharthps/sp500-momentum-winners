@@ -793,6 +793,66 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - **`CLAUDE.local.md`** (git-ignored, edited directly): commit, push, open PRs **and merge** only when you ask; never commit with your personal email.
   - **README:** the workflow paragraph describes the protection. **`decisions.md`:** "public early to protect main" and the email decision; the "private until near completion" line is updated.
   - **#21** was retitled "Protect main (repo made public early)", its checklist updated, and moved to In Progress. It closes when this PR merges.
+- **Merged:** PR #25 (CI 27 s), `69ddde6`. #21 closed and moved to Done. A direct push to `main` is now rejected by the ruleset.
+
+### Session 13 — Tuesday, 3 Nov 2026 (exploratory analysis, #10)
+
+- **Workflow:** #10 → In Progress, branch `10-eda` from `main`.
+- **Charts follow the dataviz skill** (loaded before any chart code).
+  - **Node.js LTS installed** (winget, v26.13.0), your choice, so the skill's palette validator could run instead of being eyeballed.
+  - Validated: blue/orange/aqua, all pairs, light mode. **All checks pass**: worst colourblind ΔE 9.2, normal-vision ΔE 24.0.
+  - **One binding warning:** aqua is below 3:1 contrast (2.74:1), so every chart with aqua carries direct labels, and the notebooks show the numbers as tables.
+- **Decided (your choice): notebooks are committed executed, with outputs.**
+  - **Your follow-up: what are outputs, why do they matter for git, and what's the limit?**
+    - Outputs are the stored results inside the `.ipynb` (text, tables, charts as base64 images).
+    - Trade-offs: size (every re-run stores the charts again, forever), noisy diffs, stale outputs if a notebook isn't re-run, accidental leaks on a public repo; versus readers seeing results on GitHub without the data.
+    - The 500 KB is **our own** pre-commit limit. GitHub warns at 50 MB and rejects at 100 MB, and its viewer struggles at a few MB.
+  - **Mitigations:**
+    - notebooks are only ever run by `run_notebooks run` (a fresh kernel, top to bottom);
+    - metadata is cleared;
+    - charts are saved small (110 dpi);
+    - the runner fails if a notebook exceeds 500 KB;
+    - ruff now lints and formats the notebooks too (`include` and the pre-commit `types_or` updated).
+- **Built:**
+  - `eda.py`: pure, tested functions for coverage, the removal gap, beat rate by year, excess-return quantiles, truncation, monthly IC, IC table, `distinct_signals`, IC by group and period, correlated pairs, the winners' spread, regime correlations, the plain-rule returns, and a performance summary;
+  - `plots.py`: the shared style (validated palette, hairline grid, one axis, direct labels, readable feature names) and 6 charts;
+  - `run_notebooks.py`: the runner;
+  - `notebooks/01_data.ipynb` (62 KB) and `02_features_eda.ipynb` (334 KB);
+  - 6 figures in `reports/figures/` (25–69 KB each).
+- **Rule kept:** feature signal, stability, correlations and regimes use decisions up to **2022 only** (`RESEARCH_END` in config, with the split now in `SPLIT`). The target description and the plain-rule preview cover every year.
+- **Caught along the way:**
+  - **A privacy leak.** `config.py` logged `PROJ_ROOT path is C:\Users\Siddharth\...` on import (a template default), which would have been saved into the public notebook outputs. Removed. All outputs were scanned: no local paths, no names.
+  - **A wrong claim in my own chart subtitle.** I had drafted "below 50% in most years" before checking. The data says the opposite for 2010–16. Fixed to match the data, and every later claim was checked against the outputs first.
+  - **Chart problems, found by looking at the charts** (the skill's step 7): overlapping end labels, a legend covering dots, decimal years on an axis, duplicate signals shown as separate bars, code names instead of readable ones. All fixed, and the charts were checked again.
+  - A font warning ("semibold" missing) was being saved into the outputs. The title weight is now bold.
+  - A divide-by-zero warning in the Sharpe ratio (a flat series). It's now handled explicitly, and the tests pass with warnings treated as errors.
+  - The MkDocs site wouldn't show figures stored outside `docs/`. That got **its own issue, #26**, not a silent fix.
+- **Findings (preview; early years still miss most acquired companies):**
+  - **Beat rate:** 49% over all years. 50–52% in 2010–16, mostly below since (46–51% in 2017–21, 54% in 2022, 43–47% in 2023–26). A few mega-caps carry the cap-weighted index.
+  - **Excess returns:** a median of −0.1%. For 1 month, 5%/95% at −11.5%/+11.6%; for 12 months, −44%/+45%.
+  - **Feature signal (2010–22):** the largest |IC| is about 0.02, and nothing is significant alone. **Last month's return has a negative IC (−0.020)**: short-term reversal. The strongest features (where the close sits in the month's range, balance of power) favour weak finishes too.
+  - **Not steady:** almost all of the signal is in **2015–19** (±0.05), close to zero in 2010–14 and 2020–22, and some features flip sign. This backs the choice of time-series CV.
+  - **33 pairs correlate above 0.95** (the ROC family, price transforms, ATR/NATR, CMO/RSI). That's 131 features with an IC, but fewer distinct signals.
+  - **Regime:** the winners' spread is about 0 on average (−0.02% a month, positive in 51% of months), but correlates **+0.26 with SPY's 12-month return**, +0.19 with breadth, and **−0.19 with Fed Funds**. That supports the SPY-uptrend filter strategy.
+  - **Plain rule preview, no costs:** the top 10 made 15.2% a year vs SPY's 14.3%, but with volatility of 21.8% vs 14.8%, a worst fall of −37% vs −23%, and a Sharpe of 0.76 vs 0.98. **Adjusted for risk, SPY was better.** The top 1 made 10.1% a year at 40% volatility.
+- **Tests:** 6 new ones in `tests/test_eda.py`. There are now **34, all passing**, also with `-W error`.
+- **Docs:**
+  - Chapter 5 written: the why, with the 5 charts and tables. Every number checked against the outputs, and one overclaim softened.
+  - Also updated: `docs/index.md`, `mkdocs.yml`, the README (a notebooks section, the runner command, the rerun-table row, the tree, the status), and `CLAUDE.md` (the notebook and chart rules, the runner command).
+- **Your addition: rules for what a notebook may print** (from a side discussion). Printing whole tables (500 rows, or the 101k-row panel) makes notebooks huge, unreadable and noisy in diffs, and could hit the 500 KB limit. The notebooks already showed only summaries (the longest table was 20 rows), but the rules are now **checks that fail**, not guidelines:
+  - **`nb.setup()`** at the top of every notebook: pandas capped at 20 rows (an accidental full display shows 20), loguru limited to warnings, the chart style applied.
+  - **Summaries only.** Full results go to `reports/`: the complete per-feature signal table is now `reports/feature_signal_2010_2022.csv` (131 rows), and the notebook shows the top 20.
+  - **The runner checks every executed notebook and fails on:**
+    - a cell output over 50 lines;
+    - anything on stderr (logs, tqdm bars and warnings all land there, so one rule covers all three);
+    - a local Windows or home path, an e-mail address, or the AV key from `.env` in any output;
+    - a notebook over a **300 KB budget** (under the 500 KB hard limit).
+  - **The budget bit straight away:** `02_features_eda` was 334 KB. Charts are now shown at 80 dpi inline, while `plots.save` still writes the book's PNGs at 110 dpi. The notebook dropped to **268 KB**; `01_data` is 54 KB.
+  - **5 tests** (`tests/test_run_notebooks.py`) build synthetic notebooks that break each rule, so every check is shown to actually fail. There are now **39 tests**, all passing with `-W error`.
+  - Recorded in `CLAUDE.md` (the full notebook rules, "fix the cause, never loosen the check"), the README (a notebooks section, `nb.py` in the tree), `decisions.md` and #10's checklist.
+- **Your request: keep the new rules in `CLAUDE.md` and `CLAUDE.local.md`.**
+  - `CLAUDE.md`: "done means" now includes `run_notebooks run` passing its output checks, and there's a new working rule, **check every claim against the actual output before writing it** (from the wrong subtitle in this session).
+  - `CLAUDE.local.md` is unchanged. It holds only personal preferences (commits, one question at a time, time zones, the commit email), and nothing new this session is personal.
 - *(The discussion continues below.)*
 
 ---
