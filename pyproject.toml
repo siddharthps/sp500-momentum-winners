@@ -1,0 +1,56 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "sp500_momentum"
+version = "0.0.1"
+description = "Monthly-winner momentum strategy on point-in-time S\u0026P 500 members, with an ML ranking model, survivorship-bias-aware data and an exact backtest against SPY."
+authors = [
+  { name = "Siddharth" },
+]
+license = { file = "LICENSE" }
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License"
+]
+dependencies = [
+    "ipython",
+    "jupyterlab",
+    "loguru",
+    "lxml>=6.1.3",
+    "matplotlib",
+    "notebook",
+    "numpy",
+    "pandas",
+    "pip",
+    "pyarrow>=26.0.0",
+    "python-dotenv",
+    "requests>=2.34.2",
+    "scikit-learn",
+    "tqdm",
+    "typer",
+    "yfinance>=1.7.0",
+]
+requires-python = "~=3.12.0"
+
+
+[tool.ruff]
+line-length = 99
+src = ["sp500_momentum"]
+include = ["pyproject.toml", "sp500_momentum/**/*.py"]
+
+[tool.ruff.lint]
+extend-select = ["I"]  # Add import sorting
+
+[tool.ruff.lint.isort]
+known-first-party = ["sp500_momentum"]
+force-sort-within-sections = true
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+    "ruff>=0.17.3",
+]
+
