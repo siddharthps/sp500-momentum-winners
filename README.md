@@ -40,6 +40,10 @@ ALPHAVANTAGE_API_KEY=your_key_here
 Step 3 is rerun once a day until the queue is empty (~9 days for members removed since 2010).
 It skips tickers already pulled and stops cleanly when the daily quota runs out.
 
+On Windows, `scripts/register_av_task.ps1` schedules it daily at 09:00 with Task Scheduler.
+Each run appends to `logs/av_pull.log`. To test the setup without using API calls, run
+`scripts/av_pull_daily.ps1 -MaxCalls 0`.
+
 ## Development
 
 ```bash
