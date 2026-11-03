@@ -63,7 +63,12 @@ def test_monthly_lagged_uses_the_published_month_and_fills_gaps():
 
 
 def test_yield_before_is_strictly_before_the_decision_date():
-    s = pd.DataFrame({"date": pd.to_datetime(["2026-10-28", "2026-10-29", "2026-10-30"]), "value": [1.0, 2.0, 3.0]})
+    s = pd.DataFrame(
+        {
+            "date": pd.to_datetime(["2026-10-28", "2026-10-29", "2026-10-30"]),
+            "value": [1.0, 2.0, 3.0],
+        }
+    )
     out = ft.yield_before(s, pd.Series(pd.to_datetime(["2026-10-30"])))
     assert out.iloc[0] == 2.0  # 30 Oct's own value is only published the next day
 
@@ -97,9 +102,14 @@ def test_cross_section_ranks_stay_within_each_date():
             "ticker": ["A", "B", "A", "B"],
             "sector": "Energy",
             "ret_1m": [0.10, 0.20, -0.50, -0.40],  # February is a crash month for both
-            "ret_3m": 0.0, "ret_6m": 0.0, "ret_12m": 0.0, "ret_12_1m": 0.0,
-            "mkt_spy_ret_1m": 0.0, "mkt_spy_ret_12m": 0.0,
-            "sector_etf_ret_1m": 0.0, "sector_etf_ret_12m": 0.0,
+            "ret_3m": 0.0,
+            "ret_6m": 0.0,
+            "ret_12m": 0.0,
+            "ret_12_1m": 0.0,
+            "mkt_spy_ret_1m": 0.0,
+            "mkt_spy_ret_12m": 0.0,
+            "sector_etf_ret_1m": 0.0,
+            "sector_etf_ret_12m": 0.0,
             "above_ma10": 1.0,
         }
     )

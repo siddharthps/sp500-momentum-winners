@@ -733,6 +733,43 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - the set check.
   - There are now **28 tests, all passing.**
 - **Docs:** Chapter 4 written (the why: monthly bars, the sets, sectors, the look-ahead checks). The README, `CLAUDE.md` (commands, definition of done, the monthly-bars trap) and `mkdocs.yml` were updated.
+
+### Session 11 — Tuesday, 3 Nov 2026 (a plan to tick off: tracker, workflow, CI)
+
+- **Your question: should we finalise a plan for the upcoming steps, and the same for what's done, so we stick to the task and can go back and change past steps if something goes wrong?**
+  - Yes. `decisions.md` records *what* was decided and the journal *when* and *why*, but nothing recorded **what's left, in what order**, or **what to rerun if an earlier step changes**.
+- **Your two guiding rules (saved for future sessions):**
+  - The ~30 h budget is a soft guide, not a cap.
+  - **Choose the professional way, not the easier one.**
+- **Decided, one question at a time:**
+  1. **Tracker: GitHub Issues + milestones + a project board.**
+  2. **Workflow: a branch and a pull request per issue** (`<issue>-<short-name>`, PR says `Closes #n`, squash merge).
+  3. **CI + pre-commit, required to merge.**
+     - **Your follow-up: what is CI, does it cost anything, and how long does it take?** GitHub Actions runs the checks on a clean Linux machine on every push and PR. It's free for us: ~2,000 private-repo minutes a month, and unlimited once public. A run takes ~1–2 min, mostly installing, with lint first so it fails in seconds. A failure loop is unlikely because CI runs exactly the local definition-of-done commands, and the pre-commit hook catches lint before pushing.
+- **Done:**
+  - **GitHub CLI installed** (winget, v2.103.3; `winget` wasn't on the shell's PATH, so it was run by full path). You signed in with `gh auth login --web --scopes project,workflow`, and `gh auth setup-git` connected git to it.
+  - **The tracker, created from a script:**
+    - 7 type labels;
+    - **11 milestones** with due dates. 1–3 are closed (Data, Monthly table, Features); 4–11 are open (Project setup → Submission, 19 Nov);
+    - **23 issues.** #1–#8 record the finished work, closed and linked to their commits. #9–#23 are the remaining tasks, each with a goal, a "Done when" checklist and dependencies;
+    - **a project board** (https://github.com/users/siddharthps/projects/1): 8 Done, 15 Todo.
+  - **Caveat:** GitHub's free plan enforces branch protection only on **public** repos. Until the repo goes public, "CI green before merge" is a rule we keep ourselves. **#21** turns protection on at publication.
+  - **Working on #9 the professional way, on branch `9-tracker-ci-precommit`:**
+    - `.github/workflows/ci.yml`: uv with cache, `uv sync --locked`, ruff check, ruff format --check, pytest. A 10-minute timeout, and older runs are cancelled by newer pushes. TA-Lib has a Linux wheel, so CI doesn't need its C library.
+    - `.pre-commit-config.yaml`: ruff through `uv run`, so it's the same pinned version as CI. Standard hooks: **block files over 500 KB** (data must never reach GitHub), detect private keys, YAML/TOML/merge-conflict checks, end-of-file and trailing whitespace.
+    - `pre-commit` added as a dev dependency, and the hook installed.
+  - **Trap found by the first pre-commit run: `ruff` had never checked `tests/`.** The project template's `include` listed only `sp500_momentum/**/*.py`, so "All checks passed" only ever covered the package. Pre-commit passes files by name and found an unsorted import and long lines in the tests. `tests/**/*.py` was added to `include`, and lint/format now cover 17 files instead of 15.
+  - **README:**
+    - a CI badge, and the status line updated (features done, links to the issues, milestones and board);
+    - step 3 now says from 2000;
+    - **"Rerunning after a change"**: the pipeline diagram and an "if you change X, rerun from Y" table;
+    - a development workflow section;
+    - the project tree shows `.github/` and the pre-commit config.
+  - **`CLAUDE.md`:**
+    - the tracker workflow (branch per issue, tick the boxes, board status, PR with `Closes #n`, merge only on green, new work gets its own issue);
+    - never skip pre-commit;
+    - follow the rerun table;
+    - "done" now includes the issue boxes and a green, merged PR.
 - *(The discussion continues below.)*
 
 ---

@@ -1,0 +1,38 @@
+# Code checks on every push to main and every pull request: lint, formatting, tests.
+# Tests are offline, so no data or API keys are needed here.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true # a newer push cancels the older run
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true # reuses downloaded packages between runs
+
+      - name: Install (exact versions from uv.lock)
+        run: uv sync --locked
+
+      - name: Lint (fails in seconds if it's going to)
+        run: uv run ruff check
+
+      - name: Formatting
+        run: uv run ruff format --check
+
+      - name: Tests
+        run: uv run pytest -q
