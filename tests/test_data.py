@@ -4,8 +4,8 @@ import pandas as pd
 import pytest
 
 from sp500_momentum.sources import alphavantage as av
-from sp500_momentum.sources.wikipedia import classify_reason, normalize_ticker, removed_since
 from sp500_momentum.sources import yahoo
+from sp500_momentum.sources.wikipedia import classify_reason, normalize_ticker, removed_since
 from sp500_momentum.sources.yahoo import yahoo_usable
 
 
@@ -16,8 +16,13 @@ def test_normalize_ticker():
 def test_classify_reason():
     assert classify_reason("Capital One acquired Discover Financial.") == "acquired"
     assert classify_reason("Market capitalization changes.") == "market_cap"
-    assert classify_reason("Ceridian changed its ticker symbol from CDAY to DAY.") == "ticker_change"
-    assert classify_reason("SVB Financial Group failed and was taken over by the FDIC.") == "bankrupt_failed"
+    assert (
+        classify_reason("Ceridian changed its ticker symbol from CDAY to DAY.") == "ticker_change"
+    )
+    assert (
+        classify_reason("SVB Financial Group failed and was taken over by the FDIC.")
+        == "bankrupt_failed"
+    )
     assert classify_reason(None) == "other"
 
 
@@ -71,14 +76,25 @@ def test_build_queue_order_and_skips():
     cov = pd.DataFrame(
         {
             "ticker": ["A", "B", "C", "D", "E"],
-            "removed_date": pd.to_datetime(["2020-01-01", "2023-03-15", "2021-01-01", "2024-01-01", "2019-01-01"]),
-            "reason_cat": ["market_cap", "bankrupt_failed", "acquired", "acquired", "ticker_change"],
+            "removed_date": pd.to_datetime(
+                ["2020-01-01", "2023-03-15", "2021-01-01", "2024-01-01", "2019-01-01"]
+            ),
+            "reason_cat": [
+                "market_cap",
+                "bankrupt_failed",
+                "acquired",
+                "acquired",
+                "ticker_change",
+            ],
             "yahoo_ok": [False, False, False, True, False],
         }
     )
     manifest = pd.DataFrame({"ticker": ["C"]})
     q = av.build_queue(cov, manifest)
-    assert q["ticker"].tolist() == ["B", "A"]  # bankrupt first; C done, D on yfinance, E is a rename
+    assert q["ticker"].tolist() == [
+        "B",
+        "A",
+    ]  # bankrupt first; C done, D on yfinance, E is a rename
 
 
 def test_price_universe_groups_and_dedup():
@@ -123,7 +139,11 @@ def test_tidy_daily_and_file_name():
 
 def test_check_daily():
     good = pd.DataFrame(
-        {"date": pd.to_datetime(["2010-01-04", "2010-01-05"]), "close": [5.0, 6.0], "adj_close": [4.0, 5.0]}
+        {
+            "date": pd.to_datetime(["2010-01-04", "2010-01-05"]),
+            "close": [5.0, 6.0],
+            "adj_close": [4.0, 5.0],
+        }
     )
     assert yahoo.check_daily(good) == "ok"
     assert yahoo.check_daily(good, pd.Timestamp("2009-06-01")) == "reused_ticker"
@@ -170,7 +190,10 @@ def test_repair_changes_renames_in_window_and_adds_missing():
             "reason": ["", "", ""],
         }
     )
-    renames = [("FB", "META", "2013-12-01", "2013-12-31"), ("WLTW", "WTW", "2016-01-01", "2022-01-31")]
+    renames = [
+        ("FB", "META", "2013-12-01", "2013-12-31"),
+        ("WLTW", "WTW", "2016-01-01", "2022-01-31"),
+    ]
     renames += [("Q", "IQV", "2017-08-01", "2017-11-30")]
     out = repair_changes(changes, renames, {"SW": "2024-07-08"})
     assert "META" in set(out["added_ticker"])
@@ -290,7 +313,11 @@ def test_coverage_for_av_treats_suspects_as_missing(tmp_path, monkeypatch):
 
     cov_path, sus_path = tmp_path / "cov.csv", tmp_path / "sus.csv"
     pd.DataFrame(
-        {"ticker": ["CPWR", "OK"], "removed_date": ["2011-12-31", "2015-01-01"], "yahoo_ok": [True, True]}
+        {
+            "ticker": ["CPWR", "OK"],
+            "removed_date": ["2011-12-31", "2015-01-01"],
+            "yahoo_ok": [True, True],
+        }
     ).to_csv(cov_path, index=False)
     pd.DataFrame({"ticker": ["CPWR"]}).to_csv(sus_path, index=False)
     monkeypatch.setattr(dataset, "REMOVED_COVERAGE", cov_path)

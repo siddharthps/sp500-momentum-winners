@@ -14,10 +14,25 @@ The agreed plan (split, features, models, simulation, deliverables) is in `refer
 Follow it. **Ask first** before changing the plan, spending API calls, or touching the scheduled task.
 **Just do it** for bug fixes, tests, and refactors within a module, and say so afterwards.
 
-**Done means:** `uv run pytest` and `uv run ruff check` pass; the monthly table and features rebuild;
-the journal entry and the step's chapter are written.
+**Done means:** `uv run pytest`, `uv run ruff check` and `uv run ruff format --check` pass; the monthly
+table and features rebuild; the journal entry and the step's chapter are written; the issue's "Done
+when" boxes are ticked; the PR is merged with CI green.
 
 ## Working rules
+
+- **Work through the tracker.** Every task is a GitHub issue in a milestone, shown on the project board
+  (https://github.com/users/siddharthps/projects/1). Use `gh` (installed at
+  `C:\Program Files\GitHub CLI\gh.exe`, not on PATH in the Bash tool).
+  - Start a task on a branch named `<issue>-<short-name>` from an up-to-date `main`. Never commit to `main`.
+  - Tick the issue's "Done when" boxes as items are finished, and set its board status (Todo → In
+    Progress → Done).
+  - Open a PR whose body says `Closes #<issue>`, and merge (squash) only when CI is green. Branch
+    protection can't be enforced on a private free repo, so this is a rule we keep ourselves (#21).
+  - New work found along the way gets its own issue, not a silent addition.
+- **Pre-commit** runs ruff and safety checks on every commit. If it changes files, re-add them and
+  commit again. Never skip it with `--no-verify`.
+- **"If you change X, rerun from Y"** is in the README ("Rerunning after a change"). Follow it after
+  changing any earlier step.
 
 - **Journal every step.** Add a dated "Session N" entry to Section 8 of
   `references/Project_Ideas_Brainstorm.md` (plain style, including traps found and fixes). Put settled

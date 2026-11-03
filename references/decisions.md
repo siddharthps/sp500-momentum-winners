@@ -147,6 +147,17 @@ a stock is the month's top gainer.
 - **Checked:** macro values come from already-published dates; fill rate is the same by source (99.6% vs 99.9%);
   the largest single-feature IC is 0.014 (no leak).
 
+**Planning and workflow (3 Nov)**
+
+- **Guiding rule:** the professional way over the easier one. The ~30 h budget is a soft guide.
+- **Tracker:** GitHub Issues + 11 milestones (one per phase, with due dates) + a project board. The
+  finished work is recorded as closed issues #1–#8, linked to their commits.
+- **Workflow:** a branch per issue, a PR with `Closes #n`, squash merge.
+- **Checks:** GitHub Actions CI (ruff check, ruff format --check, pytest) on every push and PR, plus a
+  pre-commit hook (ruff, a large-file block, a private-key check). Merge only when CI is green. Enforced by
+  branch protection once the repo is public (#21); by convention until then (the free plan's limit).
+- **Rerun chain:** documented in the README ("if you change X, rerun from Y").
+
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 
