@@ -33,6 +33,8 @@ The golden rule: every feature is known at the month-end close, and the trade ha
   (~12 Nov 2026). Unregister the task once it's done.
 - yfinance daily prices are downloaded (`yahoo-daily`, 2 Nov 2026): 623 tickers, 2.84M rows, from
   2007, in `data/raw/yahoo/daily/<TICKER>.parquet`. Rerunning skips tickers already saved.
+- FRED (`fred`): 6 series in `data/raw/fred/`, publication lags in `FRED_SERIES`. FRED's CSV endpoint stalls
+  on our custom User-Agent, so `sources/fred.py` sends the default one. Core CPI has no Oct 2025 value (shutdown).
 - Monthly table: `uv run python -m sp500_momentum.monthly build` -> `data/processed/monthly_panel.parquet`.
   Wikipedia fixes live in `config.py`: `RENAMES` (date-windowed, because tickers get reused), `MISSING_ADDS`, `REASON_OVERRIDES`.
   yfinance series under a $10M median dollar volume are a different security. They go to the AV queue via `yahoo_suspect.csv`.
@@ -43,7 +45,7 @@ The golden rule: every feature is known at the month-end close, and the trade ha
 uv sync
 uv run pytest
 uv run ruff check && uv run ruff format
-uv run python -m sp500_momentum.dataset membership | coverage | yahoo-daily | av-pull | av-status
+uv run python -m sp500_momentum.dataset membership | coverage | yahoo-daily | fred | av-pull | av-status
 uv run python -m sp500_momentum.monthly build
 ```
 

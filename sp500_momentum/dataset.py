@@ -3,6 +3,7 @@
 uv run python -m sp500_momentum.dataset membership   # Wikipedia: current list + changes
 uv run python -m sp500_momentum.dataset coverage     # which removed members yfinance lacks
 uv run python -m sp500_momentum.dataset yahoo-daily  # yfinance daily prices + benchmarks
+uv run python -m sp500_momentum.dataset fred         # FRED macro series
 uv run python -m sp500_momentum.dataset av-pull      # Alpha Vantage, ~23 tickers a day; rerun daily
 uv run python -m sp500_momentum.dataset av-status    # progress of the pull
 """
@@ -19,6 +20,9 @@ from sp500_momentum.config import (
     AV_MONTHLY_DIR,
     AV_SLEEP_SECONDS,
     BENCHMARKS,
+    FRED_DIR,
+    FRED_SERIES,
+    FRED_START,
     PRICE_START,
     REASON_OVERRIDES,
     REMOVED_COVERAGE,
@@ -29,6 +33,7 @@ from sp500_momentum.config import (
     YAHOO_SUSPECT,
 )
 from sp500_momentum.sources import alphavantage as av
+from sp500_momentum.sources import fred as fred_src
 from sp500_momentum.sources import wikipedia, yahoo
 
 app = typer.Typer(help="Download raw data for the project.")
@@ -152,6 +157,28 @@ def yahoo_daily(
     manifest.to_csv(YAHOO_MANIFEST, index=False)
     table = pd.crosstab(manifest["group"], manifest["status"], margins=True)
     logger.success(f"Saved {YAHOO_MANIFEST.name}: {manifest['rows'].sum():,} daily rows\n{table}")
+
+
+@app.command()
+def fred(start: str = FRED_START):
+    """Download the FRED macro series in FRED_SERIES (full refresh: 6 small requests)."""
+    FRED_DIR.mkdir(parents=True, exist_ok=True)
+    rows = []
+    for sid, meta in FRED_SERIES.items():
+        df = fred_src.fetch_series(sid, start)
+        df.to_csv(FRED_DIR / f"{sid}.csv", index=False)
+        rows.append(
+            {
+                "series": sid,
+                "name": meta["name"],
+                "rows": len(df),
+                "first": df["date"].min().date(),
+                "last": df["date"].max().date(),
+                "last_value": df["value"].iloc[-1],
+            }
+        )
+    table = pd.DataFrame(rows).to_string(index=False)
+    logger.success(f"Saved {len(rows)} FRED series to {FRED_DIR}\n{table}")
 
 
 @app.command("av-pull")

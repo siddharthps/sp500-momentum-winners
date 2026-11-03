@@ -106,6 +106,14 @@ a stock is the month's top gainer.
 | Automation | Monthly Task Scheduler run (incremental update → rebuild → score → picks) + a `--from-file` switch |
 | Extras | After the core (~mid-Nov). Telegram bot first if time allows |
 
+**FRED and market downloads**
+
+- **FRED:** six series (the class's set) from FRED's CSV endpoint, not `pandas_datareader`
+  (unmaintained). Publication lags live in `FRED_SERIES`: 1 month for core CPI and Fed Funds, and
+  the last value before the decision date for daily yields.
+- **Market series:** `^DJI`, `GC=F` and `CL=F` were added to the yfinance downloads (A5). Downloads now keep
+  rows strictly before the end date, because futures let today's half-finished bar through.
+
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 

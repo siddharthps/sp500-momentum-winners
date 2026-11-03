@@ -31,6 +31,28 @@ YAHOO_DIR = RAW_DATA_DIR / "yahoo"
 YAHOO_DAILY_DIR = YAHOO_DIR / "daily"  # one parquet file per ticker
 YAHOO_MANIFEST = YAHOO_DIR / "_manifest.csv"
 
+FRED_DIR = RAW_DATA_DIR / "fred"  # one CSV per series: date, value
+
+# FRED series: the class's set (Week 2). The yield-curve slope (DGS10 - DGS1) is derived later.
+# `lag_months`: how many months after an observation's own date it's safe to use, so no
+# feature sees a figure before it was published (decisions.md, A4). A monthly figure is dated
+# the 1st of its month, so lag 1 means "July's value is used from the end of August on".
+# - CPILFESL (core CPI, monthly): released mid-next-month -> 1.
+# - FEDFUNDS (monthly average): released on the first days of the next month -> 1.
+# - DGS1/DGS5/DGS10 (daily yields): published the next business day; features use the last
+#   value strictly before the decision date -> 0 months, plus that 1-day rule.
+# - GDPPOT (CBO potential GDP, quarterly): a projection published in advance -> 0. FRED keeps
+#   only the latest projection, not past vintages, so this one is a mild, accepted look-ahead.
+FRED_SERIES = {
+    "CPILFESL": {"name": "Core CPI (index, monthly)", "lag_months": 1},
+    "FEDFUNDS": {"name": "Fed Funds rate (monthly average)", "lag_months": 1},
+    "DGS1": {"name": "1-year Treasury yield (daily)", "lag_months": 0},
+    "DGS5": {"name": "5-year Treasury yield (daily)", "lag_months": 0},
+    "DGS10": {"name": "10-year Treasury yield (daily)", "lag_months": 0},
+    "GDPPOT": {"name": "Real potential GDP, CBO (quarterly)", "lag_months": 0},
+}
+FRED_START = "2005-01-01"  # a year before PRICE_START, so yearly changes exist from 2007
+
 MONTHLY_PANEL = PROCESSED_DATA_DIR / "monthly_panel.parquet"
 MONTHLY_COVERAGE = INTERIM_DATA_DIR / "monthly_coverage.csv"
 PRICE_FLAGS = INTERIM_DATA_DIR / "price_flags.csv"
@@ -41,9 +63,15 @@ START_DATE = "2010-01-01"  # first month-end decision date in the backtest
 # 12-month beta all exist from the first decision date (and the 2008 crash is in the regime data).
 PRICE_START = "2007-01-01"
 
-# Benchmark and regime series from yfinance: SPY, the 11 SPDR sector ETFs, and VIX.
-# XLRE starts in 2015 and XLC in 2018; the sector features have to allow for that.
+# Benchmark, market and regime series from yfinance: SPY, the 11 SPDR sector ETFs, VIX, and the
+# US-focused market set for growth features (decisions.md, A5): Dow Jones, gold and WTI futures.
+# The 10-year yield comes from FRED (DGS10). XLRE starts in 2015 and XLC in 2018.
+# WTI futures traded below zero on 20 Apr 2020, so CL=F shows as `bad_prices` in the manifest;
+# its month-end values are fine.
 BENCHMARKS = [
+    "^DJI",
+    "GC=F",
+    "CL=F",
     "SPY",
     "XLB",
     "XLC",

@@ -574,6 +574,26 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
     - **D2, data hosting:** a **Hugging Face dataset**, used by the "from file" mode.
     - **D3, automation:** a **monthly scheduled run** (Task Scheduler, on the first trading day of the month). It updates prices incrementally, rebuilds the table, scores with the saved model and saves next month's picks. Plus a `--from-file` switch.
     - **D4, extras:** **core first, then decide** (~mid-Nov). If time is left, the Telegram bot comes first.
+### Session 6 — Monday, 2 Nov 2026 (FRED and market downloads, code)
+
+- **Built: `uv run python -m sp500_momentum.dataset fred`** (new `sources/fred.py`). It downloads the class's six FRED series from 2005 into `data/raw/fred/<ID>.csv` (date, value). It's a full refresh each time: 6 small requests, under a second.
+  - **Series:**
+    - `CPILFESL`: core CPI, monthly, 2005-01 → 2026-09;
+    - `FEDFUNDS`: monthly, → 2026-10;
+    - `DGS1`, `DGS5`, `DGS10`: daily, → 30 Oct 2026, 5,462 rows each;
+    - `GDPPOT`: quarterly CBO projection, runs to 2036.
+  - **Not `pandas_datareader`**, which the class used. It's unmaintained. FRED's public CSV endpoint returns the same data without a key.
+  - **Trap found:** FRED's endpoint **stalls (30-second timeout) on our custom User-Agent** but answers in 0.2 s with the default one. So `fred.py` doesn't send `HTTP_HEADERS`.
+  - **Publication lags are written into `FRED_SERIES` in `config.py`, so no feature sees a figure before it was published (decision A4):**
+    - core CPI and Fed Funds: 1 month (July's value is used from the end of August);
+    - daily yields: the last value strictly before the decision date;
+    - GDPPOT: 0. It's a projection, but FRED keeps only the latest one, so this is a mild, accepted look-ahead.
+  - **Gap found: core CPI has no Oct 2025 value** (the 2025 government shutdown, the same gap the class noted). The features step will carry the previous value forward.
+- **Market series (decision A5, US-focused):** `^DJI`, `GC=F` (gold) and `CL=F` (WTI) were added to `BENCHMARKS`. `yahoo-daily` downloaded just those 3 (it skips what's already saved). The 10-year yield comes from FRED. SPY and the sector ETFs were already there.
+  - CL=F shows as `bad_prices` in the manifest because of the −$37.63 close on 20 Apr 2020. That's real, and April's month-end (18.84) is fine.
+  - **Trap found:** futures trade overnight, so yfinance's `end` date let **today's half-finished bar** through for GC=F and CL=F. `download_daily` now keeps rows strictly before `end`. The two files were downloaded again, and all series now end on 30 Oct.
+- **Totals:** 627 yfinance series, 2,861,374 daily rows, plus 6 FRED series. One test added (FRED CSV parsing, `.` and blank values). There are now 16, all passing.
+- **Next:** the features step. Daily → month-end: growth against SPY, Dow, the sector ETF, gold, WTI and the 10-year yield; TA-Lib indicators; macro with the lags; VIX; ~20 own features; sectors for removed members. Then the named feature sets.
 - *(The discussion continues below.)*
 
 ---

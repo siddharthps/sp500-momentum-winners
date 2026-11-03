@@ -115,7 +115,10 @@ def download_daily(
             )
         for t in part:
             try:
-                out[t] = tidy_daily(data[t])
+                df = tidy_daily(data[t])
+                # yfinance's `end` lets futures (GC=F, CL=F) through with today's half-finished
+                # bar, because they trade overnight. Keep strictly before `end`.
+                out[t] = df[df["date"] < pd.Timestamp(end)].reset_index(drop=True)
             except KeyError:
                 out[t] = pd.DataFrame(columns=["date", *DAILY_COLUMNS.values()])
     return out

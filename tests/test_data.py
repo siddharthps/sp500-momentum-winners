@@ -207,3 +207,13 @@ def test_add_returns_unknown_after_data_end():
     out = add_returns(p, holds=[1], data_end=pd.Period("2026-09", "M"))
     assert out["fwd_ret_1m"].iloc[0] == pytest.approx(1.0)
     assert out["fwd_ret_1m"].iloc[1:].isna().all()
+
+
+def test_fred_parse_csv_drops_missing():
+    from sp500_momentum.sources.fred import parse_csv
+
+    text = "observation_date,DGS10\n2025-10-01,4.1\n2025-10-02,.\n2025-10-03,\n2025-10-06,4.2\n"
+    df = parse_csv(text, "DGS10")
+    assert list(df.columns) == ["date", "value"]
+    assert df["value"].tolist() == [4.1, 4.2]
+    assert df["date"].iloc[-1] == pd.Timestamp("2025-10-06")
