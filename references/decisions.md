@@ -44,6 +44,29 @@ a stock is the month's top gainer.
   Reruns skip tickers that already have a file. `--refresh` downloads everything again.
 - **First run:** all 623 `ok`, 2.84M daily rows, all ending 30 Oct 2026.
 
+**Delisted prices: cutoff rule, no cross-check**
+
+- After a failure, Alpha Vantage keeps reporting over-the-counter penny prices (SBNY +3,102% in
+  Dec 2023). So each delisted stock's prices **stop after the month that contains its removal
+  date**. A position still held is valued at that last price, then treated as cash.
+- Keeping the removal month (not stopping before it) keeps the crash in. SIVB's March 2023 close is
+  0.905, while February's was 288.11.
+- **No AV vs yfinance cross-check.** The prices compared so far match (KO within 0.1%; WBD, AVB and
+  EA exactly). Remaining errors would show up as outliers when the monthly table is checked.
+
+**Hold periods and evaluation**
+
+- **Rule baseline:** hold X = 1, 3, 6 and 12 months, run over the **full 2010–2026 period** with no
+  split. The rule fits nothing, so it needs no test set.
+- **Look-back grid:** "winner" is defined over 1, 3, 6 or 12 months, plus 12 months skipping the
+  latest one. Every cell of the grid gets reported. The best one is also checked on 2022 onwards.
+- **Simulation details:** staggered portfolios (1/X of the money enters each month), about 10 bps
+  cost per side, and top 1 (the baseline) next to top 5 and top 10.
+- **ML model: 1-month target only**, with the time split. A ~4-year test set leaves only ~24 usable
+  months for a 12-month target (~2 independent periods), too few to judge.
+- **24 months dropped.** It's past the range where momentum holds (winners tend to reverse), and its
+  train/test gaps would use up ~4 of the 16 years.
+
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 

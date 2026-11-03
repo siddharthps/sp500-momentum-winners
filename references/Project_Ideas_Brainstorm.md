@@ -423,6 +423,45 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 - **Known risks, not handled yet:**
   - **Hidden ticker reuse:** the `reused_ticker` check only catches data that *starts after* the removal. If a ticker passed to another company that already traded before the removal date, it wouldn't be caught. A price-jump check around the removal date would find that. It goes on the list for the monthly-table step.
   - **Ticker changes:** for these, the old and new tickers need mapping to one stock in the monthly table (e.g. CDAY → DAY).
+- **Committed and pushed** (`0cfdfc5`).
+- **Your question: is anything Alpha Vantage pulls also available on yfinance, and is it correct?** (checked from the saved files, plus yfinance calls only; no Alpha Vantage calls used)
+  - **What the coverage step already guarantees:** a ticker only goes into the AV queue if yfinance has no usable history **under the same ticker**. Of the 213 missing:
+    - 182 return **no rows at all**;
+    - 5 are **1-row stubs** (WBD, AVB, EA, QRVO, LEG);
+    - 26 have data that **starts after the removal date**. Either a different company reused the symbol (MMI, STI, EMC, SE, ...), or the same company relisted after bankruptcy without its old history (BTU, NE, SHLD).
+    - 4 ticker changes are kept out of the queue, because they need mapping, not new data.
+    - So no AV call goes to a name yfinance already covers under that ticker.
+  - **Not checked:** whether yfinance has some of them under **another symbol** (a new ticker after a rename, or an OTC `…Q` symbol after bankruptcy). Only SIVBQ was tried, in Session 2, and it was empty. For acquired names the old ticker is usually the only one, so this gap is likely small.
+  - **Are the 7 AV pulls correct?** `validate()` only checks dates, not prices, so a price check was run as well:
+    - **Last price matches yfinance's stub exactly:** WBD 30.95, AVB 184.06, EA 209.70.
+    - HOLX, CTRA and SIVB have nothing on yfinance to compare against. The AV data looks sane: no zero or negative prices, SIVB −99.7% in Mar 2023, SBNY −99.8%.
+    - Earlier check (Session 2): KO's adjusted close matched yfinance within 0.1% over 2005–2026, dividends included.
+  - **New finding, a trap for the monthly table:** after the failure, the AV data carries on with **OTC penny prices**. SBNY goes +350% in Nov 2023 and **+3,102% in Dec 2023** (0.05 → 1.60), and SIVB +111% in Jan 2024. These are noise after the removal date. The monthly table must **cut each delisted name's prices at its removal or delisting date** and value a position still held at that last price. Otherwise a held loser could turn into a fake 30× winner.
+  - **Possible extra check (not done; it needs AV calls):** use the 2 spare calls a day (the budget is 25 and the task uses 23) on removed members that **both** sources cover, and compare monthly returns. About 18 overlap checks by 11 Nov, with no delay to the main queue.
+- **Decided: no AV vs yfinance cross-check. The cutoff rule handles the risk.**
+  - **Your call:** skip the overlap check, cut each delisted stock at its removal date, and value an open position at its last real price.
+  - **Why it's enough:** the penny-price trap was the only real error we found, and the cutoff removes it. Where both sources have a price they match (KO within 0.1%; WBD, AVB and EA exactly). The 18 extra checks wouldn't change any decision, and the time goes to the build.
+  - **One detail, so the cutoff doesn't hide losses:** with *monthly* data, cutting *before* the removal date would drop the crash. SIVB was removed on 15 Mar 2023. Its last month-end before that is Feb (288.11), but the March month-end is 0.905. Valuing at Feb would turn a −99.7% loss into no loss. So the rule is: **keep the month that contains the removal date, then stop.**
+    - For SIVB that gives Mar 2023 (0.905). For SBNY, Mar 2023 (0.183).
+    - For acquired names, AV's last row is the last trading day, which sits at the deal price.
+    - After that month, the position is treated as cash, at 0% until the hold ends.
+  - **What this leaves out:** AV's prices *before* removal are trusted on the strength of 4 matches. If one turns out wrong, it shows up as an outlier when the monthly table is checked.
+- **Discussion: which hold periods (X)? (open question 10, proposal, not yet decided)**
+  - **Suggested: X = 1, 3, 6, 12 for the rule. Drop 24.**
+    - In the research, the momentum effect lasts about 3–12 months. Past ~2 years, winners tend to *reverse*. So 24 months tests a different effect.
+    - It's also expensive. With 2010–2026 (~200 months), each split needs a 24-month gap (Section 7.5). Two gaps would use up 4 of the 16 years.
+    - 1 month is worth keeping as the contrast: the research also finds a **short-term reversal**, where last month's biggest winner often gives some of it back the next month. That makes it a fair test of the original idea.
+  - **Suggested: also vary the look-back** (how "winner" is defined: last 1, 3, 6 or 12 months, and 12 months skipping the latest one). That gives a small look-back × hold grid, the classic way momentum is reported. It's cheap once the monthly table exists, and it shows *which kind* of winner works.
+  - **Suggested: the ML model gets one main horizon, not five.** 1 month by default: there's no overlap, no gap is needed, it has the most test months and it fits the class flow. Switch to the best X from the rule grid if 1 month clearly loses. The other horizons stay as extra targets for analysis only.
+  - **Points the plan didn't cover yet:**
+    - **(a) How to hold X months when a new signal comes every month.** Suggested: staggered portfolios. Each month, 1/X of the money goes into that month's picks and stays for X months. The result then doesn't depend on which month you started in. The plain alternative, rebalancing only every X months, gives one result per start month.
+    - **(b) Trading costs.** A top-1 rule changes the whole portfolio every month. Charge e.g. 10 bps per side, so short holds aren't flattered.
+    - **(c) Top-1 is noisy.** One stock a month means one takeover or crash decides the year. Report top-1 (the baseline) next to top-5 and top-10 from the start, since it costs nothing extra.
+  - **Your challenge: why keep 12 months, if a ~4-year test set leaves so few data points?**
+    - **For the ML test set, you're right.** Take 48 test months. Lose 12 to the gap after training, and 12 at the end, where the 12-month return isn't known yet. That leaves **~24 usable decision months, or only ~2 independent 12-month periods.** That's too few to judge anything. So 12 months (and even 6) is **not** used for the ML model.
+    - **For the plain rule, it's fine,** because the rule learns nothing. "Buy last month's top N" has no fitted parameters, so it needs no train/test split and can run over **the full 2010–2026 period**. That's ~190 monthly start dates, or ~16 independent 12-month periods. Still modest, but enough to compare against SPY.
+    - **The catch:** if we pick the "best X" from the full-period grid, that choice is fitted to the data. So report **every cell of the grid**, not just the winner. And check that the best X also wins in the later years (2022 onwards) on its own.
+    - **Decided (you agreed):** the rule runs over the full period with X = 1, 3, 6, 12. The ML model uses 1 month only, with the time split. 12 months stays as a rule-only cell. Dropping it would be fine too if time runs short.
 - **Next:** build the monthly table. Take month-end closes and next-day opens from the daily files, apply the point-in-time membership on each month-end, and join the Alpha Vantage monthly prices for delisted names. Then run the baseline rule against SPY. Open question 10 (which hold periods X to test) needs an answer before the targets are built.
 - *(The discussion continues below.)*
 
@@ -442,6 +481,8 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 | 2 Nov 2026 | Shortlist cut to **H (lead), D (fallback), A (alternative)**. B, C, E, F and G removed | They don't fit 30 hours, no account and the free Alpha Vantage tier (Section 5) |
 | 2 Nov 2026 | **Idea H, start in 2010.** Prices: yfinance daily for current members and removed members it covers, Alpha Vantage monthly for the rest | Thin Wikipedia history before ~2008. The free Alpha Vantage tier has full history for monthly data only |
 | 2 Nov 2026 | **Daily prices start in Jan 2007**, unadjusted OHLC + adjusted close + dividends and splits, one parquet file per ticker. SPY, the 11 sector ETFs and VIX are included | A 3-year warm-up for the long features. The unadjusted columns let us rebuild an adjusted next-day open |
+| 2 Nov 2026 | **Delisted names: keep prices up to the month that contains the removal date, then stop.** An open position is valued at that last price, then held as cash. **No AV vs yfinance cross-check** | Removes the OTC penny-price noise (SBNY +3,102% in Dec 2023) without hiding the crash month. The prices compared so far all match |
+| 2 Nov 2026 | **Hold periods:** rule baseline X = 1, 3, 6, 12 months over the full 2010–2026 period, as a look-back × hold grid with staggered portfolios, ~10 bps per side and top 1/5/10. **ML model: 1 month only**, with the time split. **24 months dropped** | The rule fits nothing, so it can use every month. A ~4-year test set leaves only ~2 independent 12-month periods for ML. 24 months is past the momentum range and needs long gaps |
 
 ### Parking lot (ideas to keep but not pursue now)
 
@@ -459,5 +500,5 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 7. ~~Compute?~~ Answered (2 Nov): Colab / cloud is available if needed.
 8. ~~Was the yearly "winner beats the market" result tested on today's list or historical membership?~~ Answered: most likely historical membership. Still open: was it the single top stock or a group, and over which years?
 9. ~~One stock per month or a basket?~~ Answered: top 1 as the baseline, a basket only if it shows a real edge.
-10. Which **hold periods (X)** should we test? The draft uses 1, 3, 6, 12 and 24 months.
+10. ~~Which **hold periods (X)** should we test?~~ Answered (2 Nov): rule baseline X = 1, 3, 6, 12 over the full period. ML model 1 month only, with the time split. 24 months dropped (Section 8, Session 3).
 11. ~~For delisted companies: accept the gap and measure it, start the data later (e.g. 2010), or pay for data with delisted history?~~ Answered (2 Nov): a mix. Start in 2010, fill the gap with free Alpha Vantage monthly data, and measure what's still missing.
