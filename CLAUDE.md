@@ -1,7 +1,8 @@
 # CLAUDE.md
 
 Course final project (Stock Markets Analytics Zoomcamp 2026). **Deadline: Fri 20 Nov 2026, 23:59 Dublin.**
-~30 h budget (~3 h/day). Goal: a solid pass; extras only after the core is done.
+**Do things the professional, industry-standard way, not the quickest way.** ~30 h is a soft guide,
+not a cap. Extras (bot, Docker, dashboard) still come after the core is done.
 
 ## The project
 
@@ -26,14 +27,15 @@ when" boxes are ticked; the PR is merged with CI green.
   - Start a task on a branch named `<issue>-<short-name>` from an up-to-date `main`. Never commit to `main`.
   - Tick the issue's "Done when" boxes as items are finished, and set its board status (Todo → In
     Progress → Done).
-  - Open a PR whose body says `Closes #<issue>`, and merge (squash) only when CI is green. Branch
-    protection can't be enforced on a private free repo, so this is a rule we keep ourselves (#21).
+  - Open a PR whose body says `Closes #<issue>`, and squash-merge it once CI is green.
+  - **`main` is protected** (ruleset "Protect main"): a PR is required, the CI check `checks` must pass
+    on an up-to-date branch, and force-pushes, deletion and bypasses are blocked. Merged branches are
+    deleted automatically. If a push to `main` is rejected (GH013), that's the ruleset working.
   - New work found along the way gets its own issue, not a silent addition.
 - **Pre-commit** runs ruff and safety checks on every commit. If it changes files, re-add them and
   commit again. Never skip it with `--no-verify`.
 - **"If you change X, rerun from Y"** is in the README ("Rerunning after a change"). Follow it after
   changing any earlier step.
-
 - **Journal every step.** Add a dated "Session N" entry to Section 8 of
   `references/Project_Ideas_Brainstorm.md` (plain style, including traps found and fixes). Put settled
   points in its Section 9 table and in `references/decisions.md`.
@@ -84,4 +86,6 @@ uv run python -m sp500_momentum.features build     # after monthly build
   name a module after a package it imports (`yahoo.py`, not `yfinance.py`).
 - Steps are typer commands (Windows, no `make`). Tests are offline. `data/` and `.env` are git-ignored.
 - Reuse the course's flow where it fits (named feature sets, `pred*` rules, `sim1_`-style simulation).
-- The GitHub repo `siddharthps/sp500-momentum-winners` is private until near completion.
+- The GitHub repo `siddharthps/sp500-momentum-winners` is **public** (since 3 Nov 2026). Everything
+  pushed is visible: never commit data, secrets, logs or personal details. Commits use the GitHub
+  noreply email (repo-local git config).

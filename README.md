@@ -102,8 +102,9 @@ uv run ruff format             # format
 **Workflow.** Work is tracked as GitHub issues, grouped into milestones (one per phase) and shown on
 the project board. Each issue gets its own branch (`<issue>-<short-name>`, e.g. `10-eda`) and is
 merged into `main` through a pull request whose description says `Closes #<issue>`. CI (GitHub
-Actions: ruff check, ruff format --check, pytest) runs on every push and pull request, and a pull
-request is merged only when CI is green.
+Actions: ruff check, ruff format --check, pytest) runs on every push and pull request. `main` is
+protected: changes arrive only through pull requests, CI must pass, merges are squashed, and force-pushes
+or deleting `main` are blocked.
 
 ## Project organization
 
