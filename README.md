@@ -41,6 +41,7 @@ ALPHAVANTAGE_API_KEY=your_key_here
 | 3b. Macro | `uv run python -m sp500_momentum.dataset fred` | FRED: core CPI, Fed Funds, 1/5/10-year yields, potential GDP (from 2005) | `data/raw/fred/` |
 | 4. Delisted prices | `uv run python -m sp500_momentum.dataset av-pull` | Alpha Vantage (free tier, ~23 tickers/day, resumable) | `data/raw/alphavantage/` |
 | 5. Monthly table | `uv run python -m sp500_momentum.monthly build` | Steps 1–4 | `data/processed/monthly_panel.parquet` |
+| 6. Features | `uv run python -m sp500_momentum.features build` | Step 5 + monthly bars, FRED, `references/removed_sectors.csv` | `data/processed/features.parquet` (147 features in named sets) |
 | Progress | `uv run python -m sp500_momentum.dataset av-status` | | |
 
 Step 4 is rerun once a day (and step 5 after it) until the queue is empty (started 2 Nov 2026,
@@ -87,7 +88,7 @@ uv run ruff format     # format
     ├── sources/       <- One module per data source: wikipedia, yahoo, alphavantage, fred
     ├── membership.py  <- Point-in-time membership and repairs to Wikipedia's changes
     ├── monthly.py     <- The monthly member table: prices, past and forward returns
-    ├── features.py    <- Monthly feature table (to do)
+    ├── features.py    <- Features from monthly bars (TA-Lib, risk, ranks, market, macro) and feature sets
     ├── modeling/      <- train.py, predict.py (to do)
     └── plots.py       <- Charts (to do)
 ```

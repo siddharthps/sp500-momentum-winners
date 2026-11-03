@@ -19,7 +19,7 @@ Each chapter has the same shape:
 | 1 | [The problem and the idea](01_problem.md) | Draft |
 | 2 | [Data collection](02_data_collection.md) | Draft |
 | 3 | [Building the monthly table](03_monthly_table.md) | Draft |
-| 4 | Features | To do |
+| 4 | [Features](04_features.md) | Draft |
 | 5 | Exploratory analysis | To do |
 | 6 | Modelling | To do |
 | 7 | Trading simulation and results | To do |

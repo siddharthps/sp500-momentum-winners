@@ -14,8 +14,8 @@ The agreed plan (split, features, models, simulation, deliverables) is in `refer
 Follow it. **Ask first** before changing the plan, spending API calls, or touching the scheduled task.
 **Just do it** for bug fixes, tests, and refactors within a module, and say so afterwards.
 
-**Done means:** `uv run pytest` and `uv run ruff check` pass; the monthly table rebuilds; the journal
-entry and the step's chapter are written.
+**Done means:** `uv run pytest` and `uv run ruff check` pass; the monthly table and features rebuild;
+the journal entry and the step's chapter are written.
 
 ## Working rules
 
@@ -36,6 +36,8 @@ entry and the step's chapter are written.
   once the queue is empty (~12–14 Nov).
 - **Tickers get reused.** An old symbol can return a different company (FB, STI, CPWR). Always check a
   series against the removal date and trading volume. Membership repairs live in `config.py`.
+- **Features come from monthly bars for every stock.** Never add a daily-only feature: it would be
+  blank exactly for the later-delisted (Alpha Vantage) names and leak their fate.
 - **Look-ahead checks for every feature:**
   - It uses data up to the month-end close only.
   - Macro values go through their `FRED_SERIES` publication lag.
@@ -58,6 +60,7 @@ uv run pytest
 uv run ruff check && uv run ruff format
 uv run python -m sp500_momentum.dataset membership | coverage | yahoo-daily | fred | av-pull | av-status
 uv run python -m sp500_momentum.monthly build
+uv run python -m sp500_momentum.features build     # after monthly build
 ```
 
 ## Conventions

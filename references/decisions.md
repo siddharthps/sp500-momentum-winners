@@ -133,6 +133,20 @@ a stock is the month's top gainer.
   the why, not the how (no reproduce sections, commands or file paths, which stay in the README).
 - **Timing:** written as we go (01–03 drafted on 3 Nov). The numbers get refreshed after the AV pull ends.
 
+**Features (3 Nov)**
+
+- **Monthly bars for every stock.** All features, TA-Lib included, come from monthly open/high/low/
+  close/volume bars. Daily-only features would be blank exactly for the later-delisted (monthly-only)
+  companies and leak their fate. (This replaced my first recommendation, "blank + flag", which had that leak.)
+- **Prices from 2000**, for the warm-up of the long monthly indicators. The unfinished current month is
+  never a decision date.
+- **147 features in named sets:** PAST_RETURNS 5, TA 55, STOCK 15, CROSS_SECTION 16, MARKET 24, MACRO 9,
+  DUMMIES 23. Price-level indicators are divided by the price, so they're scale-free.
+- **Sectors for removed members** were labelled by hand (`references/removed_sectors.csv`). They agree 90% with
+  Yahoo, against a 95% baseline. Sector funds that didn't exist yet fall back (XLRE → XLF, XLC → SPY).
+- **Checked:** macro values come from already-published dates; fill rate is the same by source (99.6% vs 99.9%);
+  the largest single-feature IC is 0.014 (no leak).
+
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 

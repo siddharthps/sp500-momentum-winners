@@ -46,10 +46,16 @@ def repair_changes(
     return pd.concat([ch, extra], ignore_index=True)
 
 
-def month_ends(trading_days: pd.Series, start: str) -> pd.Series:
-    """The last trading day of each month from `start` on (the decision dates)."""
+def month_ends(trading_days: pd.Series, start: str, asof=None) -> pd.Series:
+    """The last trading day of each month from `start` on (the decision dates).
+
+    The month containing `asof` (default: today) is left out: it isn't over yet, so its
+    "last trading day so far" isn't a month-end.
+    """
     days = pd.Series(pd.to_datetime(trading_days)).sort_values()
     me = days.groupby(days.dt.to_period("M")).max()
+    current = pd.Timestamp(asof if asof is not None else pd.Timestamp.now()).to_period("M")
+    me = me[me.index < current]
     return me[me >= pd.Timestamp(start)].reset_index(drop=True)
 
 

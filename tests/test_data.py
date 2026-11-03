@@ -151,6 +151,14 @@ def test_point_in_time_walks_changes_backwards():
     assert by[pd.Timestamp("2020-06-15")] == {"A", "NEW"}  # effective on its date
 
 
+def test_month_ends_skips_the_unfinished_month():
+    from sp500_momentum.membership import month_ends
+
+    days = pd.Series(pd.to_datetime(["2026-09-30", "2026-10-29", "2026-10-30", "2026-11-02"]))
+    out = month_ends(days, "2026-01-01", asof="2026-11-03")
+    assert out.tolist() == [pd.Timestamp("2026-09-30"), pd.Timestamp("2026-10-30")]
+
+
 def test_repair_changes_renames_in_window_and_adds_missing():
     from sp500_momentum.membership import repair_changes
 

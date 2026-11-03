@@ -29,6 +29,7 @@ dependencies = [
     "python-dotenv",
     "requests>=2.34.2",
     "scikit-learn",
+    "ta-lib>=0.6",
     "tqdm",
     "typer",
     "yfinance>=1.7.0",

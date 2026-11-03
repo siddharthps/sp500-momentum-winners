@@ -54,14 +54,42 @@ FRED_SERIES = {
 FRED_START = "2005-01-01"  # a year before PRICE_START, so yearly changes exist from 2007
 
 MONTHLY_PANEL = PROCESSED_DATA_DIR / "monthly_panel.parquet"
+FEATURES_TABLE = PROCESSED_DATA_DIR / "features.parquet"  # the monthly panel + every feature
+
+# GICS sectors for members removed since 2010 (Wikipedia's changes table has none). Written by hand
+# from each company's last sector; checked against Yahoo's sector field on 3 Nov 2026 (90% agreement,
+# vs 95% for current members; the mismatches are taxonomy differences or reused tickers).
+REMOVED_SECTORS = PROJ_ROOT / "references" / "removed_sectors.csv"
+
+# Sector fund for each GICS sector. XLRE starts Oct 2015 and XLC Jun 2018; before that, Real Estate
+# uses XLF (REITs were in Financials) and Communication Services uses SPY.
+SECTOR_ETF = {
+    "Information Technology": "XLK",
+    "Financials": "XLF",
+    "Health Care": "XLV",
+    "Consumer Discretionary": "XLY",
+    "Consumer Staples": "XLP",
+    "Energy": "XLE",
+    "Industrials": "XLI",
+    "Materials": "XLB",
+    "Utilities": "XLU",
+    "Real Estate": "XLRE",
+    "Communication Services": "XLC",
+}
+SECTOR_ETF_FALLBACK = {"XLRE": "XLF", "XLC": "SPY"}
+
+# Market series for growth features (decisions.md, A5: US-focused). The 10-year yield is from FRED.
+MARKET_SERIES = {"spy": "SPY", "dji": "^DJI", "gold": "GC=F", "wti": "CL=F"}
 MONTHLY_COVERAGE = INTERIM_DATA_DIR / "monthly_coverage.csv"
 PRICE_FLAGS = INTERIM_DATA_DIR / "price_flags.csv"
 
 # Study settings
 START_DATE = "2010-01-01"  # first month-end decision date in the backtest
-# Daily prices start 3 years earlier, so 12- and 24-month features, 200-day averages and
-# 12-month beta all exist from the first decision date (and the 2008 crash is in the regime data).
-PRICE_START = "2007-01-01"
+# Daily prices start 10 years earlier. Features are computed on MONTHLY bars for every stock
+# (decisions.md: so stocks with only Alpha Vantage monthly data are treated the same), and the
+# longest monthly indicators need years of warm-up: MACD ~3 years, the Hilbert-transform cycle
+# indicators ~5. Alpha Vantage files mostly start in 1999 anyway.
+PRICE_START = "2000-01-01"
 
 # Benchmark, market and regime series from yfinance: SPY, the 11 SPDR sector ETFs, VIX, and the
 # US-focused market set for growth features (decisions.md, A5): Dow Jones, gold and WTI futures.

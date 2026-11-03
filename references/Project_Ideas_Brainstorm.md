@@ -683,6 +683,56 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
     - the volume check counting only member months (`suspect_tickers`);
     - suspect tickers being treated as missing for the AV queue (`_coverage_for_av`).
   - There are now **20 tests, all passing.**
+
+### Session 10 — Tuesday, 3 Nov 2026 (features, code)
+
+- **TA-Lib installed** (`ta-lib` 0.8.3, a ready-made Windows wheel since 0.6). The class used 41 TA-Lib functions besides the candle patterns, giving 55 columns. We use the same set.
+- **Decision, then a correction: how to handle the ~210 monthly-only (Alpha Vantage) companies.**
+  - You first chose my recommendation: "leave daily features blank, plus a monthly-only flag".
+  - **That recommendation was wrong, and I said it had no look-ahead.** "No daily data" happens exactly for companies that are later delisted (mostly acquired). Tree models would learn "blank = will disappear" from the blanks alone, even without the flag. It's the same trap as the "unknown sector" one (Session 5, A8).
+  - **Re-decided (your choice): monthly bars for everyone.** Every stock's prices become monthly open/high/low/close/volume bars (Yahoo daily rolled up; Alpha Vantage is monthly already), and every feature, TA-Lib included, is computed on those bars. Day-level detail (up-day share, the biggest single-day jump) gets monthly versions. Also added to `CLAUDE.md` as a trap: never add a daily-only feature.
+- **Yahoo history extended to 2000** (`PRICE_START`; `yahoo-daily --refresh` took ~1 minute and made 3.67M daily rows). Monthly indicators need long warm-ups: MACD ~3 years, the Hilbert-transform cycle indicators ~5. Most AV files start in 1999 anyway.
+  - **New edge case found:** the data now included Mon 2 Nov, so the half-finished November counted as a "month-end". `month_ends` now skips the current month (a test was added). The last decision is 30 Oct 2026, and the Sep 2026 decision now has its 1-month target, because the 2 Nov open is known.
+- **Volume units checked before building bars:**
+  - Yahoo's `close` and `volume` are already split-adjusted (AAPL shows ~$125 before its 2020 4:1 split), so close × volume is the true dollar volume.
+  - AV's open/high/low/close and volume are raw.
+  - Both are scaled by adjusted close / close, with volume in adjusted shares, so volume indicators stay consistent across splits.
+- **Sectors for the 316 removed tickers (decision A8):** labelled by hand in `references/removed_sectors.csv`, with each company's last GICS sector in today's 11-sector scheme.
+  - **Checked against Yahoo's sector field:** 90% agreement for the ~100 removed companies Yahoo lists, against 95% for current members, where the two taxonomies also differ.
+  - Of the 11 mismatches, 3 were Yahoo describing the **wrong company**: CPWR "Utilities", KG and SII "Financials", the reused tickers the volume check had already caught. The rest are taxonomy differences.
+  - Uncertain: The Trade Desk (IT or Communication Services). Left as IT.
+- **Built: `uv run python -m sp500_momentum.features build`** (`features.py`, replacing the CCDS placeholder). It writes `data/processed/features.parquet` in ~18 s: **147 features in named sets**, with a check that every column is in exactly one set:
+
+  | Set | Count | What |
+  |---|---|---|
+  | PAST_RETURNS | 5 | ret 1/3/6/12m, 12-1m |
+  | TA | 55 | the class's TA-Lib set on monthly bars. Price-like outputs ÷ close; OBV and A/D as a 12-month change ÷ 12 months of volume |
+  | STOCK | 15 | volatility (3/12m, downside), beta 36m, drawdown, distance to the 12-month high/low, MA3/MA10 ratios, above MA10, up-month share, ret_1m z-score, monthly range, log dollar volume, volume spike |
+  | CROSS_SECTION | 16 | ranks within date (5), sector ranks (2), return vs SPY/sector (4), breadth, dispersion, last month's top-10 excess (1m, 12m avg), new member (12m) |
+  | MARKET | 24 | SPY/Dow/gold/WTI returns 1/3/6/12m, 10-year yield change 1/3/12m, sector fund 1/3/12m, VIX level and 5-year percentile |
+  | MACRO | 9 | core CPI yearly/monthly, Fed Funds, DGS1/5/10, slope 10–1, potential GDP yearly/quarterly |
+  | DUMMIES | 23 | month of year (12), sector (11) |
+
+  - **Sector funds before they existed:** XLRE (2015) falls back to XLF, and XLC (2018) to SPY.
+- **Bugs found while checking:**
+  - The 10-year yield's 12-month change was blank for all of 2010. It had been computed on decision dates only, which start in 2010. It's now computed on all month-ends from 2005.
+  - The first fix used calendar month-ends, which could pick up the decision day's own yield (published the next day). It now uses the actual decision date, and the last bond-trading day for earlier months.
+- **Look-ahead checks:**
+  - CPI for the Aug 2026 decision = July's figure (August's was published mid-Sep).
+  - DGS10 on 30 Oct = 29 Oct's value.
+  - Fed Funds on 30 Oct = September's.
+  - **Fill rate, Yahoo vs AV rows: 99.6% vs 99.9%** (largest gap 1.1 points), so blanks reveal nothing about the source.
+  - **Largest single-feature IC** (average monthly rank correlation with next month's excess return): **0.014**. A leak would show ~0.1+.
+- **First preview (not a result):** no single feature predicts next month's winners strongly, and `ret_1m` (the plain rule's signal) isn't in the top 10. Whether the features work together is the question for the models.
+- **Tests:** 8 new offline tests in `tests/test_features.py`:
+  - the monthly bars from both sources (adjustment, cutoff, volume units);
+  - publication lags and the CPI gap;
+  - yields strictly before the decision date;
+  - TA values identical at 50× the share price;
+  - ranks within a date;
+  - the set check.
+  - There are now **28 tests, all passing.**
+- **Docs:** Chapter 4 written (the why: monthly bars, the sets, sectors, the look-ahead checks). The README, `CLAUDE.md` (commands, definition of done, the monthly-bars trap) and `mkdocs.yml` were updated.
 - *(The discussion continues below.)*
 
 ---
