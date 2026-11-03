@@ -396,6 +396,34 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - **First pull:** 8 tickers, 7 ok, FRC no data. About 9 more days to finish.
   - Decisions are kept short in `references/decisions.md`. Discussion stays here.
   - Daily Task Scheduler job `sp500-momentum-av-pull` set up (09:00, 23 calls). This file was moved into the repo's `references/` folder.
+
+### Session 3 — Monday, 2 Nov 2026 (yfinance daily download, code)
+
+- **Status check first:** the scaffold, the Wikipedia scrape, the coverage check and the Alpha Vantage pull were all in place. The scheduled task hadn't run on its own yet (first run: Tue 3 Nov, 09:00). The AV queue had 201 tickers left (~9 days, done ~11–12 Nov). Features, modelling and the backtest hadn't started.
+- **Housekeeping:** open questions 6 (Alpha Vantage plan) and 11 (delisted companies) were already settled in Session 2, so they're now marked as answered in Section 9.
+- **Built: the `yahoo-daily` step** (`uv run python -m sp500_momentum.dataset yahoo-daily`).
+  - **Who gets downloaded (623 tickers):**
+    - the 503 current members;
+    - the 107 members removed since 2010 that yfinance still covers (`yahoo_ok` in `removed_coverage.csv`);
+    - 13 benchmark and regime series: SPY, the 11 SPDR sector ETFs (XLB, XLC, XLE, XLF, XLI, XLK, XLP, XLRE, XLU, XLV, XLY) and ^VIX, for feature groups 3 and 9 in Section 7.3.
+  - **Date range: 1 Jan 2007 to yesterday's close.** It starts 3 years before the first decision date (2010), so the 12- and 24-month features, the 200-day averages and the 12-month beta all exist from the first month, and the 2008 crash is in the regime data. The end date is exclusive and set to today, so a half-finished trading day never gets saved.
+  - **What's kept:** the unadjusted open, high, low and close, plus `adj_close`, volume, dividends and splits. The golden rule says we trade at the next open, so we need an **adjusted open**. It can be rebuilt as `open × adj_close / close`. Keeping the raw columns also keeps the dividends and splits visible, so they can be checked.
+  - **Storage:** one parquet file per ticker in `data/raw/yahoo/daily/` (`^VIX` is saved as `_VIX.parquet`), plus `data/raw/yahoo/_manifest.csv` with each ticker's status, rows, first and last date, and dividend and split counts. Same pattern as the Alpha Vantage folder.
+  - **Resumable:** a rerun skips tickers that already have a file. `--refresh` downloads everything again. Tickers that come back empty in a big batch get one retry in small batches. The manifest is always rebuilt from the files on disk.
+  - **Checks per ticker** (`check_daily`): `no_data`, `stub` (1 row), `bad_prices` (zero or negative), `reused_ticker` (a removed member whose data starts after its removal date).
+  - 3 offline tests were added (universe groups, column tidying, the checks). There are now 10 tests, all passing.
+- **Result of the first run (about 50 seconds):**
+  - **All 623 tickers are `ok`. That's 2,841,416 daily rows** (about 134 MB of parquet), which covers the "3M daily rows" estimate in Section 7.1. The Alpha Vantage monthly data for delisted names comes on top.
+  - Every series ends on **Fri 30 Oct 2026**.
+  - 134 tickers start after Jan 2007 because they listed later (IPOs and spin-offs). That's expected.
+  - **Spot checks:**
+    - AAPL's 7:1 (2014) and 4:1 (2020) splits are there.
+    - SPY's total-return CAGR from 2010 to 2025 comes out at **13.9%**, which is plausible.
+  - All 107 removed members still trade today, which is why yfinance has them. So these are mostly **market-cap drops**, not the acquisitions that matter most for the bias. Those still depend on the Alpha Vantage pull.
+- **Known risks, not handled yet:**
+  - **Hidden ticker reuse:** the `reused_ticker` check only catches data that *starts after* the removal. If a ticker passed to another company that already traded before the removal date, it wouldn't be caught. A price-jump check around the removal date would find that. It goes on the list for the monthly-table step.
+  - **Ticker changes:** for these, the old and new tickers need mapping to one stock in the monthly table (e.g. CDAY → DAY).
+- **Next:** build the monthly table. Take month-end closes and next-day opens from the daily files, apply the point-in-time membership on each month-end, and join the Alpha Vantage monthly prices for delisted names. Then run the baseline rule against SPY. Open question 10 (which hold periods X to test) needs an answer before the targets are built.
 - *(The discussion continues below.)*
 
 ---
@@ -412,6 +440,8 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 | 2 Nov 2026 | Budget: **~30 hours over 10 days**. A solid pass is the MVP, anything more is a bonus | Your time constraint. Scope decisions are made against it |
 | 2 Nov 2026 | **No broker or exchange account for now.** The broker bonus point is dropped | Your call. Rules out ideas that need an account just to get the data |
 | 2 Nov 2026 | Shortlist cut to **H (lead), D (fallback), A (alternative)**. B, C, E, F and G removed | They don't fit 30 hours, no account and the free Alpha Vantage tier (Section 5) |
+| 2 Nov 2026 | **Idea H, start in 2010.** Prices: yfinance daily for current members and removed members it covers, Alpha Vantage monthly for the rest | Thin Wikipedia history before ~2008. The free Alpha Vantage tier has full history for monthly data only |
+| 2 Nov 2026 | **Daily prices start in Jan 2007**, unadjusted OHLC + adjusted close + dividends and splits, one parquet file per ticker. SPY, the 11 sector ETFs and VIX are included | A 3-year warm-up for the long features. The unadjusted columns let us rebuild an adjusted next-day open |
 
 ### Parking lot (ideas to keep but not pursue now)
 
@@ -425,9 +455,9 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 3. ~~Which market?~~ Answered (2 Nov): any.
 4. ~~A solid pass, or as many points as possible?~~ Answered (2 Nov): a solid pass is the MVP, anything more is a bonus.
 5. ~~Is a paper-trading account acceptable?~~ Answered (2 Nov): no, for now.
-6. ~~Any paid data?~~ Answered (2 Nov): an Alpha Vantage key. Still open: is it the free tier (~25 calls a day) or a paid plan?
+6. ~~Any paid data?~~ Answered (2 Nov): an Alpha Vantage key, on the **free tier** (25 calls a day, 1 a second). Monthly adjusted data has full history. Daily full history is premium.
 7. ~~Compute?~~ Answered (2 Nov): Colab / cloud is available if needed.
 8. ~~Was the yearly "winner beats the market" result tested on today's list or historical membership?~~ Answered: most likely historical membership. Still open: was it the single top stock or a group, and over which years?
 9. ~~One stock per month or a basket?~~ Answered: top 1 as the baseline, a basket only if it shows a real edge.
 10. Which **hold periods (X)** should we test? The draft uses 1, 3, 6, 12 and 24 months.
-11. For delisted companies: accept the gap and measure it, start the data later (e.g. 2010), or pay for data with delisted history?
+11. ~~For delisted companies: accept the gap and measure it, start the data later (e.g. 2010), or pay for data with delisted history?~~ Answered (2 Nov): a mix. Start in 2010, fill the gap with free Alpha Vantage monthly data, and measure what's still missing.

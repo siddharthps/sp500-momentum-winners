@@ -2,6 +2,7 @@
 
 uv run python -m sp500_momentum.dataset membership   # Wikipedia: current list + changes
 uv run python -m sp500_momentum.dataset coverage     # which removed members yfinance lacks
+uv run python -m sp500_momentum.dataset yahoo-daily  # yfinance daily prices + benchmarks
 uv run python -m sp500_momentum.dataset av-pull      # Alpha Vantage, ~23 tickers a day; rerun daily
 uv run python -m sp500_momentum.dataset av-status    # progress of the pull
 """
@@ -17,9 +18,13 @@ from sp500_momentum.config import (
     AV_MANIFEST,
     AV_MONTHLY_DIR,
     AV_SLEEP_SECONDS,
+    BENCHMARKS,
+    PRICE_START,
     REMOVED_COVERAGE,
     START_DATE,
     WIKIPEDIA_DIR,
+    YAHOO_DAILY_DIR,
+    YAHOO_MANIFEST,
 )
 from sp500_momentum.sources import alphavantage as av
 from sp500_momentum.sources import wikipedia, yahoo
@@ -67,6 +72,68 @@ def coverage(start: str = START_DATE):
         margins=True,
     )
     logger.success(f"Saved {REMOVED_COVERAGE.name}\n{table}")
+
+
+@app.command("yahoo-daily")
+def yahoo_daily(
+    start: str = PRICE_START,
+    refresh: bool = typer.Option(False, help="Download every ticker again, not just new ones"),
+):
+    """Daily prices from yfinance: current members, removed members it covers, benchmarks.
+
+    Saves one parquet file per ticker in data/raw/yahoo/daily/ and a manifest. Data ends at
+    yesterday's close (today's bar may be half-finished). Without --refresh, tickers that
+    already have a file are skipped, so a failed run can simply be rerun.
+    """
+    current = pd.read_csv(WIKIPEDIA_DIR / "sp500_current.csv")
+    cov = pd.read_csv(REMOVED_COVERAGE, parse_dates=["removed_date"])
+    universe = yahoo.price_universe(current, cov, BENCHMARKS)
+    YAHOO_DAILY_DIR.mkdir(parents=True, exist_ok=True)
+
+    todo = universe
+    if not refresh:
+        have = {p.name for p in YAHOO_DAILY_DIR.glob("*.parquet")}
+        todo = universe[~universe["ticker"].map(yahoo.file_name).isin(have)]
+    end = pd.Timestamp.now().strftime("%Y-%m-%d")
+    logger.info(
+        f"{len(universe)} tickers in the universe "
+        f"({universe['group'].value_counts().to_dict()}); downloading {len(todo)} "
+        f"from {start} to {end} (exclusive)"
+    )
+
+    frames = yahoo.download_daily(todo["ticker"].tolist(), start=start, end=end)
+    # yfinance sometimes drops a ticker inside a big batch; try those once more on their own.
+    retry = [t for t, df in frames.items() if df.empty]
+    if retry:
+        logger.info(f"Retrying {len(retry)} empty tickers one batch at a time: {retry[:10]}...")
+        frames.update(yahoo.download_daily(retry, start=start, end=end, chunk=10))
+
+    for t, df in frames.items():
+        if not df.empty:
+            df.to_parquet(YAHOO_DAILY_DIR / yahoo.file_name(t), index=False)
+
+    # Rebuild the manifest from the files on disk, so it always matches them.
+    rows = []
+    for _, r in universe.iterrows():
+        path = YAHOO_DAILY_DIR / yahoo.file_name(r["ticker"])
+        df = pd.read_parquet(path) if path.exists() else None
+        rows.append(
+            {
+                "ticker": r["ticker"],
+                "group": r["group"],
+                "removed_date": r["removed_date"],
+                "status": yahoo.check_daily(df, r["removed_date"]),
+                "rows": 0 if df is None else len(df),
+                "first": None if df is None else df["date"].min(),
+                "last": None if df is None else df["date"].max(),
+                "n_dividends": 0 if df is None else int((df["dividends"] > 0).sum()),
+                "n_splits": 0 if df is None else int((df["stock_splits"] > 0).sum()),
+            }
+        )
+    manifest = pd.DataFrame(rows)
+    manifest.to_csv(YAHOO_MANIFEST, index=False)
+    table = pd.crosstab(manifest["group"], manifest["status"], margins=True)
+    logger.success(f"Saved {YAHOO_MANIFEST.name}: {manifest['rows'].sum():,} daily rows\n{table}")
 
 
 @app.command("av-pull")

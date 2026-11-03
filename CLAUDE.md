@@ -31,6 +31,8 @@ The golden rule: every feature is known at the month-end close, and the trade ha
 - **Don't spend Alpha Vantage calls ad hoc.** The scheduled task `sp500-momentum-av-pull` uses 23
   a day at 09:00 (`scripts/av_pull_daily.ps1`, log in `logs/av_pull.log`) until the queue is empty
   (~12 Nov 2026). Unregister the task once it's done.
+- yfinance daily prices are downloaded (`yahoo-daily`, 2 Nov 2026): 623 tickers, 2.84M rows, from
+  2007, in `data/raw/yahoo/daily/<TICKER>.parquet`. Rerunning skips tickers already saved.
 
 ## Commands
 
@@ -38,7 +40,7 @@ The golden rule: every feature is known at the month-end close, and the trade ha
 uv sync
 uv run pytest
 uv run ruff check && uv run ruff format
-uv run python -m sp500_momentum.dataset membership | coverage | av-pull | av-status
+uv run python -m sp500_momentum.dataset membership | coverage | yahoo-daily | av-pull | av-status
 ```
 
 ## Conventions

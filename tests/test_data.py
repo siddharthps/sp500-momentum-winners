@@ -4,6 +4,7 @@ import pandas as pd
 
 from sp500_momentum.sources import alphavantage as av
 from sp500_momentum.sources.wikipedia import classify_reason, normalize_ticker, removed_since
+from sp500_momentum.sources import yahoo
 from sp500_momentum.sources.yahoo import yahoo_usable
 
 
@@ -77,3 +78,55 @@ def test_build_queue_order_and_skips():
     manifest = pd.DataFrame({"ticker": ["C"]})
     q = av.build_queue(cov, manifest)
     assert q["ticker"].tolist() == ["B", "A"]  # bankrupt first; C done, D on yfinance, E is a rename
+
+
+def test_price_universe_groups_and_dedup():
+    current = pd.DataFrame({"ticker": ["AAPL", "MSFT"]})
+    cov = pd.DataFrame(
+        {
+            "ticker": ["OLD", "GONE"],
+            "removed_date": pd.to_datetime(["2015-01-01", "2020-01-01"]),
+            "yahoo_ok": [True, False],
+        }
+    )
+    u = yahoo.price_universe(current, cov, ["SPY", "AAPL"])
+    assert u["ticker"].tolist() == ["AAPL", "MSFT", "OLD", "SPY"]
+    assert u.set_index("ticker")["group"].to_dict() == {
+        "AAPL": "current",
+        "MSFT": "current",
+        "OLD": "removed",
+        "SPY": "benchmark",
+    }
+
+
+def test_tidy_daily_and_file_name():
+    raw = pd.DataFrame(
+        {
+            "Open": [1.0, None],
+            "High": [1.0, None],
+            "Low": [1.0, None],
+            "Close": [1.0, None],
+            "Adj Close": [0.9, None],
+            "Volume": [10, None],
+            "Dividends": [0.0, None],
+            "Stock Splits": [0.0, None],
+            "Capital Gains": [0.0, None],
+        },
+        index=pd.to_datetime(["2020-01-02", "2020-01-03"]),
+    )
+    df = yahoo.tidy_daily(raw)
+    assert list(df.columns) == ["date", *yahoo.DAILY_COLUMNS.values()]
+    assert len(df) == 1
+    assert yahoo.file_name("^VIX") == "_VIX.parquet"
+
+
+def test_check_daily():
+    good = pd.DataFrame(
+        {"date": pd.to_datetime(["2010-01-04", "2010-01-05"]), "close": [5.0, 6.0], "adj_close": [4.0, 5.0]}
+    )
+    assert yahoo.check_daily(good) == "ok"
+    assert yahoo.check_daily(good, pd.Timestamp("2009-06-01")) == "reused_ticker"
+    assert yahoo.check_daily(good.head(1)) == "stub"
+    assert yahoo.check_daily(None) == "no_data"
+    bad = good.assign(close=[5.0, 0.0])
+    assert yahoo.check_daily(bad) == "bad_prices"

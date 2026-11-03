@@ -34,14 +34,19 @@ ALPHAVANTAGE_API_KEY=your_key_here
 |---|---|---|---|
 | 1. Membership | `uv run python -m sp500_momentum.dataset membership` | Wikipedia: current list + "Historical components of the S&P 500" | `data/raw/wikipedia/` |
 | 2. Coverage | `uv run python -m sp500_momentum.dataset coverage` | yfinance | `data/interim/removed_coverage.csv` |
-| 3. Delisted prices | `uv run python -m sp500_momentum.dataset av-pull` | Alpha Vantage (free tier, ~23 tickers/day, resumable) | `data/raw/alphavantage/` |
+| 3. Daily prices | `uv run python -m sp500_momentum.dataset yahoo-daily` | yfinance: current members, removed members it covers, SPY, sector ETFs, VIX (from 2007) | `data/raw/yahoo/` |
+| 4. Delisted prices | `uv run python -m sp500_momentum.dataset av-pull` | Alpha Vantage (free tier, ~23 tickers/day, resumable) | `data/raw/alphavantage/` |
 | Progress | `uv run python -m sp500_momentum.dataset av-status` | | |
 
-Step 3 is rerun once a day until the queue is empty (~9 days for members removed since 2010).
+Step 4 is rerun once a day until the queue is empty (~9 days for members removed since 2010).
 It skips tickers already pulled and stops cleanly when the daily quota runs out.
 
 On Windows, `scripts/register_av_task.ps1` schedules it daily at 09:00 with Task Scheduler.
-Each run appends to `logs/av_pull.log`. To test the setup without using API calls, run
+Each run appends to `logs/av_pull.log`.
+
+Step 3 takes about a minute. It saves one parquet file per ticker (unadjusted OHLC, adjusted close,
+volume, dividends, splits), ending at the previous close. Reruns skip tickers already saved, and
+`--refresh` downloads everything again. To test the setup without using API calls, run
 `scripts/av_pull_daily.ps1 -MaxCalls 0`.
 
 ## Development

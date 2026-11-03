@@ -32,6 +32,18 @@ a stock is the month's top gainer.
   nothing (LEH, BBBY, FRC). Every pull is checked against the removal date (`validate()`).
 - yfinance has the same reuse trap: `FB` now returns a different security.
 
+**yfinance daily download (`yahoo-daily`)**
+
+- **Universe: 623 tickers.** That's the 503 current members, 107 removed members yfinance covers, and
+  13 benchmark series (SPY, the 11 SPDR sector ETFs and ^VIX).
+- **Dates:** from 1 Jan 2007 (a 3-year warm-up for the 12- and 24-month features and the 200-day
+  averages) to yesterday's close. Today's half-finished bar is never saved.
+- **Columns:** unadjusted OHLC, adjusted close, volume, dividends and splits. The trade happens at the
+  next open, so the adjusted open is rebuilt as `open × adj_close / close`.
+- **Storage:** one parquet file per ticker in `data/raw/yahoo/daily/`, plus `_manifest.csv`.
+  Reruns skip tickers that already have a file. `--refresh` downloads everything again.
+- **First run:** all 623 `ok`, 2.84M daily rows, all ending 30 Oct 2026.
+
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 
