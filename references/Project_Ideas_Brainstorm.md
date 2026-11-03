@@ -463,6 +463,46 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
     - **The catch:** if we pick the "best X" from the full-period grid, that choice is fitted to the data. So report **every cell of the grid**, not just the winner. And check that the best X also wins in the later years (2022 onwards) on its own.
     - **Decided (you agreed):** the rule runs over the full period with X = 1, 3, 6, 12. The ML model uses 1 month only, with the time split. 12 months stays as a rule-only cell. Dropping it would be fine too if time runs short.
 - **Next:** build the monthly table. Take month-end closes and next-day opens from the daily files, apply the point-in-time membership on each month-end, and join the Alpha Vantage monthly prices for delisted names. Then run the baseline rule against SPY. Open question 10 (which hold periods X to test) needs an answer before the targets are built.
+### Session 4 — Monday, 2 Nov 2026 (monthly table, code)
+
+- **Built: `uv run python -m sp500_momentum.monthly build`.** It writes `data/processed/monthly_panel.parquet`, with **one row per member per month-end**. It rebuilds from the raw files in about 12 seconds, so it gets rerun as the Alpha Vantage data arrives.
+  - **Membership** (`membership.py`): start from today's list and walk Wikipedia's changes backwards. A change counts from its own date. Decision dates are the last trading day of each month (SPY's calendar), from Jan 2010 to Oct 2026: 202 month-ends.
+  - **Prices per stock and month:**
+    - `close_adj` is the month-end adjusted close. Features use it.
+    - `entry_px` is the price we trade at. For yfinance names that's the **next trading day's adjusted open**, following the golden rule. Alpha Vantage only has monthly data, so for those names it's the month-end close.
+    - Alpha Vantage names are cut after the month that contains their removal date (the Session 3 rule).
+  - **Columns:**
+    - Past returns: `ret_1m`, `ret_3m`, `ret_6m`, `ret_12m` and `ret_12_1m` (12 months, skipping the latest).
+    - For X = 1, 3, 6, 12: `fwd_ret_Xm`, `fwd_trunc_Xm` (prices ended during the hold, so the position was valued at the last price, then cash), `spy_fwd_ret_Xm`, `fwd_excess_Xm`, `is_beat_spy_Xm` and `is_top_decile_Xm`.
+    - Targets only exist where the exit price is known. The last 1-month target is the Aug 2026 decision.
+- **Problems found while building, and the fixes:**
+  - **Missing renames made stocks members too early.**
+    - Wikipedia lists the *old* ticker being added (FB in Dec 2013) but has no row for the rename to META. Walking backwards, META was never taken out, so it counted as a member from 2010. In 2012–13 it was priced, on wrong rows.
+    - The same happened with DLPH → APTV, KORS → CPRI, FLT → CPAY, RE → EG, UA-C/UA → UA/UAA, SATS → ECHO, and the 2014 GOOGL row (it was really GOOG, the class C).
+    - **Fix:** a `RENAMES` list in `config.py` rewrites old → new, but **only inside a date window**, because tickers get reused. "Q" was Qwest until 2011, QuintilesIMS in 2017, and is Qnity now. The first version's flat `Q → IQV` alias would have given Qnity IQVIA's prices.
+    - The old alias map was dropped. Pure rename rows (CDAY → DAY, WLTW → WTW, Q → IQV, KFT → MDLZ) become no-ops. One stock, under today's ticker.
+  - **A missing add:** Smurfit Westrock (SW, joined 2024) has no "added" row. It was counted back to 2010 with the junk data of an older "SW". Fixed with a synthetic add in `MISSING_ADDS`.
+  - **Stray characters in scraped tickers:** one Wikipedia row reads "ALLE |" / "JCP |", and another "ITT |". The coverage check had never tried JCP or ITT. `normalize_ticker` now drops anything that isn't a letter, digit or "-".
+  - **Hidden ticker reuse, confirmed:** CPWR's and EP's yfinance data are a different security. Volume is near zero and prices jump around (CPWR +300% then −75% in a month). The coverage check passed them because the data starts *before* the removal date.
+    - **Fix:** a liquidity check. If a yfinance series' median daily dollar volume over its member months is under **$10M**, it can't be an S&P 500 stock, so its prices are dropped.
+    - It caught 6: **CPWR, EP, GENZ, KG, SII and SUN** (Sunoco; yfinance "SUN" is Sunoco LP).
+    - The removed ones are written to `data/interim/yahoo_suspect.csv`, and `av-pull` now treats them as missing.
+  - **Bemis (BMS)** was acquired by Amcor, but the reason text reads like a ticker change, so it was kept out of the AV queue. It's now in `REASON_OVERRIDES`.
+  - With these fixes, the **AV queue went from 201 to 207** (+JCP, +BMS, +the 6 suspects; ITT turned out to be on yfinance). It still finishes ~11–12 Nov.
+- **Result:**
+  - **101,431 rows, 819 tickers, 499–504 members per month-end** (before the fixes it was up to 510).
+  - **Share of members priced:** 68% in 2010, rising to 100% in 2026. The gap is almost all the AV queue: **14,253 of 14,803 unpriced member-months wait on it.** About 550 won't be filled:
+    - Old companies whose ticker a current member reuses, so neither source has the old history: Dow Chemical (DOW, 92 months), SanDisk (SNDK, 76), Dell before its 2013 buyout (45), Constellation Energy (CEG, 26).
+    - FRC has no data on Alpha Vantage. Qwest (Q) is missing for 2010–11.
+    - These get measured and documented, not fixed.
+  - **Spot checks:**
+    - SIVB, Jan 2023 decision: −99.7% over 3 months, valued at the March crash price and flagged as cut short.
+    - AAPL's 2020 rows line up with SPY.
+    - The 1-month beat-SPY base rate is 49%.
+    - The 6 flagged moves left look real: APA in the 2020 oil crash, and SNDK, INTC, DELL and MRNA in 2026, all with high volume.
+  - 5 new offline tests (the membership walk, the repairs, ticker cleaning, cutoff and truncation, and the data-end rule). There are now 15, all passing.
+- **Caution:** until the AV pull finishes, the early years are missing most acquired names. So **any baseline result run now is still survivorship-biased** and is a preview only.
+- **Next:** the baseline rule grid (look-back × hold, top 1/5/10, staggered, ~10 bps), as a first version of `simulate.py`. Then features.
 - *(The discussion continues below.)*
 
 ---
@@ -483,6 +523,7 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 | 2 Nov 2026 | **Daily prices start in Jan 2007**, unadjusted OHLC + adjusted close + dividends and splits, one parquet file per ticker. SPY, the 11 sector ETFs and VIX are included | A 3-year warm-up for the long features. The unadjusted columns let us rebuild an adjusted next-day open |
 | 2 Nov 2026 | **Delisted names: keep prices up to the month that contains the removal date, then stop.** An open position is valued at that last price, then held as cash. **No AV vs yfinance cross-check** | Removes the OTC penny-price noise (SBNY +3,102% in Dec 2023) without hiding the crash month. The prices compared so far all match |
 | 2 Nov 2026 | **Hold periods:** rule baseline X = 1, 3, 6, 12 months over the full 2010–2026 period, as a look-back × hold grid with staggered portfolios, ~10 bps per side and top 1/5/10. **ML model: 1 month only**, with the time split. **24 months dropped** | The rule fits nothing, so it can use every month. A ~4-year test set leaves only ~2 independent 12-month periods for ML. 24 months is past the momentum range and needs long gaps |
+| 2 Nov 2026 | **Monthly table repairs:** date-windowed `RENAMES`, `MISSING_ADDS`, ticker cleaning, and a $10M median dollar-volume check that drops yfinance series belonging to another security (those go to the AV queue) | Wikipedia misses renames, so stocks counted as members too early (META from 2010). Tickers get reused (Q, UA, SUN), so a flat alias map gives wrong prices |
 
 ### Parking lot (ideas to keep but not pursue now)
 

@@ -1,6 +1,7 @@
 """Offline tests for the data helpers (no network calls)."""
 
 import pandas as pd
+import pytest
 
 from sp500_momentum.sources import alphavantage as av
 from sp500_momentum.sources.wikipedia import classify_reason, normalize_ticker, removed_since
@@ -130,3 +131,79 @@ def test_check_daily():
     assert yahoo.check_daily(None) == "no_data"
     bad = good.assign(close=[5.0, 0.0])
     assert yahoo.check_daily(bad) == "bad_prices"
+
+
+def test_point_in_time_walks_changes_backwards():
+    from sp500_momentum.membership import point_in_time
+
+    current = pd.DataFrame({"ticker": ["A", "NEW"]})
+    changes = pd.DataFrame(
+        {
+            "date": pd.to_datetime(["2020-06-15"]),
+            "added_ticker": ["NEW"],
+            "removed_ticker": ["OLD"],
+        }
+    )
+    dates = pd.to_datetime(["2020-05-29", "2020-06-15", "2020-06-30"])
+    m = point_in_time(current, changes, dates)
+    by = m.groupby("date")["ticker"].apply(set).to_dict()
+    assert by[pd.Timestamp("2020-05-29")] == {"A", "OLD"}
+    assert by[pd.Timestamp("2020-06-15")] == {"A", "NEW"}  # effective on its date
+
+
+def test_repair_changes_renames_in_window_and_adds_missing():
+    from sp500_momentum.membership import repair_changes
+
+    changes = pd.DataFrame(
+        {
+            "date": pd.to_datetime(["2013-12-23", "2022-01-10", "2025-11-03"]),
+            "added_ticker": ["FB", "WTW", "Q"],
+            "removed_ticker": ["XX", "WLTW", None],
+            "reason": ["", "", ""],
+        }
+    )
+    renames = [("FB", "META", "2013-12-01", "2013-12-31"), ("WLTW", "WTW", "2016-01-01", "2022-01-31")]
+    renames += [("Q", "IQV", "2017-08-01", "2017-11-30")]
+    out = repair_changes(changes, renames, {"SW": "2024-07-08"})
+    assert "META" in set(out["added_ticker"])
+    assert "WLTW" not in set(out["removed_ticker"].dropna())  # pure rename row dropped
+    assert "Q" in set(out["added_ticker"])  # outside the Q window: Qnity keeps "Q"
+    assert out.loc[out["added_ticker"] == "SW", "date"].iloc[0] == pd.Timestamp("2024-07-08")
+
+
+def test_clean_ticker():
+    from sp500_momentum.membership import clean_ticker
+
+    assert clean_ticker("ALLE |") == "ALLE"
+    assert normalize_ticker("JCP |") == "JCP"
+    assert pd.isna(clean_ticker(None))
+
+
+def test_add_returns_truncates_at_delisting():
+    from sp500_momentum.monthly import add_returns
+
+    months = pd.period_range("2023-01", "2023-04", freq="M")
+    p = pd.DataFrame(
+        {"month": months[:3], "close_adj": [100.0, 110.0, 1.0], "entry_px": [100.0, 110.0, 1.0]}
+    )
+    out = add_returns(p, holds=[1, 3], data_end=pd.Period("2023-12", "M"))
+    assert out["fwd_ret_1m"].iloc[0] == pytest.approx(0.10)
+    # held 3 months from Jan: prices stop in Mar, valued at the last price (1.0), then cash
+    assert out["fwd_ret_3m"].iloc[0] == pytest.approx(-0.99)
+    assert bool(out["fwd_trunc_3m"].iloc[0])
+    assert out["ret_1m"].iloc[1] == pytest.approx(0.10)
+
+
+def test_add_returns_unknown_after_data_end():
+    from sp500_momentum.monthly import add_returns
+
+    p = pd.DataFrame(
+        {
+            "month": pd.period_range("2026-08", "2026-10", freq="M"),
+            "close_adj": [1.0, 2.0, 3.0],
+            "entry_px": [1.0, 2.0, None],
+        }
+    )
+    out = add_returns(p, holds=[1], data_end=pd.Period("2026-09", "M"))
+    assert out["fwd_ret_1m"].iloc[0] == pytest.approx(1.0)
+    assert out["fwd_ret_1m"].iloc[1:].isna().all()

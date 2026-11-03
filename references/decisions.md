@@ -67,6 +67,20 @@ a stock is the month's top gainer.
 - **24 months dropped.** It's past the range where momentum holds (winners tend to reverse), and its
   train/test gaps would use up ~4 of the 16 years.
 
+**Monthly table (`sp500_momentum.monthly build`)**
+
+- **Shape:** one row per member per month-end (2010-01 to 2026-10), in
+  `data/processed/monthly_panel.parquet`. Rebuilt from the raw files each run.
+- **Trade price:** the next trading day's adjusted open. Alpha Vantage names only have monthly data,
+  so they use the month-end close.
+- **Wikipedia repairs:** date-windowed renames in `RENAMES` (tickers get reused, so a flat alias map
+  is wrong), synthetic adds in `MISSING_ADDS`, and stray characters stripped from tickers.
+- **Wrong-security check:** a yfinance series with a median daily dollar volume under $10M over its
+  member months is dropped, and the removed names go to the AV queue instead (CPWR, EP, GENZ, KG,
+  SII, SUN).
+- **Accepted gap:** about 550 member-months that neither source can fill, mostly old companies
+  whose ticker a current member now uses (DOW, SNDK, DELL, CEG). They're measured, not fixed.
+
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 

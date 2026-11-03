@@ -20,11 +20,13 @@ from sp500_momentum.config import (
     AV_SLEEP_SECONDS,
     BENCHMARKS,
     PRICE_START,
+    REASON_OVERRIDES,
     REMOVED_COVERAGE,
     START_DATE,
     WIKIPEDIA_DIR,
     YAHOO_DAILY_DIR,
     YAHOO_MANIFEST,
+    YAHOO_SUSPECT,
 )
 from sp500_momentum.sources import alphavantage as av
 from sp500_momentum.sources import wikipedia, yahoo
@@ -36,6 +38,16 @@ def _read_manifest() -> pd.DataFrame:
     if AV_MANIFEST.exists():
         return pd.read_csv(AV_MANIFEST, parse_dates=["removed_date", "av_first", "av_last"])
     return pd.DataFrame(columns=["ticker"])
+
+
+def _coverage_for_av() -> pd.DataFrame:
+    """Coverage table, with yfinance series that failed the monthly build's liquidity check
+    (another security reused the ticker, e.g. CPWR, EP) treated as missing."""
+    cov = pd.read_csv(REMOVED_COVERAGE, parse_dates=["removed_date"])
+    if YAHOO_SUSPECT.exists():
+        bad = set(pd.read_csv(YAHOO_SUSPECT)["ticker"])
+        cov.loc[cov["ticker"].isin(bad), "yahoo_ok"] = False
+    return cov
 
 
 @app.command()
@@ -57,7 +69,13 @@ def coverage(start: str = START_DATE):
     """For every member removed since `start`, check whether yfinance has its history."""
     current = pd.read_csv(WIKIPEDIA_DIR / "sp500_current.csv")
     changes = pd.read_csv(WIKIPEDIA_DIR / "sp500_changes.csv", parse_dates=["date"])
+    for col in ["added_ticker", "removed_ticker"]:  # older scrapes kept stray chars ("JCP |")
+        changes[col] = changes[col].where(
+            changes[col].isna(), changes[col].map(wikipedia.normalize_ticker)
+        )
     removed = wikipedia.removed_since(changes, current, start)
+    for t, cat in REASON_OVERRIDES.items():
+        removed.loc[removed["ticker"] == t, "reason_cat"] = cat
     logger.info(
         f"{len(removed)} tickers removed since {start} and not members today; checking yfinance"
     )
@@ -139,7 +157,7 @@ def yahoo_daily(
 @app.command("av-pull")
 def av_pull(max_calls: int = AV_DAILY_BUDGET):
     """Pull monthly adjusted history from Alpha Vantage for the next tickers in the queue."""
-    cov = pd.read_csv(REMOVED_COVERAGE, parse_dates=["removed_date"])
+    cov = _coverage_for_av()
     manifest = _read_manifest()
     queue = av.build_queue(cov, manifest)
     if queue.empty:
@@ -185,7 +203,7 @@ def av_pull(max_calls: int = AV_DAILY_BUDGET):
 @app.command("av-status")
 def av_status():
     """Show how far the Alpha Vantage pull has got."""
-    cov = pd.read_csv(REMOVED_COVERAGE, parse_dates=["removed_date"])
+    cov = _coverage_for_av()
     manifest = _read_manifest()
     left = len(av.build_queue(cov, manifest))
     done = 0 if manifest.empty else len(manifest)

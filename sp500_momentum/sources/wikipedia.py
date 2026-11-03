@@ -17,8 +17,10 @@ CHANGES_URL = "https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_
 
 
 def normalize_ticker(t: str) -> str:
-    """Wikipedia writes class shares as BRK.B; yfinance and Alpha Vantage use BRK-B."""
-    return str(t).strip().upper().replace(".", "-")
+    """Wikipedia writes class shares as BRK.B; yfinance and Alpha Vantage use BRK-B.
+
+    Stray characters are dropped too (one row reads "ALLE |")."""
+    return re.sub(r"[^A-Z0-9-]", "", str(t).upper().replace(".", "-"))
 
 
 def _get_tables(url: str) -> list[pd.DataFrame]:
