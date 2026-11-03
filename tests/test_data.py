@@ -217,3 +217,76 @@ def test_fred_parse_csv_drops_missing():
     assert list(df.columns) == ["date", "value"]
     assert df["value"].tolist() == [4.1, 4.2]
     assert df["date"].iloc[-1] == pd.Timestamp("2025-10-06")
+
+
+def test_yahoo_monthly_entry_is_next_days_adjusted_open():
+    from sp500_momentum.monthly import yahoo_monthly
+
+    daily = pd.DataFrame(
+        {
+            "date": pd.to_datetime(["2020-01-30", "2020-01-31", "2020-02-03", "2020-02-28"]),
+            "open": [10.0, 11.0, 20.0, 21.0],
+            "close": [10.0, 12.0, 20.0, 22.0],
+            "adj_close": [5.0, 6.0, 10.0, 11.0],  # adjustment factor 0.5
+            "volume": [1e6, 3e6, 1e6, 1e6],
+        }
+    )
+    m = yahoo_monthly(daily).set_index("month")
+    jan = m.loc[pd.Period("2020-01", "M")]
+    assert jan["close_adj"] == 6.0  # last adjusted close of January
+    assert jan["entry_px"] == pytest.approx(10.0)  # Feb 3 open 20 * 10/20
+    assert jan["dollar_vol"] == pytest.approx((10e6 + 36e6) / 2)  # median of the month's days
+    assert pd.isna(m.loc[pd.Period("2020-02", "M"), "entry_px"])  # no March data yet
+
+
+def test_av_monthly_keeps_the_removal_month_then_stops():
+    from sp500_momentum.monthly import av_monthly
+
+    av_rows = pd.DataFrame(
+        {
+            "timestamp": pd.to_datetime(["2023-01-31", "2023-02-28", "2023-03-31", "2023-04-28"]),
+            "adjusted close": [302.44, 288.11, 0.905, 0.07],
+        }
+    )
+    m = av_monthly(av_rows, pd.Timestamp("2023-03-15"))
+    assert m["month"].astype(str).tolist() == ["2023-01", "2023-02", "2023-03"]
+    assert m["close_adj"].iloc[-1] == 0.905  # the crash month is kept
+    assert (m["entry_px"] == m["close_adj"]).all()  # monthly data trades at the month-end close
+
+
+def test_suspect_tickers_only_counts_member_months():
+    from sp500_momentum.monthly import suspect_tickers
+
+    months = pd.period_range("2015-01", "2015-04", freq="M")
+    prices = pd.DataFrame(
+        {
+            "price_ticker": ["BIG"] * 4 + ["JUNK"] * 4,
+            "month": list(months) * 2,
+            # JUNK is liquid only in months when it wasn't a member
+            "dollar_vol": [50e6] * 4 + [0.1e6, 0.1e6, 80e6, 80e6],
+            "source": "yahoo",
+        }
+    )
+    members = pd.DataFrame(
+        {
+            "date": pd.to_datetime(["2015-01-30", "2015-02-27"] * 2),
+            "ticker": ["BIG", "BIG", "JUNK", "JUNK"],
+        }
+    )
+    out = suspect_tickers(members, prices, min_dollar_vol=10e6)
+    assert out.index.tolist() == ["JUNK"]
+
+
+def test_coverage_for_av_treats_suspects_as_missing(tmp_path, monkeypatch):
+    from sp500_momentum import dataset
+
+    cov_path, sus_path = tmp_path / "cov.csv", tmp_path / "sus.csv"
+    pd.DataFrame(
+        {"ticker": ["CPWR", "OK"], "removed_date": ["2011-12-31", "2015-01-01"], "yahoo_ok": [True, True]}
+    ).to_csv(cov_path, index=False)
+    pd.DataFrame({"ticker": ["CPWR"]}).to_csv(sus_path, index=False)
+    monkeypatch.setattr(dataset, "REMOVED_COVERAGE", cov_path)
+    monkeypatch.setattr(dataset, "YAHOO_SUSPECT", sus_path)
+    out = dataset._coverage_for_av().set_index("ticker")["yahoo_ok"]
+    assert not out["CPWR"]
+    assert out["OK"]

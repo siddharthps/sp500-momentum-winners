@@ -661,6 +661,28 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - the **Windows editing trap**: use the Edit/Write tools, because heredoc patches broke 3 times.
   - **Not added:** `@` imports (they would load the growing `decisions.md` into every session), coding-style rules (ruff covers them), per-folder files (the codebase is too small).
 - **New: `CLAUDE.local.md`** (git-ignored), for personal preferences that shouldn't go public with the repo: commit only when asked, decisions one at a time, and PC time (Central) versus deadline time (Dublin). `CLAUDE.md` is now 69 lines.
+### Session 9 — Tuesday, 3 Nov 2026 (checking existing work against "done")
+
+- **Why:** you wanted the new definition of done applied to everything built so far before moving on. Done means: pytest and ruff pass, the monthly table rebuilds, and the journal entry and chapter are written.
+- **Code:** pytest (16 passed), `ruff check`, `ruff format --check` (15 files) and `monthly build` (101,431 rows, 86.7% priced) all passed as they stood.
+- **Journal and chapters:** every step so far has a journal entry (Sessions 2–8) and is covered by a chapter.
+  - Wikipedia, coverage, yfinance, FRED, Alpha Vantage and the schedule: Chapter 2.
+  - The monthly table and its repairs: Chapter 3.
+  - The test rules: Chapter 1.
+  - A fresh scan of `docs/` against the writing rules was clean.
+- **Gaps found and fixed:**
+  - **The README had fallen behind the code:**
+    - step 3 didn't list the Dow, gold and WTI series (Session 6);
+    - the AV pull said "~9 days", and now says ~12–14 Nov;
+    - the project tree was missing `membership.py`, `monthly.py`, `fred`, `scripts/`, `logs/` and `mkdocs.yml`;
+    - it listed a "data dictionary" in `references/` that doesn't exist (that's Appendix A, still to do).
+    - It also now mentions that removed members failing the volume check join the AV queue automatically.
+  - **Core logic with no tests.** 4 offline tests were added:
+    - the next-open trade price and monthly dollar volume (`yahoo_monthly`);
+    - keeping the removal month, then stopping (`av_monthly`, using SIVB's real numbers);
+    - the volume check counting only member months (`suspect_tickers`);
+    - suspect tickers being treated as missing for the AV queue (`_coverage_for_av`).
+  - There are now **20 tests, all passing.**
 - *(The discussion continues below.)*
 
 ---
