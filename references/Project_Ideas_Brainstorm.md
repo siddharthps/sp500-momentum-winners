@@ -770,6 +770,29 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
     - never skip pre-commit;
     - follow the rerun table;
     - "done" now includes the issue boxes and a green, merged PR.
+- **Merged:** PR #24 (CI passed in 28 s on its first run), squash commit `5b5cd83`. #9 closed and moved to Done automatically. Milestone 4 closed. CI on `main` after the merge is green.
+
+### Session 12 — Tuesday, 3 Nov 2026 (protecting `main`; the repo goes public)
+
+- **Your question: GitHub says "Your main branch isn't protected". Are we doing that?**
+  - No, and we couldn't. GitHub's API answered "Upgrade to GitHub Pro or make this repository public to enable this feature" (HTTP 403) for both classic protection and rulesets. "Merge only on green" was a rule we kept ourselves, with #21 planned for publication.
+- **Your choice: make the repo public now and protect it** (professional and free), instead of staying private or paying for Pro.
+  - **History scanned before going public** (14 commits): the AV key appears 0 times in any file or commit message; nothing from `data/`, `logs/`, `.env` or `CLAUDE.local.md` was ever committed; no private keys or tokens; the largest file ever committed is `uv.lock` (212 KB).
+  - **Found: your personal email is on 13 commits.** I first suggested rewriting history to the noreply address, then **corrected myself**: GitHub keeps `refs/pull/24/head` permanently. It points at the old commits, and owners can't delete it, so a rewrite alone wouldn't hide the address. The real options were to recreate the repo, ask GitHub Support to purge it, or apply noreply to future commits only. **Your choice: noreply for future commits only** (repo-local `user.email` = `58229276+siddharthps@users.noreply.github.com`).
+  - **Done:**
+    - the repo is public;
+    - squash-only merges, and merged branches deleted automatically;
+    - **ruleset "Protect main"** (#26476775): a PR is required, the CI check `checks` must pass on an up-to-date branch, force-pushes and deletion are blocked, and nobody can bypass it.
+  - **Tested:** an empty test commit pushed straight to `main` was **rejected** (GH013: "Changes must be made through a pull request", "Required status check 'checks' is expected"), then dropped locally. *(That test commit skipped the hook with `--no-verify`. It was empty and discarded, but noted because the rule says never skip it.)*
+- **Your second question: do `CLAUDE.md` and `CLAUDE.local.md` need updating?** Yes.
+  - **`CLAUDE.md`** (via branch `21-protect-main` and a PR, since `main` only takes PRs now):
+    - the header now says "do things the professional way; ~30 h is a soft guide";
+    - the protection rules are described, and what a GH013 rejection means;
+    - the repo is public, so never commit data, secrets, logs or personal details, and commits use the noreply email;
+    - the formatting slip is fixed.
+  - **`CLAUDE.local.md`** (git-ignored, edited directly): commit, push, open PRs **and merge** only when you ask; never commit with your personal email.
+  - **README:** the workflow paragraph describes the protection. **`decisions.md`:** "public early to protect main" and the email decision; the "private until near completion" line is updated.
+  - **#21** was retitled "Protect main (repo made public early)", its checklist updated, and moved to In Progress. It closes when this PR merges.
 - *(The discussion continues below.)*
 
 ---

@@ -154,11 +154,16 @@ a stock is the month's top gainer.
   finished work is recorded as closed issues #1–#8, linked to their commits.
 - **Workflow:** a branch per issue, a PR with `Closes #n`, squash merge.
 - **Checks:** GitHub Actions CI (ruff check, ruff format --check, pytest) on every push and PR, plus a
-  pre-commit hook (ruff, a large-file block, a private-key check). Merge only when CI is green. Enforced by
-  branch protection once the repo is public (#21); by convention until then (the free plan's limit).
+  pre-commit hook (ruff, a large-file block, a private-key check). Merge only when CI is green.
 - **Rerun chain:** documented in the README ("if you change X, rerun from Y").
+- **Public early, to protect `main` (3 Nov):** a free private repo can't use branch protection, so the repo
+  went public before the planned "near completion". The full history was scanned first: no key, data or
+  logs. Ruleset "Protect main": PR required, CI `checks` required on an up-to-date branch, no force-push,
+  no deletion, no bypass. Squash-only, branches auto-deleted.
+- **Commit email:** new commits use the GitHub noreply address. The 13 earlier commits keep the original
+  address. Rewriting them wouldn't hide it, because GitHub keeps PR #24's ref permanently.
 
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 
-**Repo:** private on GitHub while in progress, public near completion.
+**Repo:** public since 3 Nov 2026 (it was private until then). `main` is protected (see Planning and workflow).
