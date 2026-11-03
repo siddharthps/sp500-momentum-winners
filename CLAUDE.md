@@ -10,10 +10,14 @@ the top-N by an ML model's probability, hold X months, and backtest against SPY.
 over X months. One row per stock per month-end (~150k rows), built from ~3M daily rows.
 The golden rule: every feature is known at the month-end close, and the trade happens at the next open.
 
-Background and the full design draft (feature groups, targets, modelling flow):
-`C:\Users\Siddharth\Downloads\Stock-Markets-Analytics-Zoomcamp-2026\Final Project\Project_Ideas_Brainstorm.md`
-(Section 7 = field design, Section 8 = discussion log). Ideation notes go there; decisions also go,
-in short form, in `references/decisions.md` here.
+## Notes files (in `references/`)
+
+- `references/Project_Ideas_Brainstorm.md`: the full brainstorm and the design draft.
+  Section 5 = shortlisted ideas, Section 7 = field design for idea H (targets, 13 feature groups,
+  how the class's flow carries over), Section 8 = dated discussion log, Section 9 = decisions and
+  parking lot. **Log every idea or design discussion in Section 8** under a dated session heading,
+  in the same plain style, and move settled points to Section 9.
+- `references/decisions.md`: a short list of only what was decided and why. Update it alongside the log.
 
 ## Data facts already established (don't re-test)
 

@@ -1,6 +1,6 @@
 # Decisions log
 
-The full discussion lives in the course repo (`Final Project/Project_Ideas_Brainstorm.md`). This file
+The full discussion lives in [Project_Ideas_Brainstorm.md](Project_Ideas_Brainstorm.md). This file
 keeps only what was decided and why.
 
 ## 2 Nov 2026
