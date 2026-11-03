@@ -18,6 +18,15 @@ The golden rule: every feature is known at the month-end close, and the trade ha
   parking lot. **Log every idea or design discussion in Section 8** under a dated session heading,
   in the same plain style, and move settled points to Section 9.
 - `references/decisions.md`: a short list of only what was decided and why. Update it alongside the log.
+- `docs/`: **the project book**, one Markdown chapter per step (`01_problem.md` … `09_…`, appendices),
+  shaped goal → what was done → what came out → decisions and why → caveats. **After finishing each
+  step, write or update its chapter** and its row in `docs/index.md`. Numbers get refreshed after the
+  AV pull ends. `mkdocs.yml` is ready for a site. Rules for the chapters (user's, 3 Nov):
+  - Written for someone who never took the course: **no mentions of the course, class, homework or weeks**.
+  - **Never mention the grading rubric** or points, in any form.
+  - **No links or references to `references/` files**, except in the last appendix ("the full working record").
+  - **Explain the why, not the how:** no "how to reproduce" sections, commands, file paths or module names
+    (those belong in the README).
 
 ## Data facts already established (don't re-test)
 

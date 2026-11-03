@@ -4,15 +4,18 @@
     <img src="https://img.shields.io/badge/CCDS-Project%20template-328F97?logo=cookiecutter" />
 </a>
 
-Final project for the Stock Markets Analytics Zoomcamp 2026.
-
 **Idea:** at the end of each month, buy the S&P 500 stocks that rose the most, hold them for X months,
 and find the best X. The plain rule is the baseline. An ML model ranks all members each month, and the
 results are backtested against SPY. The test uses **point-in-time membership** (who was in the index
 *on each date*), including companies that were later acquired, failed or dropped, so the results
 aren't flattered by survivorship bias.
 
-> Status: data collection in progress. See [references/decisions.md](references/decisions.md).
+> Status: data collection and the monthly table are done; features are next. The Alpha Vantage
+> download of delisted companies runs until ~12–14 Nov 2026.
+
+**The project book:** [docs/](docs/index.md) explains each step as a chapter (problem, data
+collection, the monthly table, features, modelling, results, automation). Decisions are in
+[references/decisions.md](references/decisions.md).
 
 ## Setup
 
@@ -62,6 +65,7 @@ uv run ruff format     # format
 ## Project organization
 
 ```
+├── docs               <- The project book: one chapter per step (MkDocs-ready)
 ├── data
 │   ├── external       <- Data from third-party sources
 │   ├── interim        <- Intermediate data (e.g. yfinance coverage of removed members)
@@ -80,3 +84,7 @@ uv run ruff format     # format
     ├── modeling/      <- train.py, predict.py (to do)
     └── plots.py       <- Charts (to do)
 ```
+
+## Acknowledgements
+
+Built as the final project for the Stock Markets Analytics Zoomcamp 2026 (DataTalksClub).

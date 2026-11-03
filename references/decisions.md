@@ -121,6 +121,18 @@ a stock is the month's top gainer.
   through on 3 Nov). Estimated finish: ~12–14 Nov.
 - The quota message quotes the API key, so `av-pull` now writes `***` in its place in the log.
 
+**Documentation (3 Nov)**
+
+- **The book:** numbered Markdown chapters in `docs/`, MkDocs-ready (CCDS's own docs tool), with no build step.
+  Chapters 01 problem, 02 data collection, 03 monthly table, 04 features, 05 EDA, 06 modelling,
+  07 simulation and results, 08 automation, 09 limitations. Appendices: data dictionary, decisions, journal.
+- **Chapter shape:** goal → what was done → what came out → decisions and why → caveats. The README is
+  the front page and links to the chapters.
+- **Rules (your review):** written for a reader who never took the course; no mention of the course or the
+  grading rubric; no links to `references/` except in the last appendix ("the full working record");
+  the why, not the how (no reproduce sections, commands or file paths, which stay in the README).
+- **Timing:** written as we go (01–03 drafted on 3 Nov). The numbers get refreshed after the AV pull ends.
+
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 

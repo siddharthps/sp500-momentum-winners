@@ -1,0 +1,13 @@
+# Optional website for the project book in docs/.
+# GitHub shows the Markdown files as they are; this is only needed to build a site:
+#   uv run --with mkdocs-material mkdocs serve
+site_name: S&P 500 momentum winners
+docs_dir: docs
+theme:
+  name: material
+nav:
+  - Contents: index.md
+  - 1. The problem and the idea: 01_problem.md
+  - 2. Data collection: 02_data_collection.md
+  - 3. Building the monthly table: 03_monthly_table.md
+  - Appendix B. The full working record: appendix_b_working_record.md

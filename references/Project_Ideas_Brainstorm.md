@@ -605,6 +605,40 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 - **Fixed: the API key was being written to the log.** Alpha Vantage's quota message quotes the key, and `av-pull` logged the message as is. The key is now replaced with `***`, and it was scrubbed from the existing `logs/av_pull.log`. `logs/` is git-ignored, so it never reached GitHub.
 - Also noted: Task Scheduler's own history log is switched off on this PC, so `logs/av_pull.log` is the only record of the runs.
 - ANSS came back `ok`, but its data runs to Nov 2026, well past its Jul 2025 removal (the old ticker still quotes). The cutoff rule from Session 3 (stop after the removal month) already handles this.
+### Session 8 — Tuesday, 3 Nov 2026 (how to document the project, then chapters 01–03)
+
+- **Your question: how do we document this simply but in depth, like chapters of a book? Are there rules, skills or a template (like CCDS) to follow?**
+  - **CCDS:** it has a `docs/` folder and uses **MkDocs** as its docs tool. Our scaffold was generated with docs switched off, so there was no `docs/` yet.
+  - **Diátaxis**, the standard framework for technical docs, sorts docs into tutorials, how-to guides, reference and explanation. Our book is mostly *explanation*, plus one *how-to* chapter (reproducing the project) and one *reference* (the data dictionary). We borrow that split, not the whole framework.
+  - **Chapter template: the course's own summary files** (`Module_0X_..._Summary.md`): goal → what was done → what came out → takeaways → caveats. Reviewers took the same course, so it's familiar. Two sections are added to each chapter: **decisions and why**, and **how to reproduce**.
+  - **Skills:** none specific. The `docs` skill is for documents on claude.ai, not repo files, and the rubric scores the repo. Style: plain language, short sentences, real numbers in tables, one chart per key point (the Google developer documentation style guide as a reference).
+  - **Layers, so nothing is written twice:**
+    - README = the front page (where most rubric points are judged);
+    - `docs/` = the book;
+    - notebooks = the evidence;
+    - journal + `decisions.md` = the lab notebook, used as source material and linked as appendices.
+- **Decided (one question at a time):**
+  - **Format:** numbered Markdown chapters in `docs/`, plus an `mkdocs.yml`, so it can become a website later. GitHub renders the files as they are, with nothing to build.
+  - **Chapters:**
+    - 01 Problem and idea;
+    - 02 Data collection;
+    - 03 Building the monthly table;
+    - 04 Features;
+    - 05 Exploratory analysis;
+    - 06 Modelling;
+    - 07 Trading simulation and results;
+    - 08 Automation and reproducing;
+    - 09 Limitations and next steps.
+    - Appendices: A data dictionary, B decision log, C journal.
+  - **Timing:** write as we go. Draft 01–03 now from Sessions 1–7, write each later chapter right after its step, and do a final pass after the AV pull (~14 Nov) to refresh the numbers. Budget: ~30–40 min a chapter, 4–5 h in total.
+- **Drafted:** `docs/index.md` and chapters 01–03, plus `mkdocs.yml`. The README now links to the book. The monthly table was rebuilt first so the chapters quote current numbers (86.7% of rows priced after this morning's 9 AV tickers).
+- **Your review of the drafts: four rules for the book** (now also in `CLAUDE.md`):
+  1. **No references to the course.** The book must make sense to someone who never took it. Chapter 1's "how this differs from the course" became "what makes this question different" (compared with a typical stock-prediction setup).
+  2. **No mention of the grading rubric**, in any form.
+  3. **No references to the files in `references/`** inside the chapters. They're tagged only in the last appendix, for readers who want the whole process. Appendices B (decisions) and C (journal) were merged into **Appendix B, "The full working record"**.
+  4. **No "how to reproduce" sections.** The book explains the *why*. Commands, file paths and module names were removed, and the "how" stays in the README. Chapter 8 was renamed from "Automation and reproducing" to "Automation".
+- All three chapters were rewritten to these rules, and a scan of `docs/` for course, rubric, references, commands and paths came back clean. Table separators were tidied to `| --- |`.
+- **README (your choice):** the opening line "Final project for the Stock Markets Analytics Zoomcamp 2026" moved to a short **Acknowledgements** section at the end. The README now opens with the idea itself.
 - *(The discussion continues below.)*
 
 ---
