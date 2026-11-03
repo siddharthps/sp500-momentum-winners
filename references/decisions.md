@@ -114,6 +114,13 @@ a stock is the month's top gainer.
 - **Market series:** `^DJI`, `GC=F` and `CL=F` were added to the yfinance downloads (A5). Downloads now keep
   rows strictly before the end date, because futures let today's half-finished bar through.
 
+**Alpha Vantage schedule (3 Nov)**
+
+- The daily pull runs at **21:00 PC time** (it was 09:00), with catch-up after boot. The PC was off at
+  09:00, and the free tier's 25-call limit looks like a rolling 24 hours (only 9 of 23 calls got
+  through on 3 Nov). Estimated finish: ~12–14 Nov.
+- The quota message quotes the API key, so `av-pull` now writes `***` in its place in the log.
+
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 

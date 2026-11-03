@@ -29,7 +29,7 @@ The golden rule: every feature is known at the month-end close, and the trade ha
   but **monthly adjusted is free with full history**, and it includes dividends (it matches yfinance).
   Some symbols return the company that reused the ticker later (STI), so validate against the removal date.
 - **Don't spend Alpha Vantage calls ad hoc.** The scheduled task `sp500-momentum-av-pull` uses 23
-  a day at 09:00 (`scripts/av_pull_daily.ps1`, log in `logs/av_pull.log`) until the queue is empty
+  a day at 21:00 PC time (`scripts/av_pull_daily.ps1`, log in `logs/av_pull.log`) until the queue is empty
   (~12 Nov 2026). Unregister the task once it's done.
 - yfinance daily prices are downloaded (`yahoo-daily`, 2 Nov 2026): 623 tickers, 2.84M rows, from
   2007, in `data/raw/yahoo/daily/<TICKER>.parquet`. Rerunning skips tickers already saved.

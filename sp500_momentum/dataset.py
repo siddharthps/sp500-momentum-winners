@@ -216,7 +216,9 @@ def av_pull(max_calls: int = AV_DAILY_BUDGET):
             logger.info(f"{r['ticker']:6s} {r['reason_cat']:15s} -> {status}")
             time.sleep(AV_SLEEP_SECONDS)
     except av.QuotaExhausted as e:
-        logger.warning(f"Alpha Vantage quota reached, stopping for today: {e}")
+        # Alpha Vantage's quota message quotes the API key; don't write it to the log.
+        msg = str(e).replace(key, "***")
+        logger.warning(f"Alpha Vantage quota reached, stopping for today: {msg}")
     finally:
         if rows:
             new = pd.DataFrame(rows)

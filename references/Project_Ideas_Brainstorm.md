@@ -594,6 +594,17 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - **Trap found:** futures trade overnight, so yfinance's `end` date let **today's half-finished bar** through for GC=F and CL=F. `download_daily` now keeps rows strictly before `end`. The two files were downloaded again, and all series now end on 30 Oct.
 - **Totals:** 627 yfinance series, 2,861,374 daily rows, plus 6 FRED series. One test added (FRED CSV parsing, `.` and blank values). There are now 16, all passing.
 - **Next:** the features step. Daily → month-end: growth against SPY, Dow, the sector ETF, gold, WTI and the 10-year yield; TA-Lib indicators; macro with the lags; VIX; ~20 own features; sectors for removed members. Then the named feature sets.
+### Session 7 — Tuesday, 3 Nov 2026 (checking the scheduled Alpha Vantage run)
+
+- **Your question: did the scheduled run work?** Yes, but late and only partly.
+  - **The PC was off at 09:00.** It booted at 09:16, and the PC clock is Central time (-06:00). The task's "start when available" setting caught up at **09:19:43** and pulled **9 tickers, all `ok`**: DAY, K, IPG, WBA, HES, ANSS, JNPR, DFS, CTLT. Then Alpha Vantage refused more ("25 requests per day").
+  - My first status check (09:19:53) landed while that run was still going, so the task looked like it had never run. A manual start at 09:20 then found the limit already used, and stopped cleanly.
+  - The manifest went from 8 to 17 tried, and **198 are left**.
+- **Why only 9 calls, not 23:** most likely **the free tier counts 25 calls over a rolling 24 hours**, not per calendar day. About 16 calls were made on the afternoon and evening of 2 Nov (tests in chat plus the first 8 pulls). This is inferred from the log, not documented by Alpha Vantage.
+- **Changed (your choice): the task now runs at 21:00 only (PC time), not 09:00.** `scripts/register_av_task.ps1` was updated and the task re-registered. Catch-up after boot is still on. The first run is tonight. If the window really is rolling, tonight gets ~16 calls (this morning's 9 are still inside 24 hours), and from tomorrow ~23 a night. **Estimated finish: about 12–14 Nov**, still before the 20 Nov deadline.
+- **Fixed: the API key was being written to the log.** Alpha Vantage's quota message quotes the key, and `av-pull` logged the message as is. The key is now replaced with `***`, and it was scrubbed from the existing `logs/av_pull.log`. `logs/` is git-ignored, so it never reached GitHub.
+- Also noted: Task Scheduler's own history log is switched off on this PC, so `logs/av_pull.log` is the only record of the runs.
+- ANSS came back `ok`, but its data runs to Nov 2026, well past its Jul 2025 removal (the old ticker still quotes). The cutoff rule from Session 3 (stop after the removal month) already handles this.
 - *(The discussion continues below.)*
 
 ---

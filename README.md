@@ -43,7 +43,7 @@ ALPHAVANTAGE_API_KEY=your_key_here
 Step 4 is rerun once a day (and step 5 after it) until the queue is empty (~9 days for members removed since 2010).
 It skips tickers already pulled and stops cleanly when the daily quota runs out.
 
-On Windows, `scripts/register_av_task.ps1` schedules it daily at 09:00 with Task Scheduler.
+On Windows, `scripts/register_av_task.ps1` schedules it daily at 21:00 (PC local time) with Task Scheduler.
 Each run appends to `logs/av_pull.log`.
 
 Step 3 takes about a minute. It saves one parquet file per ticker (unadjusted OHLC, adjusted close,
