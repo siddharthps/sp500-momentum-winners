@@ -16,8 +16,8 @@ Follow it. **Ask first** before changing the plan, spending API calls, or touchi
 **Just do it** for bug fixes, tests, and refactors within a module, and say so afterwards.
 
 **Done means:** `uv run pytest`, `uv run ruff check` and `uv run ruff format --check` pass; the monthly
-table and features rebuild; the journal entry and the step's chapter are written; the issue's "Done
-when" boxes are ticked; the PR is merged with CI green.
+table and features rebuild; `run_notebooks run` passes its output checks; the journal entry and the
+step's chapter are written; the issue's "Done when" boxes are ticked; the PR is merged with CI green.
 
 ## Working rules
 
@@ -36,6 +36,9 @@ when" boxes are ticked; the PR is merged with CI green.
   commit again. Never skip it with `--no-verify`.
 - **"If you change X, rerun from Y"** is in the README ("Rerunning after a change"). Follow it after
   changing any earlier step.
+- **Check every claim before writing it.** No finding goes into a chart title, notebook text,
+  chapter or summary until it has been checked against the actual output. (A drafted subtitle said
+  the opposite of the data once; it was caught in review.)
 - **Journal every step.** Add a dated "Session N" entry to Section 8 of
   `references/Project_Ideas_Brainstorm.md` (plain style, including traps found and fixes). Put settled
   points in its Section 9 table and in `references/decisions.md`.
@@ -65,6 +68,19 @@ when" boxes are ticked; the PR is merged with CI green.
 - **Rebuild order:** after new raw data (the AV pull, any download), rerun `monthly build` before
   anything downstream.
 - **Secrets:** never print, log or commit the Alpha Vantage key or `.env`.
+- **Notebooks are committed with outputs**, so:
+  - Run them only with `run_notebooks run` (a fresh kernel). Never edit outputs by hand.
+  - Start every notebook with `nb.setup()`. It caps tables at 20 rows, keeps logs to warnings only,
+    and applies the chart style.
+  - **Show summaries, never raw data:** aggregates, rates, `.head(n)`. Full results go to files in
+    `reports/`. One table or chart per question, each with a sentence saying what it shows.
+  - Keep logic in the package (`eda.py`, `plots.py`), not in cells.
+  - Feature analysis uses decisions up to `RESEARCH_END` only.
+  - **The runner fails** on: a cell output over 50 lines; anything on stderr; a local path, e-mail or
+    the AV key in any output; a notebook over 300 KB. Fix the cause, never loosen the check.
+- **Charts:** follow the dataviz skill. Colours come from `plots.SLOTS` in fixed order (validated
+  with the skill's validator; Node is at `C:\Program Files\nodejs\node.exe`), one y-axis, and every
+  chart gets looked at before it ships.
 - **Editing on Windows:** change code with the Edit/Write tools. Shell heredocs with Python patches
   break on `\n` inside strings (this happened 3 times).
 - Raw data in `data/raw/` is never edited by hand.
@@ -78,6 +94,7 @@ uv run ruff check && uv run ruff format
 uv run python -m sp500_momentum.dataset membership | coverage | yahoo-daily | fred | av-pull | av-status
 uv run python -m sp500_momentum.monthly build
 uv run python -m sp500_momentum.features build     # after monthly build
+uv run python -m sp500_momentum.run_notebooks run  # after features build; refreshes figures
 ```
 
 ## Conventions

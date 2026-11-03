@@ -8,7 +8,7 @@ load_dotenv()
 
 # Paths
 PROJ_ROOT = Path(__file__).resolve().parents[1]
-logger.info(f"PROJ_ROOT path is: {PROJ_ROOT}")
+# (The template logged PROJ_ROOT here; removed: notebooks would publish the local path and username.)
 
 DATA_DIR = PROJ_ROOT / "data"
 RAW_DATA_DIR = DATA_DIR / "raw"
@@ -117,6 +117,16 @@ BENCHMARKS = [
 
 # Hold periods (months) for the forward-return targets. 24 was dropped (decisions.md).
 HOLD_MONTHS = [1, 3, 6, 12]
+
+# Time split (decisions.md, A2). Decision dates, inclusive. Models use 1-month gaps between sets.
+SPLIT = {
+    "train": ("2010-01-01", "2019-12-31"),
+    "validation": ("2020-01-01", "2022-12-31"),
+    "test": ("2023-01-01", "2099-12-31"),
+}
+# Anything that could steer modelling choices (feature analysis, tuning) uses decisions up to this
+# date only, so the test period stays unseen until the final evaluation.
+RESEARCH_END = SPLIT["validation"][1]
 
 # Renames: the same company kept trading under a new ticker. In Wikipedia's changes table,
 # rows dated inside [from, to] get `old` rewritten to `new`. That way the stock is one member

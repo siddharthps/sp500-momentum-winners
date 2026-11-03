@@ -163,6 +163,20 @@ a stock is the month's top gainer.
 - **Commit email:** new commits use the GitHub noreply address. The 13 earlier commits keep the original
   address. Rewriting them wouldn't hide it, because GitHub keeps PR #24's ref permanently.
 
+**Exploratory analysis (3 Nov)**
+
+- **Notebooks are committed executed, with outputs** (readers see results without the data). They're only
+  ever run by `run_notebooks run` (fresh kernel), with metadata cleared, small charts, and a 500 KB cap;
+  ruff lints them.
+- **Charts:** a palette validated with the dataviz validator (blue/orange/aqua, all pairs pass). Aqua is
+  below 3:1 contrast, so it always gets direct labels plus a table. One axis, and every chart is reviewed by eye.
+- **Research period:** feature signal, stability, correlations and regimes use decisions up to 2022 only
+  (`RESEARCH_END`). The test years 2023–26 stay unseen.
+- **Logic lives in the package** (`eda.py`, `plots.py`, tested). Notebooks only call it.
+- **What notebooks may print, enforced by the runner:** summaries only (`nb.setup()` caps tables at 20 rows;
+  full results go to `reports/`). A run fails on a cell output over 50 lines, anything on stderr, a local
+  path, e-mail or key in the outputs, or a notebook over 300 KB.
+
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 

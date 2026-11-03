@@ -20,7 +20,7 @@ Each chapter has the same shape:
 | 2 | [Data collection](02_data_collection.md) | Draft |
 | 3 | [Building the monthly table](03_monthly_table.md) | Draft |
 | 4 | [Features](04_features.md) | Draft |
-| 5 | Exploratory analysis | To do |
+| 5 | [Exploratory analysis](05_eda.md) | Draft |
 | 6 | Modelling | To do |
 | 7 | Trading simulation and results | To do |
 | 8 | Automation | To do |
