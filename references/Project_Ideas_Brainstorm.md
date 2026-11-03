@@ -639,6 +639,28 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   4. **No "how to reproduce" sections.** The book explains the *why*. Commands, file paths and module names were removed, and the "how" stays in the README. Chapter 8 was renamed from "Automation and reproducing" to "Automation".
 - All three chapters were rewritten to these rules, and a scan of `docs/` for course, rubric, references, commands and paths came back clean. Table separators were tidied to `| --- |`.
 - **README (your choice):** the opening line "Final project for the Stock Markets Analytics Zoomcamp 2026" moved to a short **Acknowledgements** section at the end. The README now opens with the idea itself.
+- **`CLAUDE.md` trimmed (your request: "lean and mean", so adding more doesn't confuse).**
+  - **Taken out:**
+    - numbers that go stale ("~150k rows" was already wrong at ~101k; ticker and row counts);
+    - facts the code already documents (the FRED User-Agent trap in `fred.py`, the repair lists in `config.py`, the download details);
+    - the section-by-section map of this file.
+  - **Kept:**
+    - the deadline and budget, the project in 4 lines, and the golden rule;
+    - a pointer to `decisions.md` as the agreed plan ("follow it, ask before changing");
+    - the working rules: the journal, and the book with its 3 writing rules;
+    - two traps: Alpha Vantage calls, and reused tickers;
+    - the commands and conventions.
+  - It went from 71 lines to about 50.
+- **Your question: what best practices are missing from `CLAUDE.md`?** Added, by your choice:
+  - a **definition of done**: pytest and ruff pass, the table rebuilds, the journal and chapter are written;
+  - an **ask-vs-act boundary**: ask before changing the plan, spending API calls or touching the task; bug fixes, tests and refactors just get done and reported;
+  - a **look-ahead checklist** for features: data to the month-end close only, macro through its publication lag, ranks within each date;
+  - **results honesty**: "preview" until the AV pull ends, never tune on 2023–26;
+  - the **rebuild order** after new raw data;
+  - **secrets**: never print, log or commit the key or `.env`;
+  - the **Windows editing trap**: use the Edit/Write tools, because heredoc patches broke 3 times.
+  - **Not added:** `@` imports (they would load the growing `decisions.md` into every session), coding-style rules (ruff covers them), per-folder files (the codebase is too small).
+- **New: `CLAUDE.local.md`** (git-ignored), for personal preferences that shouldn't go public with the repo: commit only when asked, decisions one at a time, and PC time (Central) versus deadline time (Dublin). `CLAUDE.md` is now 69 lines.
 - *(The discussion continues below.)*
 
 ---

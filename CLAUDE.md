@@ -1,52 +1,54 @@
 # CLAUDE.md
 
-Final project for the Stock Markets Analytics Zoomcamp 2026. **Deadline: Fri 20 Nov 2026,
-23:59 Dublin time.** Time budget is about 30 hours (~3 h/day). A solid pass is the goal; extras are a bonus.
+Course final project (Stock Markets Analytics Zoomcamp 2026). **Deadline: Fri 20 Nov 2026, 23:59 Dublin.**
+~30 h budget (~3 h/day). Goal: a solid pass; extras only after the core is done.
 
-## The idea (idea H)
+## The project
 
-Each month-end, rank point-in-time S&P 500 members, buy last month's winners (the baseline rule) or
-the top-N by an ML model's probability, hold X months, and backtest against SPY. Target: beats SPY
-over X months. One row per stock per month-end (~150k rows), built from ~3M daily rows.
-The golden rule: every feature is known at the month-end close, and the trade happens at the next open.
+Each month-end, rank the point-in-time S&P 500 members and buy the top N, either by last month's
+return (the baseline rule) or by an ML model's probability of beating SPY next month. Hold them, and
+backtest against SPY. One row per member per month-end (2010 →), built from the daily prices.
+**Golden rule:** every feature is known at the month-end close; the trade happens at the next open.
 
-## Notes files (in `references/`)
+The agreed plan (split, features, models, simulation, deliverables) is in `references/decisions.md`.
+Follow it. **Ask first** before changing the plan, spending API calls, or touching the scheduled task.
+**Just do it** for bug fixes, tests, and refactors within a module, and say so afterwards.
 
-- `references/Project_Ideas_Brainstorm.md`: the full brainstorm and the design draft.
-  Section 5 = shortlisted ideas, Section 7 = field design for idea H (targets, 13 feature groups,
-  how the class's flow carries over), Section 8 = dated discussion log, Section 9 = decisions and
-  parking lot. **Log every idea or design discussion in Section 8** under a dated session heading,
-  in the same plain style, and move settled points to Section 9.
-- `references/decisions.md`: a short list of only what was decided and why. Update it alongside the log.
-- `docs/`: **the project book**, one Markdown chapter per step (`01_problem.md` … `09_…`, appendices),
-  shaped goal → what was done → what came out → decisions and why → caveats. **After finishing each
-  step, write or update its chapter** and its row in `docs/index.md`. Numbers get refreshed after the
-  AV pull ends. `mkdocs.yml` is ready for a site. Rules for the chapters (user's, 3 Nov):
-  - Written for someone who never took the course: **no mentions of the course, class, homework or weeks**.
-  - **Never mention the grading rubric** or points, in any form.
-  - **No links or references to `references/` files**, except in the last appendix ("the full working record").
-  - **Explain the why, not the how:** no "how to reproduce" sections, commands, file paths or module names
-    (those belong in the README).
+**Done means:** `uv run pytest` and `uv run ruff check` pass; the monthly table rebuilds; the journal
+entry and the step's chapter are written.
 
-## Data facts already established (don't re-test)
+## Working rules
 
-- Membership comes from Wikipedia: the current list plus **"Historical components of the S&P 500"**
-  (the changes table moved off the main page). The study starts in **2010**.
-- yfinance has no history for most delisted members (213 of the 320 removed since 2010).
-  Some old tickers now point to different securities (`FB`), and some return 1-row stubs.
-- Alpha Vantage key = **free tier: 25 calls a day, 1 a second**. Daily `outputsize=full` is premium,
-  but **monthly adjusted is free with full history**, and it includes dividends (it matches yfinance).
-  Some symbols return the company that reused the ticker later (STI), so validate against the removal date.
-- **Don't spend Alpha Vantage calls ad hoc.** The scheduled task `sp500-momentum-av-pull` uses 23
-  a day at 21:00 PC time (`scripts/av_pull_daily.ps1`, log in `logs/av_pull.log`) until the queue is empty
-  (~12 Nov 2026). Unregister the task once it's done.
-- yfinance daily prices are downloaded (`yahoo-daily`, 2 Nov 2026): 623 tickers, 2.84M rows, from
-  2007, in `data/raw/yahoo/daily/<TICKER>.parquet`. Rerunning skips tickers already saved.
-- FRED (`fred`): 6 series in `data/raw/fred/`, publication lags in `FRED_SERIES`. FRED's CSV endpoint stalls
-  on our custom User-Agent, so `sources/fred.py` sends the default one. Core CPI has no Oct 2025 value (shutdown).
-- Monthly table: `uv run python -m sp500_momentum.monthly build` -> `data/processed/monthly_panel.parquet`.
-  Wikipedia fixes live in `config.py`: `RENAMES` (date-windowed, because tickers get reused), `MISSING_ADDS`, `REASON_OVERRIDES`.
-  yfinance series under a $10M median dollar volume are a different security. They go to the AV queue via `yahoo_suspect.csv`.
+- **Journal every step.** Add a dated "Session N" entry to Section 8 of
+  `references/Project_Ideas_Brainstorm.md` (plain style, including traps found and fixes). Put settled
+  points in its Section 9 table and in `references/decisions.md`.
+- **Write the book as you go.** After each step, write or update its chapter in `docs/` and its row in
+  `docs/index.md`. Chapter shape: goal → what was done → what came out → decisions and why → caveats.
+  - No mention of the course or the grading rubric.
+  - No links to `references/`, except in the last appendix.
+  - Explain the why, not the how: no commands, file paths or module names (the README has those).
+- Keep the README's commands current.
+
+## Traps (don't re-learn these)
+
+- **Never spend Alpha Vantage calls ad hoc** (free tier: 25 per rolling ~24 h). The Task Scheduler job
+  `sp500-momentum-av-pull` pulls daily at 21:00 PC time; its log is `logs/av_pull.log`. Unregister it
+  once the queue is empty (~12–14 Nov).
+- **Tickers get reused.** An old symbol can return a different company (FB, STI, CPWR). Always check a
+  series against the removal date and trading volume. Membership repairs live in `config.py`.
+- **Look-ahead checks for every feature:**
+  - It uses data up to the month-end close only.
+  - Macro values go through their `FRED_SERIES` publication lag.
+  - Ranks and percentiles are computed within each date, never across dates.
+- **Results:**
+  - Label every result a *preview* until the AV pull is finished.
+  - Never choose settings by looking at the test period (2023–26). Tune with time-series CV inside 2010–22.
+- **Rebuild order:** after new raw data (the AV pull, any download), rerun `monthly build` before
+  anything downstream.
+- **Secrets:** never print, log or commit the Alpha Vantage key or `.env`.
+- **Editing on Windows:** change code with the Edit/Write tools. Shell heredocs with Python patches
+  break on `\n` inside strings (this happened 3 times).
+- Raw data in `data/raw/` is never edited by hand.
 
 ## Commands
 
@@ -60,11 +62,8 @@ uv run python -m sp500_momentum.monthly build
 
 ## Conventions
 
-- Cookiecutter Data Science layout. One module per source in `sp500_momentum/sources/`. Don't name
-  a module after a package it imports (hence `yahoo.py`, not `yfinance.py`).
-- Raw data in `data/raw/<source>/` is never edited by hand. `data/` and `.env` are git-ignored.
-- Tests are offline (no network).
-- Windows + Git Bash/PowerShell. There's no `make`; steps are typer commands.
-- The class's flow carries over (named feature sets, time split, `pred*` rules, tree/RF/LogReg,
-  precision on test, `sim1_`-style simulation). Reuse it where possible, because time is short.
-- The repo is private on GitHub (`siddharthps/sp500-momentum-winners`) and goes public near completion.
+- Cookiecutter Data Science layout. One module per data source in `sp500_momentum/sources/`. Never
+  name a module after a package it imports (`yahoo.py`, not `yfinance.py`).
+- Steps are typer commands (Windows, no `make`). Tests are offline. `data/` and `.env` are git-ignored.
+- Reuse the course's flow where it fits (named feature sets, `pred*` rules, `sim1_`-style simulation).
+- The GitHub repo `siddharthps/sp500-momentum-winners` is private until near completion.
