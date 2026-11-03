@@ -81,6 +81,31 @@ a stock is the month's top gainer.
 - **Accepted gap:** about 550 member-months that neither source can fill, mostly old companies
   whose ticker a current member now uses (DOW, SNDK, DELL, CEG). They're measured, not fixed.
 
+**Project plan (settled one question at a time, Session 5)**
+
+| Area | Decision |
+|---|---|
+| Row | One per member per month-end. The 2.85M daily rows underneath cover >1M |
+| Split | Train 2010–19, validation 2020–22, test 2023–26, 1-month gaps |
+| Timing | Build now on current data. Rerun everything after the AV pull (~12 Nov) |
+| Macro | Class FRED set + VIX (level, percentile) + yield-curve slope, each lagged to its publication date |
+| Market growth features | US-focused: SPY, Dow, sector ETF, gold, WTI, 10-year yield |
+| TA-Lib | ~55 indicators at month-end (running totals as changes or ranks). No candle patterns |
+| Own features | Core ~20: ranks, relative strength, quality of the move, volatility and beta, 52-week position, breadth |
+| Sectors, removed members | Filled in by hand (yfinance sector, then a name match, then "unknown"). An all-"unknown" sector would leak the future |
+| Target | `is_beat_spy_1m` (top decile as a second target, for analysis) |
+| Models | Decision tree, random forest, logistic regression, XGBoost |
+| Tuning | Time-series CV (expanding yearly folds inside 2010–22). Test used once |
+| Score | Precision of the monthly top-N picks against the ~49% base rate. Excess return alongside |
+| Picks | Top 1, 5 and 10 reported. Headline: top 10 |
+| Benchmarks | SPY + an equal-weight basket of all members |
+| Simulation | Vector (`sim1_` style) + exact with reinvestment (CAGR, Sharpe, max drawdown, rolling) |
+| Extra strategy | Only buy when SPY is above its 200-day average |
+| Notebooks | `00_run_all`, `01_data`, `02_features_eda`, `03_models`, `04_simulation`, each calling the `.py` modules |
+| Data hosting | Hugging Face dataset ("from file" mode) |
+| Automation | Monthly Task Scheduler run (incremental update → rebuild → score → picks) + a `--from-file` switch |
+| Extras | After the core (~mid-Nov). Telegram bot first if time allows |
+
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 

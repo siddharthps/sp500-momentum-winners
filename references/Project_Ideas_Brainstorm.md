@@ -503,6 +503,77 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - 5 new offline tests (the membership walk, the repairs, ticker cleaning, cutoff and truncation, and the data-end rule). There are now 15, all passing.
 - **Caution:** until the AV pull finishes, the early years are missing most acquired names. So **any baseline result run now is still survivorship-biased** and is a preview only.
 - **Next:** the baseline rule grid (look-back × hold, top 1/5/10, staggered, ~10 bps), as a first version of `simulate.py`. Then features.
+
+### Session 5 — Monday, 2 Nov 2026 (step back: compare with the class's Weeks 1–4, no code)
+
+- **Why:** before writing more code, you wanted to see how the class built its dataset and project, and keep this project similar.
+- **The class's pipeline, in four steps:**
+  - **Week 1, sources:** yfinance (stocks, indexes, ETFs), FRED macro data, and scraping.
+  - **Week 2, one table:** daily history for 33 stocks. Added:
+    - growth features over 1, 3, 7, 30, 90 and 365 days, for the stock and for 8 markets;
+    - about 55 TA-Lib indicators and 61 candlestick patterns;
+    - macro data (monthly values copied onto each day);
+    - dummies.
+    - The targets are `growth_future_30d` and `is_positive_growth_30d_future`. The result was 240k rows × 203 columns, saved as one parquet file.
+  - **Week 3, first models:**
+    - named feature sets and a 70/15/15 time split;
+    - a 57% baseline, and a correlation check;
+    - hand-written rules `pred0`–`pred4`;
+    - decision trees, scored on precision on test.
+  - **Week 4, more models and the simulation:**
+    - more models: random forest, logistic regression, a neural network;
+    - probability thresholds (`pred8`–`pred11`);
+    - `sim1_`: $100 per "buy", held 30 days, 0.2% fees. Capital = 30 × the 75th percentile of trades per day. Scored by CAGR.
+    - HW4 lessons: fewer dummies helped the RF; fixed thresholds break when anything changes; "stock rose last month" was a tough benchmark; choosing settings on the test set flatters the results.
+- **Same pipeline for idea H.** What changes (as planned in Section 7.7):
+  - **One row per stock per month-end, not per day.** It's still built the class's way: from a daily table (our 2.85M yfinance rows), computing the features on daily data, then keeping the month-end value.
+  - **Universe:** about 500 point-in-time members instead of 33 fixed stocks.
+  - **Target:** beats SPY over the next month (ML), instead of "up in 30 days".
+  - **Rules:** `pred0` = top 1 by last month's return (your idea).
+  - **Probability → buy:** top N each month, not a fixed threshold.
+  - **Simulation:** capital is exactly N × X × $100.
+- **Where we are on that pipeline:**
+  - Sources: done (yfinance, Wikipedia, Alpha Vantage). FRED isn't pulled yet.
+  - One table: the skeleton is done (membership, prices, returns, targets). **None of the class-style features exist yet** (growth against markets, TA-Lib, macro, VIX, dummies, named feature sets).
+  - EDA, models and the simulation: not started.
+  - **No notebooks yet.** The class worked in notebooks, and the rubric wants notebooks + `.py` scripts + one notebook that runs the whole workflow.
+- **Two things that came out of the comparison:**
+  - **A minimum (bold) rubric point says "use the data sources and the features from the lectures".** So FRED macro data, TA-Lib indicators and growth-against-markets features are required, not optional.
+  - **Proposal: one notebook per class week.** `01_data` (sources + one table), `02_features_eda`, `03_models`, `04_simulation`, plus a `run_all` notebook. Each one calls the `.py` functions. It matches the course layout, so reviewers can follow it.
+- **The open questions, broken into 20 small ones and settled one at a time (your answers):**
+  - **A. Table and data**
+    - **A1, row:** one row per member per **month-end** (not daily). The 2.85M daily rows underneath cover the >1M point.
+    - **A2, split:** **train 2010–19, validation 2020–22, test 2023–26**, with a 1-month gap between them.
+    - **A3, timing:** **build everything now** on the current data. Rerun it all once the AV pull ends (~12 Nov). Until then, results are labelled "preview".
+    - **A4, macro:** the class's FRED set (core CPI yearly and monthly, Fed Funds, 1/5/10-year yields, potential GDP), **plus VIX** (level and percentile) and the yield-curve slope. Every figure is **lagged to its publication date**.
+    - **A5, markets for growth features:** **US-focused set**: SPY, Dow, the stock's sector ETF, gold, WTI, the 10-year yield. DAX, India, Brent and Bitcoin are dropped. *(This differs from my recommendation of keeping the class's 8. The "features from the lectures" point is still covered by the same growth-feature method, the FRED macro and TA-Lib.)*
+    - **A6, TA-Lib:** **keep the ~55 indicators** at month-end, with raw running totals (OBV, A/D) turned into changes or ranks. **Drop the 61 candle patterns.** Note: Alpha Vantage-only names have monthly prices only, so their daily-based indicators will be blank.
+    - **A7, own features:** a **core ~20**: ranks (among members and within sector), return against SPY and the sector ETF, quality of the move (share of up days, biggest-day share), volatility and beta, distance to the 52-week high and low, breadth.
+    - **A8, sectors for removed members:** **fill them in by hand, once**. Use yfinance "sector" where it has the ticker, otherwise a keyword match on the name, and "unknown" for what's left. *(My first recommendation, "unknown" for all, was dropped. An "unknown" sector would really mean "gets removed later", which leaks the future.)*
+  - **B. Modelling**
+    - **B1, target:** **`is_beat_spy_1m`** (base rate ~49%). Top decile is kept as a second target for analysis.
+    - **B2, models:** **decision tree, random forest, logistic regression, XGBoost.**
+    - **B3, tuning:** **time-series cross-validation** inside 2010–22, with expanding-window folds: train on the years before, validate on the next year, 1-month gap. The test set (2023–26) is used **once**, at the end.
+      - **Your follow-up: is the extra run time worth it?** (estimates, not measured; the features don't exist yet)
+        - **Cost:** about 7 fits per setting instead of 1. With class-sized grids that's ~35–50 min against ~5–8 min. With trimmed grids (e.g. RF depth {4,6,8,10,13} × trees {50,100}) it's ~10–15 min against ~2. It's paid once per tuning run. The CV results are saved to a CSV (like the class's pre-calculated tuning tables), so the notebooks and the monthly run only load the chosen settings. About 30 extra lines of code.
+        - **Gain:**
+          - A single 2020–22 validation period is only 36 decisions (360 top-10 picks), so precision carries about ±2.6 points of noise, while settings differed by 1–3 points in class.
+          - Those three years are unusual: the COVID crash, the 2020–21 rebound (momentum's classic weak spot) and the 2022 bear market.
+          - HW4's forest chosen on validation fell to 3.7% CAGR on test.
+          - CV over 2016–22 gives 84 months across seven different years, and about ±1.7 points of noise.
+        - **No cost to model quality:** the final model is retrained on 2010–22 either way.
+        - **Verdict: keep CV**, with trimmed grids and cached results.
+    - **B4, main score:** **precision of each month's top-N picks** (the share that beat SPY), against the ~49% base rate. Average excess return is reported alongside.
+  - **C. Strategy and simulation**
+    - **C1, picks:** report top 1, 5 and 10. **Headline: top 10.**
+    - **C2, benchmarks:** **SPY**, plus an **equal-weight basket of all members**.
+    - **C3, simulation:** **both kinds.** The class's `sim1_`-style vector simulation, plus an exact simulation with reinvestment (equity curve, CAGR, Sharpe, max drawdown, rolling returns).
+    - **C4, extra strategy:** **market filter**: only buy when SPY is above its 200-day average, otherwise hold cash.
+  - **D. Deliverables and automation**
+    - **D1, notebooks:** **one per class week**: `01_data`, `02_features_eda`, `03_models`, `04_simulation`, plus `00_run_all`. Each calls the `.py` functions.
+    - **D2, data hosting:** a **Hugging Face dataset**, used by the "from file" mode.
+    - **D3, automation:** a **monthly scheduled run** (Task Scheduler, on the first trading day of the month). It updates prices incrementally, rebuilds the table, scores with the saved model and saves next month's picks. Plus a `--from-file` switch.
+    - **D4, extras:** **core first, then decide** (~mid-Nov). If time is left, the Telegram bot comes first.
 - *(The discussion continues below.)*
 
 ---
@@ -523,6 +594,7 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 | 2 Nov 2026 | **Daily prices start in Jan 2007**, unadjusted OHLC + adjusted close + dividends and splits, one parquet file per ticker. SPY, the 11 sector ETFs and VIX are included | A 3-year warm-up for the long features. The unadjusted columns let us rebuild an adjusted next-day open |
 | 2 Nov 2026 | **Delisted names: keep prices up to the month that contains the removal date, then stop.** An open position is valued at that last price, then held as cash. **No AV vs yfinance cross-check** | Removes the OTC penny-price noise (SBNY +3,102% in Dec 2023) without hiding the crash month. The prices compared so far all match |
 | 2 Nov 2026 | **Hold periods:** rule baseline X = 1, 3, 6, 12 months over the full 2010–2026 period, as a look-back × hold grid with staggered portfolios, ~10 bps per side and top 1/5/10. **ML model: 1 month only**, with the time split. **24 months dropped** | The rule fits nothing, so it can use every month. A ~4-year test set leaves only ~2 independent 12-month periods for ML. 24 months is past the momentum range and needs long gaps |
+| 2 Nov 2026 | **Project plan (20 small decisions, Session 5):** month-end rows; split 2010–19 / 2020–22 / 2023–26; build now, rerun after the AV pull; class FRED set + VIX, lagged; US-focused markets; TA-Lib indicators (no candle patterns); ~20 own features; sectors filled in by hand; target `is_beat_spy_1m`; Tree + RF + LogReg + XGBoost; time-series CV, test once; score = precision of the top-N picks; top 1/5/10 (headline 10); SPY + equal-weight benchmarks; vector + exact simulation; SPY > 200-day filter; notebooks per class week + `00_run_all`; Hugging Face data; monthly scheduled run; extras after the core | Mirrors the class's flow (Weeks 1–4) and the rubric's points. Fixes the class's caveats: look-ahead in macro, tuning on test, no benchmark |
 | 2 Nov 2026 | **Monthly table repairs:** date-windowed `RENAMES`, `MISSING_ADDS`, ticker cleaning, and a $10M median dollar-volume check that drops yfinance series belonging to another security (those go to the AV queue) | Wikipedia misses renames, so stocks counted as members too early (META from 2010). Tickers get reused (Q, UA, SUN), so a flat alias map gives wrong prices |
 
 ### Parking lot (ideas to keep but not pursue now)
