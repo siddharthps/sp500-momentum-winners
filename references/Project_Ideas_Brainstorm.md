@@ -968,6 +968,51 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 - **Docs:**
   - Chapter 4: 152 and the group counts, a new §3.5 (the eight features, the removed copies, the rejected split and ticker flags, the extreme values), decision rows, and caveats (the GICS 2016/2018 changes in detail, the months-in-index cap).
   - Also chapters 5 and 7; chapter 3 (priced rows 87.4%, and coverage by year now 70% in 2010 → 100%); the README; and the plot labels for the new features.
+- **Merged** as PR #32 (`9685e05`). Board: 14 Done, 12 Todo.
+
+### Session 17 — Wednesday, 4 Nov 2026 (model setup, #12)
+
+- **Morning check (09:33):** no new AV run (the next is 21:00). The task still shows last night's kill code, because the recovery was run by hand. VS Code had created `.vscode/` (one personal setting).
+- **You asked what #12 involves before starting.** Explained it as six pieces: the matrix and target, three time blocks, the gap, the CV folds, in-fold preparation, and tests.
+  - Real counts: 88,137 usable rows; train 48,137 (50.6% beat SPY), validation 17,443 (50.0%), test 22,557 (45.2%).
+- **Decisions, one prompt each, all as recommended:**
+  1. **CV layout A:** folds score 2014–19; 2020–22 held out; refit 2010–22; test once.
+  2. **`.vscode/` git-ignored** (with `.idea/`).
+  3. **Models.** You asked for the pros and cons of every model, existing and proposed, and pointed out the plan looked like the course's.
+     - Correction: the course used tree, RF, LogReg and an NN; XGBoost was already ours.
+     - You chose to add the **XGBoost ranker**, the **excess-return regressor** and, after asking about other NN types, the **MLP**. Following Gu, Kelly & Xiu (2020), shallow feed-forward networks did best among the methods they tested on monthly US returns.
+     - Considered and skipped: ResNet-MLP and FT-Transformer, TabNet and SAINT, TabPFN, sequence models, autoencoder pricing models.
+     - Two prompts were cancelled by mistake and re-asked.
+  4. **Average of the models' rankings** added (in #13).
+  5. **Within-month percentile switch**, chosen by CV per model.
+  6. **Ranker label:** the excess-return decile 0–9.
+  7. **Regressor:** clipped target and pseudo-Huber loss.
+- **Issues updated:** #12's checklist rewritten with every decision; #13 renamed "Train and tune 7 models + an average" with the list.
+- **Built `modeling/prep.py`** (`xgboost` 3.4.1 added):
+  - the feature matrix (152 columns, float32);
+  - three targets;
+  - `rank_within_month` (96 rankable columns);
+  - `ranker_groups`;
+  - `window_fold` / `cv_folds` / `holdout_folds` with the gap;
+  - a `QuantileClipper`;
+  - `preprocessor(kind)` (native / impute / impute_clip_scale), `clip_target`;
+  - `load_model_data` and `describe_folds`.
+- **Checked on the real data:**
+  - built in 1.5 s;
+  - every training window ends in the November before its scored block (cv_2014 → Nov 2013, … validation → Nov 2019, test → Nov 2022);
+  - the test block is scored to Sep 2026;
+  - deciles balanced (~8,800 each);
+  - VIX unchanged in the ranked copy;
+  - 201 ranker groups covering all rows;
+  - preparation gives 235 columns (152 + 83 missing flags) with no blanks left.
+- **Tests:** 10 new (`tests/test_prep.py`), covering gaps, expanding folds, CV never touching validation or test, the holdout ends, deciles within each month (including a crash month), ranks within each month only, ranker groups sorted, preparation learning only from training rows, native blanks, and target clipping. **66 pass.**
+  - One test bug: subtracting two monthly Periods returns an offset; compared with `.n`.
+- **Claim checked:** chapter 6 first said the training data "will grow by about 13,000 rows". It's 12,730 member-months missing now (after last night's 6), with ~550 unfillable, so "up to about 12,000". Fixed.
+- **Docs:** chapter 6 drafted (Part 1: setup), plus the index, `mkdocs.yml`, README (status, the `modeling/` tree line) and `decisions.md`.
+- **Trap found: reruns weren't reproducible.** With no data change, `01_data` and the grid CSV still changed.
+  - The **grid CSV's last digit** came from `simulate` summing turnover over a Python `set`, whose string order changes between processes (hash randomisation). It now sums over `sorted(...)`.
+  - **`01_data`** came back with one print split into two stream chunks, because of kernel flushing. The runner now merges them (nbconvert's `CoalesceStreamsPreprocessor`).
+  - **Proved:** two full runs give byte-identical outputs for all 13 files (3 notebooks, 2 CSVs, 8 PNGs). From now on, an output diff means a real change.
 - *(The discussion continues below.)*
 
 ---
@@ -990,6 +1035,7 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 | 2 Nov 2026 | **Hold periods:** rule baseline X = 1, 3, 6, 12 months over the full 2010–2026 period, as a look-back × hold grid with staggered portfolios, ~10 bps per side and top 1/5/10. **ML model: 1 month only**, with the time split. **24 months dropped** | The rule fits nothing, so it can use every month. A ~4-year test set leaves only ~2 independent 12-month periods for ML. 24 months is past the momentum range and needs long gaps |
 | 2 Nov 2026 | **Project plan (20 small decisions, Session 5):** month-end rows; split 2010–19 / 2020–22 / 2023–26; build now, rerun after the AV pull; class FRED set + VIX, lagged; US-focused markets; TA-Lib indicators (no candle patterns); ~20 own features; sectors filled in by hand; target `is_beat_spy_1m`; Tree + RF + LogReg + XGBoost; time-series CV, test once; score = precision of the top-N picks; top 1/5/10 (headline 10); SPY + equal-weight benchmarks; vector + exact simulation; SPY > 200-day filter; notebooks per class week + `00_run_all`; Hugging Face data; monthly scheduled run; extras after the core | Mirrors the class's flow (Weeks 1–4) and the rubric's points. Fixes the class's caveats: look-ahead in macro, tuning on test, no benchmark |
 | 3 Nov 2026 | **Baseline grid:** 60 rules reported; staggered slots; 10 bps per side on the traded weight; Sharpe net of Fed Funds; the best rule **chosen on 2010–22 and followed through the test years**; a price file beyond membership. The split is unchanged (~60/18/22; ~78/22 with CV) | Every try shown, so luck can be judged. Costs and staggering make it tradable. Choosing on the same years you check is circular. One test window for every strategy |
+| 4 Nov 2026 | **Model setup:** CV folds score 2014–19 and 2020–22 is held out (A); 8 candidates (plan's 4 + XGBoost ranker, excess-return regressor, MLP, and an average); a percentile-feature switch; decile ranker label; clipped Huber regressor; in-fold preparation per model family | Fair, leak-free comparison. The new models attack the classifier's blind spots: within-month order and the size of the win |
 | 3 Nov 2026 | **Feature review:** 8 new features, 3 exact copies dropped (#29, before #12); no split flag; sector labels as a caveat; flagged moves reviewed in #20; NaN-aware blanks in #12 | New information, not more columns. A field missing for one source leaks survival. Settled one at a time, all as recommended |
 | 3 Nov 2026 | **AV pull survives a kill (#30):** the manifest is written per ticker, and saved files are recovered from disk | A killed run had left 6 files unrecorded, which would have cost 6 scarce calls to fetch again |
 | 2 Nov 2026 | **Monthly table repairs:** date-windowed `RENAMES`, `MISSING_ADDS`, ticker cleaning, and a $10M median dollar-volume check that drops yfinance series belonging to another security (those go to the AV queue) | Wikipedia misses renames, so stocks counted as members too early (META from 2010). Tickers get reused (Q, UA, SUN), so a flat alias map gives wrong prices |

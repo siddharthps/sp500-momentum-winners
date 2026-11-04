@@ -235,6 +235,28 @@ a stock is the month's top gainer.
 - 152 features (TA 52, STOCK 22, CROSS_SECTION 17). Dividend yield uses each dividend over the same-time close in both sources. Months in the index uses only the changes table, capped at 120.
 - **Extreme values stay in the table.** For LogReg, every feature is clipped to its training-fold 1st/99th percentile inside each CV fold (#12). Examples: dividend yields up to 167% from special payouts and spin-offs, risk-adjusted momentum up to 98.
 
+**Model setup (4 Nov, #12), settled one question at a time, all as recommended**
+
+- **CV layout, option A:** expanding yearly folds inside the train block, scoring 2014–2019 (6 folds). 2020–22 is held out to compare the tuned models. The chosen model is refit on 2010–22 and tested once on 2023+.
+  - Option B (CV across all of 2010–22) was rejected: it loses the independent 2020–22 check.
+- **Gap:** every training window drops its last decision month before the scored block. So the validation model trains to Nov 2019 and the test model to Nov 2022.
+- **Models: the plan's four plus four (this changes B2):**
+  - the four: tree, RF, LogReg, XGBoost classifier;
+  - **XGBoost ranker** (learning to rank within each month);
+  - **XGBoost regressor** on excess return;
+  - **MLP** (small, 1–3 layers, averaged over random starts, after Gu, Kelly & Xiu 2020);
+  - an **average** of the models' within-month rankings.
+  - The course used tree, RF, LogReg and an NN; XGBoost was already our addition.
+  - Other NN types were considered and skipped: ResNet-MLP and FT-Transformer, TabNet and SAINT (PyTorch, no consistent gain), TabPFN (made for ≤10k rows), sequence models (too little data, mostly relearn momentum), autoencoder pricing models (a project of their own).
+- **Ranker label:** the excess-return decile 0–9 within each month.
+- **Regressor target:** `fwd_excess_1m`, clipped to the training fold's 1st/99th percentile, with pseudo-Huber loss (set in #13).
+- **Within-month percentile features:** a second copy of the 96 stock-level features. Market, macro and flag columns stay raw. Whether to use it is a tuning choice per model. It's stateless (same-month rows only), so it's computed once.
+- **Preparation per model family**, fitted on training rows only:
+  - XGBoost models: native blanks;
+  - tree and RF: median plus "was missing" flags;
+  - LogReg and MLP: clip to the 1st/99th percentile, then median plus flags, then scaling.
+- **Editor folders** (`.vscode/`, `.idea/`) are git-ignored: personal settings, public repo.
+
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 
