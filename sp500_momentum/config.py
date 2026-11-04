@@ -81,6 +81,15 @@ SECTOR_ETF_FALLBACK = {"XLRE": "XLF", "XLC": "SPY"}
 # Market series for growth features (decisions.md, A5: US-focused). The 10-year yield is from FRED.
 MARKET_SERIES = {"spy": "SPY", "dji": "^DJI", "gold": "GC=F", "wti": "CL=F"}
 MONTHLY_COVERAGE = INTERIM_DATA_DIR / "monthly_coverage.csv"
+# Every usable monthly price series (member months or not), for backtests that keep holding a
+# stock after it leaves the index.
+MONTHLY_PRICES = INTERIM_DATA_DIR / "monthly_prices.parquet"
+
+# Baseline rule (decisions.md, "Hold periods and evaluation"): the look-backs that define a
+# "winner", the basket sizes, and the trading cost charged on every buy and every sell.
+RULE_LOOKBACKS = ["ret_1m", "ret_3m", "ret_6m", "ret_12m", "ret_12_1m"]
+RULE_TOP_NS = [1, 5, 10]
+COST_PER_SIDE = 0.001  # 10 bps
 PRICE_FLAGS = INTERIM_DATA_DIR / "price_flags.csv"
 
 # Study settings
@@ -127,6 +136,9 @@ SPLIT = {
 # Anything that could steer modelling choices (feature analysis, tuning) uses decisions up to this
 # date only, so the test period stays unseen until the final evaluation.
 RESEARCH_END = SPLIT["validation"][1]
+# The best baseline rule is chosen on returns earned before this date and followed after it: the
+# models' test window, so rules and models are scored on exactly the same untouched months.
+RULE_CHECK_FROM = SPLIT["test"][0]
 
 # Renames: the same company kept trading under a new ticker. In Wikipedia's changes table,
 # rows dated inside [from, to] get `old` rewritten to `new`. That way the stock is one member

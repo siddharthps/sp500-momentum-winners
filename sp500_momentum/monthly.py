@@ -33,6 +33,7 @@ from sp500_momentum.config import (
     MISSING_ADDS,
     MONTHLY_COVERAGE,
     MONTHLY_PANEL,
+    MONTHLY_PRICES,
     PRICE_FLAGS,
     RENAMES,
     START_DATE,
@@ -111,8 +112,17 @@ def add_returns(p: pd.DataFrame, holds: list[int], data_end: pd.Period) -> pd.Da
     return p
 
 
+def prefer_alphavantage(prices: pd.DataFrame) -> pd.DataFrame:
+    """Keep one series per ticker. Alpha Vantage is only fetched for removed names whose yfinance
+    series is missing or belongs to another security, so when a ticker has both, AV wins."""
+    av = set(prices.loc[prices["source"] == "alphavantage", "price_ticker"])
+    clash = (prices["source"] == "yahoo") & prices["price_ticker"].isin(av)
+    return prices[~clash].reset_index(drop=True)
+
+
 def load_prices() -> pd.DataFrame:
-    """All monthly price series: yfinance files plus Alpha Vantage files with status ok."""
+    """All monthly price series: yfinance files plus Alpha Vantage files with status ok. A ticker
+    can appear in both; `prefer_alphavantage` resolves that after the liquidity check."""
     parts = []
     for path in YAHOO_DAILY_DIR.glob("*.parquet"):
         m = yahoo_monthly(pd.read_parquet(path))
@@ -142,12 +152,10 @@ def suspect_tickers(
     return med[med.fillna(0) < min_dollar_vol]
 
 
-def build_panel(
-    members: pd.DataFrame, prices: pd.DataFrame, holds: list[int], drop: set[str] = frozenset()
-) -> pd.DataFrame:
+def build_panel(members: pd.DataFrame, prices: pd.DataFrame, holds: list[int]) -> pd.DataFrame:
     """Join membership to returns and add SPY-relative targets.
 
-    Tickers in `drop` get no prices (their yfinance data is another security)."""
+    `prices` must hold one series per ticker, with wrong-security series already removed."""
     spy = prices[prices["price_ticker"] == "SPY"]
     data_end = spy.loc[spy["entry_px"].notna(), "month"].max()
     rets = prices.groupby("price_ticker", group_keys=False)[prices.columns].apply(
@@ -156,7 +164,6 @@ def build_panel(
     spy_f = rets[rets["price_ticker"] == "SPY"].set_index("month")
     panel = members.copy()
     panel["month"] = panel["date"].dt.to_period("M")
-    rets = rets[~rets["price_ticker"].isin(drop)]
     panel = panel.merge(
         rets, left_on=["ticker", "month"], right_on=["price_ticker", "month"], how="left"
     )
@@ -199,10 +206,15 @@ def build(start: str = START_DATE):
     pd.DataFrame({"ticker": suspect.index, "median_dollar_vol": suspect.values}).assign(
         is_current=lambda d: d["ticker"].isin(current_set)
     ).to_csv(YAHOO_SUSPECT, index=False)
-    panel = build_panel(members, prices, HOLD_MONTHS, drop=set(suspect.index))
+    prices = prefer_alphavantage(prices)
+    prices = prices[~(prices["price_ticker"].isin(suspect.index) & (prices["source"] == "yahoo"))]
+    panel = build_panel(members, prices, HOLD_MONTHS)
 
     MONTHLY_PANEL.parent.mkdir(parents=True, exist_ok=True)
     panel.to_parquet(MONTHLY_PANEL, index=False)
+    # Every usable price series, member months or not: a backtest keeps holding a stock after it
+    # leaves the index, so it needs prices beyond the panel's rows.
+    prices.to_parquet(MONTHLY_PRICES, index=False)
 
     cov = panel.groupby("date").agg(
         members=("ticker", "size"),

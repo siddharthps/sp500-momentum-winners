@@ -25,6 +25,16 @@ GRID = "#e1e0d9"
 AXIS = "#c3c2b7"
 SLOTS = ["#2a78d6", "#eb6834", "#1baf7a"]  # blue, orange, aqua: validated all-pairs
 POS, NEG = "#2a78d6", "#e34948"  # diverging poles (blue / red)
+MID = "#f0efec"  # diverging midpoint: neutral gray, reads as "no difference"
+DIVERGING = mpl.colors.LinearSegmentedColormap.from_list("blue_red", [NEG, MID, POS])
+
+LOOKBACK_LABELS = {
+    "ret_1m": "1 month",
+    "ret_3m": "3 months",
+    "ret_6m": "6 months",
+    "ret_12m": "12 months",
+    "ret_12_1m": "12 months, skip latest",
+}
 
 # Colour follows the series, never its position in a given chart.
 SERIES_COLOR = {"plain rule": SLOTS[0], "spy": SLOTS[1], "equal_weight": SLOTS[2]}
@@ -246,7 +256,11 @@ def ic_stability_chart(by_period: pd.DataFrame):
 
 
 def growth_chart(
-    monthly: pd.DataFrame, rule_col: str = "top_10", rule_label: str = "Top 10 last-month winners"
+    monthly: pd.DataFrame,
+    rule_col: str = "top_10",
+    rule_label: str = "Top 10 last-month winners",
+    title: str = "Preview: buying last month's top 10 vs SPY",
+    subtitle: str = "No costs, monthly rebalance; early years still miss most acquired companies",
 ):
     """Growth of $1: the plain rule vs SPY vs equal-weight members (log scale, direct end labels)."""
     series = {
@@ -266,8 +280,8 @@ def growth_chart(
     placed = []
     for val, name, x in ends:
         y = np.log10(val)
-        if placed and y - placed[-1] < 0.06:  # ~15% apart on the log axis, so labels don't touch
-            y = placed[-1] + 0.06
+        if placed and y - placed[-1] < 0.08:  # ~20% apart on the log axis, so labels don't touch
+            y = placed[-1] + 0.08
         placed.append(y)
         ax.annotate(
             f"${val:.1f}",
@@ -281,9 +295,91 @@ def growth_chart(
         )
     ax.yaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda v, _: f"${v:g}"))
     ax.set_ylabel("growth of $1 (log scale)")
-    ax.set_title("Preview: buying last month's top 10 vs SPY", pad=22)
-    _subtitle(ax, "No costs, monthly rebalance; early years still miss most acquired companies")
+    ax.set_title(title, pad=22)
+    _subtitle(ax, subtitle)
     ax.legend(loc="upper left")
     ax.margins(x=0.02)
+    fig.tight_layout()
+    return fig
+
+
+def cell_label(lookback: str, top_n: int, hold: int) -> str:
+    """'Top 5 by 6-month return, held 6 months'."""
+    lb = LOOKBACK_LABELS[lookback].replace(" months", "-month").replace(" month", "-month")
+    held = f"{hold} month" + ("s" if hold > 1 else "")
+    return f"Top {top_n} by {lb} return, held {held}"
+
+
+def grid_heatmap(table: pd.DataFrame, title: str, subtitle: str):
+    """Sharpe ratio minus SPY's for every grid cell: one panel per basket size, look-back down,
+    hold across. Diverging blue (better than SPY) / red (worse), gray at zero, values printed."""
+    spy = table.loc["spy", "sharpe"]
+    cells = table.dropna(subset=["top_n"]).copy()
+    cells["diff"] = cells["sharpe"] - spy
+    top_ns = sorted(cells["top_n"].unique())
+    holds = sorted(cells["hold"].unique())
+    lookbacks = [lb for lb in LOOKBACK_LABELS if lb in set(cells["lookback"])]
+    lim = max(0.05, float(cells["diff"].abs().max()))
+    norm = mpl.colors.TwoSlopeNorm(vcenter=0, vmin=-lim, vmax=lim)
+    fig, axes = plt.subplots(1, len(top_ns), figsize=(9.5, 3.6), sharey=True)
+    for ax, n in zip(np.atleast_1d(axes), top_ns):
+        grid = cells[cells["top_n"] == n].pivot_table(
+            index="lookback", columns="hold", values="diff"
+        )
+        grid = grid.reindex(index=lookbacks, columns=holds)
+        ax.imshow(grid.values, cmap=DIVERGING, norm=norm, aspect="auto")
+        for (i, j), v in np.ndenumerate(grid.values):
+            dark = abs(v) > 0.6 * lim  # strong cells get light text so the value stays legible
+            text = "0.00" if abs(v) < 0.005 else f"{v:+.2f}"  # no "-0.00"
+            ax.text(
+                j, i, text, ha="center", va="center", fontsize=9, color=SURFACE if dark else INK
+            )
+        ax.set_xticks(range(len(holds)), [f"{int(h)}" for h in holds])
+        ax.set_xlabel("hold (months)")
+        ax.set_title(f"Top {int(n)}", fontsize=10, pad=6)
+        ax.grid(False)
+        for side in ("left", "bottom"):
+            ax.spines[side].set_visible(False)
+        ax.tick_params(length=0)
+    first = np.atleast_1d(axes)[0]
+    first.set_yticks(range(len(lookbacks)), [LOOKBACK_LABELS[lb] for lb in lookbacks])
+    first.set_ylabel("winner over the past")
+    fig.suptitle(title, x=0.01, ha="left", fontsize=12, fontweight="bold")
+    fig.text(0.01, 0.905, subtitle, ha="left", color=INK_2, fontsize=9)
+    fig.tight_layout(rect=(0, 0, 1, 0.9))
+    return fig
+
+
+def rule_growth_chart(
+    rets: pd.Series,
+    bench: pd.DataFrame,
+    rule_label: str,
+    title: str,
+    subtitle: str,
+    mark: str | None = None,
+    mark_label: str = "",
+):
+    """Growth of $1 for one rule vs SPY vs equal-weight members, months as a Period index
+    (log scale, direct end labels, optional vertical marker, e.g. where a selection ends)."""
+    monthly = pd.DataFrame(
+        {"rule": rets, "spy": bench["spy"], "equal_weight": bench["equal_weight"]}
+    ).dropna()
+    monthly.index = monthly.index.to_timestamp(how="end").normalize()
+    fig = growth_chart(monthly, "rule", rule_label, title, subtitle)
+    ax = fig.axes[0]
+    if mark:
+        x = pd.Timestamp(mark)
+        ax.axvline(x, color=AXIS, linewidth=1, linestyle="--", zorder=0)
+        ax.annotate(
+            mark_label,
+            xy=(x, 1),
+            xycoords=("data", "axes fraction"),
+            xytext=(4, -4),
+            textcoords="offset points",
+            va="top",
+            ha="left",
+            color=INK_2,
+            fontsize=8.5,
+        )
     fig.tight_layout()
     return fig

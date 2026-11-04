@@ -177,6 +177,36 @@ a stock is the month's top gainer.
   full results go to `reports/`). A run fails on a cell output over 50 lines, anything on stderr, a local
   path, e-mail or key in the outputs, or a notebook over 300 KB.
 
+**Baseline rule grid (3 Nov, #11)**
+
+- **60 rules, all reported:** look-back 1/3/6/12 m and 12-1 m × top 1/5/10 × hold 1/3/6/12 m, over the full
+  period (returns earned Feb 2010 to Oct 2026). Each rule is a `pred_mom_<look-back>_top<N>` column.
+- **Simulation:** staggered slots (1/X of the money reinvested monthly, buy-and-hold inside a slot, the
+  slots averaged monthly). Trades at the next open. 10 bps per side on the traded weight, so a kept stock
+  pays only the difference. Index leavers stay held; delisted names go to cash at their last price.
+  Rebalancing between slots isn't charged.
+- **Prices beyond membership:** `monthly build` now also writes every usable price series
+  (`monthly_prices.parquet`), because a held stock can leave the index.
+- **Scoring:** Sharpe ratio net of the Fed Funds rate (evaluation only, so no publication lag). The
+  t-statistic of the monthly excess over SPY is shown, noting the 60 tries.
+- **The best cell is chosen on 2010–2022 and followed through the test years (2023 on)**:
+  `RULE_CHECK_FROM = SPLIT["test"][0]`. Choosing on the full period and then "checking" a sub-period of
+  it would be circular. Using the models' test window means every strategy is judged on the same
+  untouched months. The older "2022+" wording predates the A2 split. It was briefly built with a 2022
+  cut, then aligned on principle, not on the result: the 2023 cut is the *less* flattering one for the rule.
+- **The split stays 2010–19 / 2020–22 / 2023–26 (your question, 3 Nov).** In months that's about 60/18/22,
+  not 70/15/15. With time-series CV over 2010–22 it's about 78/22 development vs test, close to the usual
+  80/20. A 70/15/15 split would leave a ~30-month test, too few to judge a monthly strategy. The
+  boundaries are calendar years fixed before any result.
+- **Benchmarks are gross:** SPY's fee is in its price; the equal-weight basket is a yardstick.
+- **Bug fixed along the way:** a ticker with both a (wrong-security) yfinance series and an Alpha
+  Vantage series would have had both merged, and then both dropped. Alpha Vantage now wins, and only the
+  yfinance copy of a suspect ticker is dropped. Not yet hit, because no suspect has arrived from AV.
+- **Preview result:** 53 of 60 rules beat SPY on return, 6 on Sharpe, and none on worst fall. The best is
+  top 5 by 6-month return, held 6 months, both over the full period and chosen on 2010–22. In 2023–26 it
+  made 60% a year vs SPY's 21%, but with 43% volatility vs 12%, a worst fall of −27% vs −8%, and a
+  **lower Sharpe (1.21 vs 1.29)**. Driven by AI and memory-chip stocks.
+
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 

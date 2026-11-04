@@ -12,4 +12,5 @@ nav:
   - 3. Building the monthly table: 03_monthly_table.md
   - 4. Features: 04_features.md
   - 5. Exploratory analysis: 05_eda.md
+  - 7. Trading simulation and results: 07_simulation.md
   - Appendix B. The full working record: appendix_b_working_record.md
