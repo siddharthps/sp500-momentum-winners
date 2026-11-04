@@ -15,7 +15,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from sp500_momentum.config import FIGURES_DIR
+from sp500_momentum.backtest import parse_strategy
+from sp500_momentum.config import FIGURES_DIR, START_DOLLARS
 
 SURFACE = "#fcfcfb"
 INK = "#0b0b0b"
@@ -400,6 +401,88 @@ def importance_chart(imp: pd.Series, title: str, n: int = 15, subtitle: str | No
     return fig
 
 
+VERSION_LABELS = {
+    "equal": "equal weight",
+    "equal_buffer": "equal weight + buffer",
+    "inv_vol": "inverse vol",
+    "inv_vol_buffer": "inverse vol + buffer",
+}
+RULE_STRATEGY_LABELS = {"mom_1m": "Rule: last month's", "mom_6m": "Rule: 6-month"}
+BENCHMARK_LABELS = {"spy": "SPY", "equal_weight": "All members, equal weight"}
+
+
+def strategy_label(name: str, model_labels: dict[str, str], chosen: str | None = None) -> str:
+    """'XGBoost, by how much: top 10, inverse vol + buffer' for a `run_strategies` column;
+    benchmarks and the chosen grid rule (`chosen_rule`, described by `chosen`) by name."""
+    if name in BENCHMARK_LABELS:
+        return BENCHMARK_LABELS[name]
+    if name == "chosen_rule":
+        return f"Chosen rule: {chosen}" if chosen else "Chosen rule"
+    p = parse_strategy(name)
+    who = RULE_STRATEGY_LABELS.get(p["strategy"]) or model_labels.get(p["strategy"], p["strategy"])
+    return f"{who} top {p['top_n']}, {VERSION_LABELS[p['version']]}"
+
+
+def strategy_value_chart(
+    tables: dict[str, pd.DataFrame],
+    labels: dict[str, str],
+    kinds: dict[str, str],
+    title: str,
+    subtitle: str,
+):
+    """What START_DOLLARS became for each strategy, one panel per period (small multiples, same
+    rows, ordered by the last panel): models blue, rules orange, the all-members basket aqua,
+    SPY's end value as a dashed line in each panel. `labels` and `kinds` ('model', 'rule',
+    'benchmark') are keyed by the tables' index; values are printed at the bar ends."""
+    names = [n for n in labels if n != "spy"]
+    order = list(tables.values())[-1].loc[names, "end_value"].sort_values().index
+    color = {"model": SLOTS[0], "rule": SLOTS[1], "benchmark": SLOTS[2]}
+    fig, axes = plt.subplots(
+        1, len(tables), figsize=(11, 0.42 * len(order) + 1.9), sharey=True, squeeze=False
+    )
+    for ax, (period, table) in zip(axes[0], tables.items()):
+        t = table.loc[order, "end_value"]
+        # bars start at the starting amount: length = gain (right) or loss (left)
+        ax.barh(
+            [labels[n] for n in order],
+            t.values - START_DOLLARS,
+            left=START_DOLLARS,
+            color=[color[kinds[n]] for n in order],
+            height=0.62,
+        )
+        spy = table.loc["spy", "end_value"]
+        ax.axvline(spy, color=INK_2, linewidth=1, linestyle="--")
+        ax.axvline(START_DOLLARS, color=INK_2, linewidth=1)
+        for i, v in enumerate(t.values):
+            gain = v >= START_DOLLARS
+            ax.annotate(
+                f"${v:,.0f}",
+                (v, i),
+                xytext=(4 if gain else -4, 0),
+                textcoords="offset points",
+                va="center",
+                ha="left" if gain else "right",
+                fontsize=8.5,
+                color=INK,
+            )
+        lo, hi = min(START_DOLLARS, t.min()), max(spy, t.max())
+        pad = (hi - lo) * 0.2
+        ax.set_xlim(lo - (pad if t.min() < START_DOLLARS else pad / 4), hi + pad)
+        ax.xaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda v, _: f"${v / 1000:,.0f}k"))
+        ax.set_xlabel(f"dashed: SPY, ${spy:,.0f}")
+        ax.set_title(period, fontsize=10, pad=6, loc="left")
+        ax.grid(axis="y", visible=False)
+    handles = [
+        mpl.patches.Patch(color=color[k], label=lab)
+        for k, lab in [("model", "model"), ("rule", "plain rule"), ("benchmark", "all members")]
+    ]
+    axes[0][-1].legend(handles=handles, loc="lower right")
+    fig.suptitle(title, x=0.01, ha="left", fontsize=12, fontweight="bold")
+    fig.text(0.01, 0.93, subtitle, ha="left", color=INK_2, fontsize=9)
+    fig.tight_layout(rect=(0, 0, 1, 0.92))
+    return fig
+
+
 def cell_label(lookback: str, top_n: int, hold: int) -> str:
     """'Top 5 by 6-month return, held 6 months'."""
     lb = LOOKBACK_LABELS[lookback].replace(" months", "-month").replace(" month", "-month")
@@ -457,7 +540,9 @@ def rule_growth_chart(
     mark_label: str = "",
 ):
     """Growth of $1 for one rule vs SPY vs equal-weight members, months as a Period index
-    (log scale, direct end labels, optional vertical marker, e.g. where a selection ends)."""
+    (log scale, direct end labels, optional vertical marker, e.g. where a selection ends).
+    `mark` is a decision date: the line is drawn at that month's end, where the returns of
+    decisions from that date on start."""
     monthly = pd.DataFrame(
         {"rule": rets, "spy": bench["spy"], "equal_weight": bench["equal_weight"]}
     ).dropna()
@@ -465,7 +550,7 @@ def rule_growth_chart(
     fig = growth_chart(monthly, "rule", rule_label, title, subtitle)
     ax = fig.axes[0]
     if mark:
-        x = pd.Timestamp(mark)
+        x = pd.Period(mark, freq="M").to_timestamp(how="end").normalize()
         ax.axvline(x, color=AXIS, linewidth=1, linestyle="--", zorder=0)
         ax.annotate(
             mark_label,

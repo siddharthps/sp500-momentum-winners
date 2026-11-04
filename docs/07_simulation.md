@@ -1,7 +1,7 @@
 # Chapter 7: Trading simulation and results
 
-> **This draft covers Part 1, the baseline rule.** The model-based strategies, the simulation with
-> reinvestment and the market-trend filter are added in later parts.
+> **Part 1** (sections 3.1–3.3): the baseline rule. **Part 2** (sections 3.4–3.7): the models from
+> Chapter 6, traded. Equity curves over time and the market-trend filter are added in a later part.
 
 ## 1. Goal
 
@@ -49,9 +49,14 @@ How each rule is traded:
   by volatility.
 
 The rule fits nothing to the data, so it needs no training period. But picking the best of 60 *is* a
-kind of fitting. So the best rule is also **chosen on 2010–2022 alone and then followed through 2023–2026**.
-Those are the same test years the models are scored on, never used to choose anything, so the
-baseline and the models are compared on exactly the same months.
+kind of fitting. So the best rule is also **chosen on decisions made in 2010–2022 alone and then
+followed through the decisions from January 2023**. Those are the same test years the models are
+scored on, never used to choose anything, so the baseline and the models are compared on exactly the
+same months.
+
+**Every period is set by decision date.** A decision at the end of December 2022 earns January
+2023's return, but it belongs to 2022, the years things were chosen on. So the test returns start in
+February 2023.
 
 ---
 
@@ -93,26 +98,92 @@ but less so for the best of 60 related ones. None clears 3.
 
 ### 3.3 Chosen on 2010–2022, followed through the test years
 
-The rule with the best Sharpe ratio on **2010–2022** returns turns out to be the same one: the top 5
+The rule with the best Sharpe ratio on **decisions 2010–2022** turns out to be the same one: the top 5
 by 6-month return, held 6 months.
 
 | | Yearly return | Volatility | Sharpe ratio | Worst fall |
 | --- | --- | --- | --- | --- |
-| **2010–2022** (chosen here) | | | | |
-| The rule | 20.8% | 23.0% | 0.91 | −26% |
-| SPY | 12.5% | 15.6% | 0.79 | −23% |
-| **2023–Oct 2026** (test years, never used to choose) | | | | |
-| The rule | 59.8% | 42.6% | 1.21 | −27% |
-| SPY | 20.9% | 11.9% | 1.29 | −8% |
-| Equal-weight members | 14.2% | 12.9% | 0.75 | −11% |
+| **Decisions 2010–2022** (chosen here) | | | | |
+| The rule | 20.8% | 23.0% | 0.92 | −26% |
+| SPY | 12.8% | 15.6% | 0.81 | −23% |
+| **Decisions from Jan 2023** (test years, never used to choose) | | | | |
+| The rule | 60.7% | 43.1% | 1.21 | −27% |
+| SPY | 19.7% | 11.8% | 1.21 | −8% |
+| Equal-weight members | 12.7% | 12.7% | 0.65 | −11% |
 
 ![The best rule up to 2022, and what it did after](../reports/figures/baseline_best_rule.png)
 
-In the test years the rule **earned almost three times SPY's yearly return**, and ranked 4th of the 60
-rules. But **per unit of risk it did slightly worse than SPY**: 43% volatility against 12%, and a worst
-fall of −27% against −8%. The gain came from a handful of stocks riding the AI and memory-chip boom
+In the test years the rule **earned about three times SPY's yearly return**, and ranked 3rd of the 60
+rules. But **per unit of risk it only matched SPY**: 43% volatility against 12%, and a worst fall of
+−27% against −8%. The gain came from a handful of stocks riding the AI and memory-chip boom
 (NVIDIA, Western Digital, Palantir, Seagate, GE Vernova, SanDisk, Micron), each picked at many
 month-ends. That's a strong market theme the rule happened to catch, not a steady, broad edge.
+
+### 3.4 Part 2: the models, traded
+
+Each model's top picks are bought at the next open and **held one month**, because the models
+predict next month. The trading rules are the same as Part 1's: 0.1% a side, delisted stocks held as
+cash, and a stock kept from one month to the next only traded by the difference.
+
+**Four versions of every strategy, fixed before any result was seen:**
+
+| Version | How the money is split | When a stock is sold |
+| --- | --- | --- |
+| Equal weight (**main**) | Evenly | When it leaves the top N |
+| Equal weight + buffer | Evenly | Only when it falls out of the top 2N |
+| Inverse volatility | More to calmer stocks (∝ 1 / 3-month volatility) | When it leaves the top N |
+| Inverse volatility + buffer | ∝ 1 / volatility | Only when it falls out of the top 2N |
+
+The buffer exists because a top 10 changes a lot from month to month. The 6-month rule keeps about
+half its picks, the headline model about a quarter, and last month's winners almost none. A stock that
+slips from 9th to 12th hasn't really changed, so selling it pays fees for noise.
+
+**Two periods:** 2020–2022, where the headline model was chosen, and the test years. 2014–2019 is
+left out, because the models' scores for those years come from the folds their settings were chosen
+on. Each period starts with **$10,000**.
+
+### 3.5 The headline model loses to SPY and to the plain rules
+
+| What $10,000 became | 2020–2022 (36 months) | Test years (45 months) | Sharpe, test years |
+| --- | --- | --- | --- |
+| SPY | $13,146 | $19,650 | 1.21 |
+| All members, equal weight | $14,121 | $15,658 | 0.65 |
+| Rule chosen in Part 1 (top 5, 6-month, held 6) | $17,516 | **$59,209** | 1.21 |
+| Rule: 6-month top 10, held 1, with buffer | **$18,725** | $36,192 | 0.98 |
+| Rule: 6-month top 10, held 1 | $15,488 | $29,150 | 0.84 |
+| Rule: last month's top 10, held 1 | $16,245 | $19,094 | 0.57 |
+| **Headline model, top 10** (main version) | $11,858 | $11,640 | 0.12 |
+| Headline, inverse vol + buffer | $16,560 | $7,277 | −0.23 |
+
+![What $10,000 became](../reports/figures/strategies_value.png)
+
+**The headline model did worse than SPY and than every plain rule in both periods.** Its best-looking
+version on 2020–2022 (inverse volatility with the buffer, which beat SPY's Sharpe there) was its worst
+on the test. That is why only the main version was fixed in advance. The best of four versions on
+three years is partly luck.
+
+### 3.6 What the buffer and the weighting did
+
+- **The models trade a lot:** about 18 times the portfolio a year at top 10, against 11 for the
+  6-month rule and 23 for last month's. For the headline that was about $600 in fees on $10,000 over
+  2020–2022.
+- **The buffer cut that trading by about 3 portfolio-turns a year,** averaged over the eight models.
+  It changed their Sharpe ratio very little. For the 6-month rule at top 10 it helped in both
+  periods: Sharpe 0.61 → 0.85 on 2020–2022, and 0.84 → 0.98 on the test. At top 1 and top 5 it
+  didn't help consistently.
+- **Inverse volatility didn't help consistently.** It raised the models' average Sharpe on 2020–2022
+  (+0.05) and lowered it on the test (−0.11).
+
+### 3.7 Chance winners, and the bottom line
+
+Of 121 simulated strategies, **12 edge SPY's Sharpe in the test years**. Among so many related
+tries, a few are expected to by chance. Most hold a single stock: the top 1 of the decision tree, the neural network or the
+6-month rule. Of the strategies declared in advance, only the rule chosen in Part 1 does, and that's
+a tie (1.21 against 1.21). The neural network was the best model on the test ($23,087 at top 10), after
+a weak 2020–2022 ($10,748). Picking it now would be choosing on the test.
+
+**On this data, the models add nothing that a plain 6-month momentum rule doesn't already do better,
+and no strategy chosen in advance clearly beats SPY per unit of risk.**
 
 ---
 
@@ -127,6 +198,13 @@ month-ends. That's a strong market theme the rule happened to catch, not a stead
 | Sharpe ratio net of the Fed Funds rate | Risky strategies should be compared on what they earn above cash |
 | Best rule chosen on 2010–2022, then followed through 2023–2026 | A best-of-60 judged on the same years it was chosen on is flattered by the choice. These are the models' test years too, so every strategy is judged on the same untouched months |
 | Top 10 kept as the headline for the models | Top 1 is far too volatile. Top 10 is close to SPY on a risk-adjusted basis, a fair bar for a model to beat |
+| Every period set by decision date | A December 2022 decision belongs to the years things were chosen on. Counting its January return as "test" would score a strategy on a month it was chosen on. Fixed before the results; it happened to move SPY's test Sharpe from 1.29 to 1.21 |
+| Models held one month | They were trained to predict next month. A longer hold would judge them on something they never learned |
+| Four versions fixed in advance, one of them the main version | Each extra version is another chance to look good by luck. The others show whether the result depends on a detail |
+| A buffer of twice the basket size | A stock that slips a few places hasn't changed. Selling it pays fees for noise |
+| Inverse volatility as the only other weighting | It needs a risk forecast, not a return forecast, and volatility is fairly predictable. Weighting by the model's confidence would amplify a signal close to noise |
+| Results shown in dollars from $10,000 | Easier to read than a yearly rate, and fees can be shown as an amount |
+| 2014–2019 left out of the model results | The models' settings were chosen on those years, which flatters them |
 
 ---
 
@@ -138,6 +216,9 @@ month-ends. That's a strong market theme the rule happened to catch, not a stead
   can't settle whether the edge is lasting, and a single bad year for SPY would change the comparison.
   (With the cut a year earlier, SPY's poor 2022 makes the rule look better on Sharpe too. That's why
   the cut is fixed to the models' test window, not chosen by result.)
+- **The model strategies have only 36 and 45 months each.** Differences of a few hundred dollars
+  between versions can be chance. The conclusion rests on the headline losing in both periods to every
+  plain rule shown, not on any one gap.
 - **Rebalancing between the parts of a staggered portfolio isn't charged.** That trading is small next
   to the monthly picks, but it isn't zero.
 - **The equal-weight yardstick has no costs,** so it's slightly flattered compared with the rules.
