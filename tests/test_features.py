@@ -119,6 +119,106 @@ def test_cross_section_ranks_stay_within_each_date():
     assert out.loc[out["ticker"] == "B", "rank_ret_1m"].tolist() == [1.0, 1.0]
 
 
+def _bars(close, start="2010-01", div=None):
+    close = np.asarray(close, dtype=float)
+    b = pd.DataFrame(
+        {
+            "open": close,
+            "high": close * 1.02,
+            "low": close * 0.98,
+            "close": close,
+            "volume": 1e6,
+            "dollar_vol": 1e8,
+        },
+        index=pd.period_range(start, periods=len(close), freq="M"),
+    )
+    if div is not None:
+        b["div_yield"] = div
+    return b
+
+
+def test_dividend_yield_is_the_same_for_both_sources_and_ignores_splits():
+    # Yahoo: daily rows, split-adjusted close and dividends; a $1 dividend on a $50 close
+    daily = pd.DataFrame(
+        {
+            "date": pd.to_datetime(["2020-03-02", "2020-03-16", "2020-03-31"]),
+            "open": 50.0,
+            "high": 51.0,
+            "low": 49.0,
+            "close": 50.0,
+            "adj_close": 50.0,
+            "volume": 100.0,
+            "dividends": [0.0, 1.0, 0.0],
+        }
+    )
+    # Alpha Vantage: raw prices; the same 2% dividend, paid before a 2-for-1 split
+    av = pd.DataFrame(
+        {
+            "timestamp": pd.to_datetime(["2020-03-31", "2020-04-30"]),
+            "open": [100.0, 50.0],
+            "high": [101.0, 51.0],
+            "low": [99.0, 49.0],
+            "close": [100.0, 50.0],
+            "adjusted close": [50.0, 50.0],
+            "volume": 100.0,
+            "dividend amount": [2.0, 0.0],
+        }
+    )
+    y = ft.bars_from_daily(daily).loc[pd.Period("2020-03", "M"), "div_yield"]
+    a = ft.bars_from_av(av, pd.Timestamp("2020-12-31"))["div_yield"]
+    assert y == pytest.approx(0.02)
+    assert a.tolist() == pytest.approx([0.02, 0.0])  # the split doesn't change the yield
+
+
+def test_new_stock_features_use_only_past_months():
+    rng = np.random.default_rng(1)
+    close = 100 * np.cumprod(1 + rng.normal(0.01, 0.06, 96))
+    b = _bars(close, div=np.r_[np.zeros(95), 0.01])
+    spy = pd.Series(rng.normal(0.01, 0.04, 96), index=b.index)
+    full = ft.stock_features(b, spy)
+    # Cut the data at month 60: every value up to month 60 must be unchanged (no look-ahead).
+    cut = ft.stock_features(b.iloc[:61], spy.iloc[:61])
+    new = [
+        "div_yield_12m",
+        "mom_12_1m_per_vol",
+        "drawdown_ath",
+        "resid_mom_12_1m",
+        "ivol_36m",
+        "max_ret_12m",
+        "seasonality_5y",
+    ]
+    pd.testing.assert_frame_equal(full[new].iloc[:61], cut[new])
+    r = b["close"].pct_change()
+    t = b.index[60]
+    assert full.loc[t, "max_ret_12m"] == pytest.approx(r.iloc[49:61].max())
+    # seasonality at the end of month t averages the returns of month t+1 in past years
+    assert full.loc[t, "seasonality_5y"] == pytest.approx(
+        np.mean([r.iloc[61 - 12 * k] for k in range(1, 6)])
+    )
+    assert full["drawdown_ath"].max() <= 0
+
+
+def test_months_in_index_uses_the_latest_add_on_or_before_each_date():
+    changes = pd.DataFrame(
+        {
+            "date": pd.to_datetime(["2012-01-03", "2015-06-01"]),
+            "added_ticker": ["NEW", "NEW"],  # added, (removed in between), re-added
+            "removed_ticker": [pd.NA, pd.NA],
+        }
+    )
+    df = pd.DataFrame(
+        {
+            "date": pd.to_datetime(["2011-12-30", "2013-01-31", "2015-06-30", "2013-01-31"]),
+            "ticker": ["NEW", "NEW", "NEW", "OLD"],
+        }
+    )
+    out = ft.months_in_index(df, changes)
+    assert out.iloc[0] == 120  # before any add row: joined before the record, capped
+    assert out.iloc[1] == pytest.approx(13, abs=0.1)
+    assert out.iloc[2] == pytest.approx(1, abs=0.1)  # the later add counts, not the first
+    assert out.iloc[3] == 120  # no add row at all
+
+
 def test_check_sets_flags_unassigned_columns():
     with pytest.raises(ValueError, match="unassigned"):
         ft.check_sets(["a", "b"], {"X": ["a"]})

@@ -103,14 +103,14 @@ no loss at all. With this rule, a stock bought at the end of January 2023 and he
 | Month-ends | 202 (Jan 2010 → Oct 2026) |
 | Distinct tickers | 819 |
 | Members per month-end | 499–504 |
-| Rows with a price | 86.7% |
+| Rows with a price | 87.4% |
 | Share of rows that beat SPY the next month | 49% |
 
 **Share of members with a price, by year:**
 
 | 2010 | 2012 | 2014 | 2016 | 2018 | 2020 | 2022 | 2024 | 2026 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 69% | 73% | 77% | 83% | 88% | 93% | 97% | 99.5% | 100% |
+| 70% | 73% | 78% | 84% | 89% | 94% | 98% | 99.7% | 100% |
 
 Almost all of the missing early rows are companies still on the Alpha Vantage list. About **550
 member-months can't be filled from any free source**. These are mostly old companies whose ticker a

@@ -6,7 +6,7 @@ Before building any model, understand the two sides of the problem:
 
 1. **The target.** How often does an S&P 500 member beat SPY over the next month, and how spread out
    are the results?
-2. **The features.** Which of the 147 carry any signal about next month, is that signal steady, and
+2. **The features.** Which of the 152 carry any signal about next month, is that signal steady, and
    does it depend on market conditions?
 
 It also takes a first look at the plain rule ("buy last month's winners"), as a preview.
@@ -67,14 +67,15 @@ Stock-picking signals are small by nature: an IC of 0.02–0.05, held steadily, 
 strongest features here reach about **0.02**, and none is statistically clear on its own.
 
 The most interesting finding is about the idea itself: **last month's return points the wrong way.**
-Its IC is negative (−0.020). On average, last month's winners did slightly *worse* than other members
+Its IC is negative (−0.019). On average, last month's winners did slightly *worse* than other members
 the following month. That's the short-term reversal effect known from research on stock returns.
 The features that look strongest are close relatives: where the close sits within the month's range,
 and balance of power. Both favour stocks that finished the month weakly.
 
 Several features are exact copies of one another. A return and its rank give the same rank
-correlation, and several price measures are identical on monthly bars. **33 pairs** correlate above
-0.95. The chart shows each distinct signal once. Tree models aren't bothered by copies; the logistic
+correlation, and several price measures are identical on monthly bars. **25 pairs** correlate above
+0.95 (three exact rescalings of the rate of change were since removed by formula). The chart shows each
+distinct signal once. Tree models aren't bothered by copies; the logistic
 regression will need regularisation.
 
 ### 3.3 The signal isn't steady
@@ -91,16 +92,16 @@ stretch.
 ### 3.4 Last month's winners do better in strong markets
 
 On average, the top 10 by last month's return do **no better** than the other members the following
-month: a spread of −0.02% a month, positive in 51% of months. But the spread moves with market
+month: a spread of +0.01% a month, positive in 53% of months. But the spread moves with market
 conditions:
 
 | Market condition at the decision | Correlation with the winners' next-month spread |
 | --- | --- |
 | SPY's return over the past 12 months | **+0.26** |
-| SPY's return over the past 6 months | +0.23 |
-| The sector fund's 12-month return | +0.22 |
+| SPY's return over the past 6 months | +0.24 |
+| The sector fund's 12-month return | +0.21 |
 | Share of members in an uptrend (breadth) | +0.19 |
-| Fed Funds rate | **−0.19** |
+| Fed Funds rate | **−0.20** |
 | One-year Treasury yield | −0.17 |
 
 With 156 months of data, a correlation of 0.26 is unlikely to be chance. Winners keep winning more
@@ -116,9 +117,9 @@ There are no trading costs yet, and only this one hold period:
 
 | | Yearly return | Volatility | Worst fall | Sharpe ratio |
 | --- | --- | --- | --- | --- |
-| Top 1 | 10.1% | 39.8% | −59% | 0.44 |
-| Top 5 | 14.6% | 24.8% | −38% | 0.68 |
-| **Top 10** | **15.2%** | 21.8% | −37% | 0.76 |
+| Top 1 | 8.3% | 40.3% | −62% | 0.40 |
+| Top 5 | 14.2% | 25.7% | −40% | 0.65 |
+| **Top 10** | **15.6%** | 22.1% | −38% | 0.77 |
 | SPY | 14.3% | 14.8% | −23% | 0.98 |
 | Equal-weight members | 13.8% | 16.1% | −30% | 0.89 |
 

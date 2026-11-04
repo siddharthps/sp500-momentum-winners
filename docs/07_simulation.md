@@ -67,7 +67,7 @@ baseline and the models are compared on exactly the same months.
 Of the 60 rules:
 
 - **53 earn a higher yearly return than SPY.**
-- **Only 6 have a better Sharpe ratio.**
+- **Only 7 have a better Sharpe ratio.**
 - **All 60 have a deeper worst fall.**
 
 Buying recent winners mostly buys more risk. In a market that rose for most of 2010–2026, more risk
@@ -79,16 +79,16 @@ was paid for with more return, but not with more return *per unit of risk*.
 
 | Grid dimension | Best | Worst | Why |
 | --- | --- | --- | --- |
-| "Winner" over | **6 months** (best median return, Sharpe and worst fall) | Last month alone | Last month's winners tend to fall back the month after (the short-term reversal seen in the feature analysis) |
-| Stocks bought | 5 or 10 | **1** (a median worst fall of −56%) | A single stock's swings swamp everything else |
+| "Winner" over | **6 months** (best median return, Sharpe and worst fall) | Last month alone (lowest median return, deepest falls) | Last month's winners tend to fall back the month after (the short-term reversal seen in the feature analysis) |
+| Stocks bought | 5 or 10 | **1** (a median worst fall of −54%) | A single stock's swings swamp everything else |
 | Hold | 12 months | 1 month | Holding longer costs less: about 1.4% a year in trading costs with a 1-month hold, 0.2% with 12 months |
 
-The best rule over the whole period buys the **top 5 by 6-month return and holds them 6 months**: 28.2%
-a year, a Sharpe ratio of 0.96 against SPY's 0.88, and a worst fall of −27%. The best **top-10** rule
+The best rule over the whole period buys the **top 5 by 6-month return and holds them 6 months**: 28.8%
+a year, a Sharpe ratio of 0.97 against SPY's 0.88, and a worst fall of −27%. The best **top-10** rule
 (3-month winners, held 12 months) has a Sharpe ratio of 0.90, close to a tie with SPY.
 
 Even the best rule isn't clearly better than chance. Its average monthly return over SPY has a
-t-statistic of 2.8, and 11 of the 60 rules clear 2. That's convincing for one rule chosen in advance,
+t-statistic of 2.8, and 9 of the 60 rules clear 2. That's convincing for one rule chosen in advance,
 but less so for the best of 60 related ones. None clears 3.
 
 ### 3.3 Chosen on 2010–2022, followed through the test years
@@ -99,10 +99,10 @@ by 6-month return, held 6 months.
 | | Yearly return | Volatility | Sharpe ratio | Worst fall |
 | --- | --- | --- | --- | --- |
 | **2010–2022** (chosen here) | | | | |
-| The rule | 20.0% | 22.8% | 0.89 | −26% |
+| The rule | 20.8% | 23.0% | 0.91 | −26% |
 | SPY | 12.5% | 15.6% | 0.79 | −23% |
 | **2023–Oct 2026** (test years, never used to choose) | | | | |
-| The rule | 60.0% | 42.6% | 1.21 | −27% |
+| The rule | 59.8% | 42.6% | 1.21 | −27% |
 | SPY | 20.9% | 11.9% | 1.29 | −8% |
 | Equal-weight members | 14.2% | 12.9% | 0.75 | −11% |
 
