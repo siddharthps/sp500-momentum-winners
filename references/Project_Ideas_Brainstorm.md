@@ -1013,6 +1013,8 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - The **grid CSV's last digit** came from `simulate` summing turnover over a Python `set`, whose string order changes between processes (hash randomisation). It now sums over `sorted(...)`.
   - **`01_data`** came back with one print split into two stream chunks, because of kernel flushing. The runner now merges them (nbconvert's `CoalesceStreamsPreprocessor`).
   - **Proved:** two full runs give byte-identical outputs for all 13 files (3 notebooks, 2 CSVs, 8 PNGs). From now on, an output diff means a real change.
+- **CI on PR #33 sat in GitHub's queue** for over 400 s (runner delay, not our code). While checking, found that `xgboost` pulls `nvidia-nccl-cu13` (~300 MB of GPU libraries) on Linux.
+  - **Decision (recommended): switch to `xgboost-cpu`** (same 3.4.1 code and the same `import xgboost`, CPU only). The lock file has no NVIDIA packages now.
 - *(The discussion continues below.)*
 
 ---

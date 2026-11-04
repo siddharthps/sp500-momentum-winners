@@ -256,6 +256,7 @@ a stock is the month's top gainer.
   - tree and RF: median plus "was missing" flags;
   - LogReg and MLP: clip to the 1st/99th percentile, then median plus flags, then scaling.
 - **Editor folders** (`.vscode/`, `.idea/`) are git-ignored: personal settings, public repo.
+- **`xgboost-cpu`, not `xgboost`:** the full package pulls ~300 MB of NVIDIA GPU libraries on Linux (CI). We never use a GPU; the CPU build has the same code and API.
 
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
