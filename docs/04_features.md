@@ -38,14 +38,14 @@ single-day jump in a month, is replaced by monthly versions.
 
 ### 3.2 The feature sets
 
-**147 features in 7 groups**, plus the targets and identifiers:
+**152 features in 7 groups**, plus the targets and identifiers:
 
 | Group | Count | Examples | Why it's there |
 | --- | --- | --- | --- |
 | **Past returns** | 5 | Return over 1, 3, 6 and 12 months; 12 months skipping the latest one | The idea itself: these define a "winner" |
-| **Technical indicators** | 55 | RSI, MACD, ADX, CCI, Stochastics, Aroon, money flow, on-balance volume, ATR, cycle indicators | Standard summaries of trend, momentum, volume and volatility, computed on monthly bars |
-| **Stock risk and position** | 15 | Volatility, downside volatility, beta to SPY, drawdown from the 12-month high, distance to the 12-month high and low, price vs its 3- and 10-month average, share of up months, a volume spike measure | Separates steady climbers from erratic jumps. Stocks near their highs, and sudden volume spikes (often takeover news), are known to behave differently |
-| **Compared with other members** | 16 | Rank of each past return among all members, rank within the sector, return vs SPY and vs the sector fund, share of members in an uptrend, spread between the best and worst stocks, how last month's top 10 just did | "Winner" is relative. Ranks stay comparable in bull and bear markets. How last month's winners just did shows whether momentum is "working" right now |
+| **Technical indicators** | 52 | RSI, MACD, ADX, CCI, Stochastics, Aroon, money flow, on-balance volume, ATR, cycle indicators | Standard summaries of trend, momentum, volume and volatility, computed on monthly bars |
+| **Stock risk and position** | 22 | Volatility, downside volatility, beta to SPY, drawdown from the 12-month and all-time high, distance to the 12-month high and low, price vs its 3- and 10-month average, share of up months, a volume spike measure, plus the seven added in Section 3.5 | Separates steady climbers from erratic jumps. Stocks near their highs, and sudden volume spikes (often takeover news), are known to behave differently |
+| **Compared with other members** | 17 | Rank of each past return among all members, rank within the sector, return vs SPY and vs the sector fund, share of members in an uptrend, spread between the best and worst stocks, how last month's top 10 just did, months in the index | "Winner" is relative. Ranks stay comparable in bull and bear markets. How last month's winners just did shows whether momentum is "working" right now |
 | **Market** | 24 | Return of SPY, the Dow, gold and oil over 1, 3, 6 and 12 months; change in the 10-year yield; the stock's sector fund over 1, 3 and 12 months; VIX level and where it sits in its 5-year range | The market's mood. Momentum strategies are known to crash in sharp rebounds after a fall |
 | **Economy** | 9 | Core inflation (yearly and monthly), Fed Funds rate, 1/5/10-year yields, the yield-curve slope, potential GDP growth | The interest-rate and inflation regime, which shifts which stocks lead |
 | **Flags** | 23 | Month of the year (12), sector (11) | Seasonal effects (e.g. January reversals) and sector identity |
@@ -82,13 +82,49 @@ are differences between the two sector schemes.
 | Inflation used for the August 2026 decision | **July's** figure. August's wasn't published until mid-September |
 | 10-year yield used on 30 Oct 2026 | **29 Oct's** value. A day's yield is published the next day |
 | Fed Funds rate used on 30 Oct 2026 | **September's** figure. October's comes out in November |
-| Share of features filled: Yahoo stocks vs monthly-only stocks | **99.6% vs 99.9%**. A blank says nothing about where the data came from, or whether the company later leaves |
-| Strongest link between any single feature and next month's result | An average rank correlation of **0.014**. A leaked feature typically shows 0.1 or more |
+| Share of features filled: Yahoo stocks vs monthly-only stocks | **99.6% vs 99.8%**. A blank says nothing about where the data came from, or whether the company later leaves |
+| Strongest link between any single feature and next month's result (2010–2022) | An average rank correlation of **0.021**. A leaked feature typically shows 0.1 or more |
+
+### 3.5 Eight more features, after a review against the course material
+
+A later review compared the features with those built in the course this project grew out of, and
+with well-known findings from research on stock returns. Most of the course's features were already
+here in monthly form. Eight measure something none of the others did:
+
+| Feature | What it measures | Why it's useful |
+| --- | --- | --- |
+| Dividend yield (12 months) | Dividends paid over the past year ÷ price | Income stocks behave differently from growth stocks, and nothing else here sees dividends |
+| 12-1 month return ÷ volatility | Momentum per unit of risk | A steady climb and a wild one with the same return are different bets |
+| Drawdown from the all-time high | How far below its highest price since 2000 | A longer memory than the 12-month high |
+| Months in the index (capped at 10 years) | Time since the latest addition | New members and long-standing ones are different kinds of company |
+| Residual momentum | The 12-1 month return with the market's part removed | Research finds it steadier, and less prone to sudden crashes, than raw momentum |
+| Idiosyncratic volatility | How much the stock moves on its own, not with the market | Stocks that swing a lot on their own tend to do worse |
+| Best month of the past year | The single largest monthly gain | Separates one big jump (often takeover news) from a steady climb |
+| Same calendar month, past 5 years | The stock's average return in next month's calendar month | A known seasonal pattern, unrelated to momentum |
+
+They passed the same checks as the rest. They use only months up to the decision (a test cuts the data
+and confirms earlier values don't change), are filled as often for monthly-only stocks as for the
+others, and none reaches even 0.02 on its own.
+
+Three columns were **removed** at the same time: three rescalings of the rate of change (divided by
+100, plus 1, and plus 100) that are the same number in different units. They were dropped because
+their formulas are identical, not because of how they performed. That's 147 − 3 + 8 = 152.
+
+Two of the course's features were **not** added:
+- **A stock-split flag.** The monthly prices for companies that left have no split information, so the
+  flag would be missing exactly for them, the same leak as Section 3.1.
+- **Day-of-week and ticker flags.** Every row is a month-end, and a flag per company would let a model
+  memorise names instead of learning patterns.
+
+Some of the new values are extreme but real. A few companies show dividend yields above 100% in one year:
+Weyerhaeuser's 2010 special distribution, and spin-offs recorded as dividends. They're kept as they are;
+the modelling step limits extreme values in a consistent way.
 
 That last check is also a first, sober preview. **No single feature predicts next month's winners
-strongly**, which is normal for stock picking. Last month's return, the plain rule's signal, isn't
-among the ten strongest. Whether the features add up to something useful *together* is the
-question for the models (Chapter 6).
+strongly**, which is normal for stock picking. Last month's return, the plain rule's signal, is among
+the strongest, but it points the wrong way: last month's winners did slightly worse the next month
+(Chapter 5). Whether the features add up to something useful *together* is the question for the
+models (Chapter 6).
 
 ---
 
@@ -104,15 +140,25 @@ question for the models (Chapter 6).
 | Ranks computed within each date only | Comparing a stock with other members on the *same* date keeps bull and bear months comparable, and can't mix in later information |
 | Sectors labelled by hand, never "unknown" | An "unknown" sector would mean "this company left the index later", the same leak as Section 3.1 |
 | Sector funds that didn't exist yet are replaced | Real Estate uses the financials fund before its own started (2015), and Communication Services uses SPY before 2018 |
+| Eight features added after a review against the course and research | Each measures something no other feature does. More of the same kind would only add noise |
+| Exact copies removed by formula | The same number in different units adds nothing. Removing them by formula, not by results, keeps the choice independent of the data |
+| No split flag | It would exist only for the companies that stayed, revealing which ones left |
+| Months in the index from the changes record only, for every company | Today's member list has exact join dates, but only for companies still in the index. Using it would make the feature sharper exactly for the survivors |
 
 ---
 
 ## 5. Caveats
 
-- **Sector labels are each company's final sector, not its sector on each date.** For example, Alphabet
-  was classed as technology before 2018. A sector rarely changes, and the change doesn't carry
-  information about future returns, so the effect should be small. One label (The Trade Desk) could
-  reasonably be either technology or communication services.
+- **Sector labels are each company's final sector, not its sector on each date.** The sector scheme
+  itself changed: Real Estate was split out of Financials in September 2016, and Communication Services
+  was created in September 2018 (Alphabet and Meta came from technology and consumer discretionary). So
+  rows before those dates carry sectors that didn't exist yet. No free history of past sector labels
+  exists, and a label carries no information about future returns, so this is accepted and stated
+  rather than fixed. One label (The Trade Desk) could reasonably be either technology or communication
+  services.
+- **Months in the index is capped at 10 years.** The record of index changes is thin before about 2008,
+  so a company with no "added" entry is treated as "10 years or more". That's fair to all companies
+  alike, but it can't tell a 12-year member from a 40-year one.
 - **Potential GDP is a projection that gets revised,** and only the latest version is available. It's
   the one economic figure with a mild, accepted look-ahead.
 - **Some indicators need long warm-ups.** The slowest one (TRIX) is missing for about 5% of rows,

@@ -832,7 +832,7 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - **Excess returns:** a median of −0.1%. For 1 month, 5%/95% at −11.5%/+11.6%; for 12 months, −44%/+45%.
   - **Feature signal (2010–22):** the largest |IC| is about 0.02, and nothing is significant alone. **Last month's return has a negative IC (−0.020)**: short-term reversal. The strongest features (where the close sits in the month's range, balance of power) favour weak finishes too.
   - **Not steady:** almost all of the signal is in **2015–19** (±0.05), close to zero in 2010–14 and 2020–22, and some features flip sign. This backs the choice of time-series CV.
-  - **33 pairs correlate above 0.95** (the ROC family, price transforms, ATR/NATR, CMO/RSI). That's 131 features with an IC, but fewer distinct signals.
+  - **33 pairs correlate above 0.95** (the ROC family, price transforms, ATR/NATR, CMO/RSI). That's 87 features with an IC, but fewer distinct signals. *(First written as 131; corrected in Session 16 against the committed table.)*
   - **Regime:** the winners' spread is about 0 on average (−0.02% a month, positive in 51% of months), but correlates **+0.26 with SPY's 12-month return**, +0.19 with breadth, and **−0.19 with Fed Funds**. That supports the SPY-uptrend filter strategy.
   - **Plain rule preview, no costs:** the top 10 made 15.2% a year vs SPY's 14.3%, but with volatility of 21.8% vs 14.8%, a worst fall of −37% vs −23%, and a Sharpe of 0.76 vs 0.98. **Adjusted for risk, SPY was better.** The top 1 made 10.1% a year at 40% volatility.
 - **Tests:** 6 new ones in `tests/test_eda.py`. There are now **34, all passing**, also with `-W error`.
@@ -841,7 +841,7 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - Also updated: `docs/index.md`, `mkdocs.yml`, the README (a notebooks section, the runner command, the rerun-table row, the tree, the status), and `CLAUDE.md` (the notebook and chart rules, the runner command).
 - **Your addition: rules for what a notebook may print** (from a side discussion). Printing whole tables (500 rows, or the 101k-row panel) makes notebooks huge, unreadable and noisy in diffs, and could hit the 500 KB limit. The notebooks already showed only summaries (the longest table was 20 rows), but the rules are now **checks that fail**, not guidelines:
   - **`nb.setup()`** at the top of every notebook: pandas capped at 20 rows (an accidental full display shows 20), loguru limited to warnings, the chart style applied.
-  - **Summaries only.** Full results go to `reports/`: the complete per-feature signal table is now `reports/feature_signal_2010_2022.csv` (131 rows), and the notebook shows the top 20.
+  - **Summaries only.** Full results go to `reports/`: the complete per-feature signal table is now `reports/feature_signal_2010_2022.csv` (87 rows; first written as 131, corrected in Session 16), and the notebook shows the top 20.
   - **The runner checks every executed notebook and fails on:**
     - a cell output over 50 lines;
     - anything on stderr (logs, tqdm bars and warnings all land there, so one rule covers all three);
@@ -934,6 +934,40 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - 3 new tests, including a run killed mid-call that keeps its first ticker. 53 pass.
   - **Recovered with zero calls through the task's own script:** all 6 are `ok`, each ending within days of its removal date. Tried 23, left 192.
 - **Rebuild check with the new data:** priced rows 86.7% → 87.4%, and all 3 notebooks pass. The committed notebooks were left unchanged; refreshing the numbers is a separate PR.
+- **Merged** as PR #31 (`8eeefb2`).
+- **Your question: are any AV calls left today that we're not using?**
+  - About 8, from ~16–17 used in 24 hours.
+  - But the limit looks like a rolling 24 hours, so calls spent at 21:35 would come out of tomorrow's 21:00 run: a net gain of only ~2.
+  - The real unused capacity is the nightly 2-call buffer (23 of 25).
+  - **Decision: keep 23.** You went against my recommendation, which was to raise it to 25 (~18 more calls over the remaining nights, about one night sooner). The buffer stays for a manual check if something looks wrong.
+
+### Session 16 — Tuesday, 3 Nov 2026 (eight more features, #29)
+
+- Branch `29-more-features`; #29 In Progress.
+- **Bars:** a monthly `div_yield` column, each dividend over the same day's (Yahoo) or same month's (Alpha Vantage, raw) close, so a split doesn't distort it. Both sources carry dividends.
+- **New features:**
+  - in STOCK: `div_yield_12m`, `mom_12_1m_per_vol`, `drawdown_ath`, `resid_mom_12_1m` (residuals with each month's 36-month beta, the 11 months before the latest, over the residual std), `ivol_36m`, `max_ret_12m`, `seasonality_5y` (returns of next month's calendar month in the past 5 years, at least 3);
+  - in CROSS_SECTION: `months_in_index` (from the latest add row in the repaired changes table, capped at 120).
+- **Dropped:** `ta_rocp`, `ta_rocr`, `ta_rocr100`. **147 → 152** (TA 52, STOCK 22, CROSS_SECTION 17).
+- **Trap avoided: months in the index from today's list.** Its "date added" column exists only for current members (the survivors), so only the changes table is used, for everyone.
+- **Trap: date units.** The parquet panel dates were in ns and the CSV changes dates in us, and `merge_asof` refuses to mix them. Both are normalised in the function.
+- **Checks:**
+  - Fill rate is the same by source (AV 98.5–100%, Yahoo 98.1–100% on the new features; 99.8% vs 99.6% over all 152).
+  - The months-in-index cap is hit 64% (AV) vs 74% (Yahoo). Both use the same table, so that's real tenure, not missing data.
+  - The new ICs on 2010–22 are all below 0.02: no leak. (Seasonality is −0.015, the opposite sign to the literature. Not acted on: no feature is chosen by its IC.)
+  - 3 tests: dividend yield equal across sources and splits; no look-ahead (cutting the data leaves earlier values unchanged); months in the index uses the latest add. **56 pass.**
+- **Extreme but real values:** 129 rows with a dividend yield above 20% (WY's 2010 REIT conversion, BKR 2017, KLAC 2014, spin-offs recorded as dividends such as MRO 2011 and MDLZ 2012), and risk-adjusted momentum up to 98.
+  - **Decision (recommended): keep the table raw**, and clip every feature to its training-fold 1st/99th percentile for LogReg in #12, fitted inside each CV fold. Added to #12.
+- **Numbers refreshed** (tonight's 6 AV companies and the new features), each checked against the outputs:
+  - **notebook 04 and chapter 7:** Sharpe winners 6 → **7**; top-1 median worst fall −56% → −54%; the best rule 28.8% a year, Sharpe 0.97; 9 rules with t > 2 (was 11); chosen on 2010–22 with Sharpe 0.91 (was 0.89); 2023+ unchanged in substance (59.8% vs 20.9%, Sharpe 1.21 vs 1.29, 4th).
+  - **chapter 5:** last month's return IC −0.019; 25 pairs above 0.95 (was 33; the removed copies); spread +0.01% a month, positive in 53%; the plain-rule table.
+- **Errors found and corrected:**
+  - The journal's "131 features with an IC" (Session 13) was wrong: the committed table always had 87. Corrected in place, with a note.
+  - Chapter 4 said last month's return "isn't among the ten strongest" signals; it's 5th (negative). Rewritten.
+  - Chapter 4's "strongest IC 0.014" came from an earlier calculation on a different basis. It now quotes the 2010–22 figure, 0.021, matching chapter 5.
+- **Docs:**
+  - Chapter 4: 152 and the group counts, a new §3.5 (the eight features, the removed copies, the rejected split and ticker flags, the extreme values), decision rows, and caveats (the GICS 2016/2018 changes in detail, the months-in-index cap).
+  - Also chapters 5 and 7; chapter 3 (priced rows 87.4%, and coverage by year now 70% in 2010 → 100%); the README; and the plot labels for the new features.
 - *(The discussion continues below.)*
 
 ---

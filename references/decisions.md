@@ -226,6 +226,15 @@ a stock is the month's top gainer.
 - Now the manifest is written after every ticker, and on start any saved file the manifest lacks is added, validated with the same rule. `--max-calls 0` does only that, with no calls.
 - The 6 were recovered with no calls. Tried 23, 192 left. The task registration is unchanged.
 
+**Alpha Vantage budget stays at 23 (3 Nov, your call)**
+
+- I recommended raising the nightly budget to 25: about 18 more calls over the remaining nights, roughly one night sooner. You chose to keep the 2-call buffer for a manual check. Finish stays around 12–14 Nov.
+
+**Eight more features built (3 Nov, #29)**
+
+- 152 features (TA 52, STOCK 22, CROSS_SECTION 17). Dividend yield uses each dividend over the same-time close in both sources. Months in the index uses only the changes table, capped at 120.
+- **Extreme values stay in the table.** For LogReg, every feature is clipped to its training-fold 1st/99th percentile inside each CV fold (#12). Examples: dividend yields up to 167% from special payouts and spin-offs, risk-adjusted momentum up to 98.
+
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 

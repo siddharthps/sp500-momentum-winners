@@ -87,6 +87,14 @@ FEATURE_LABELS = {
     "dollar_vol_ratio": "Volume spike vs past year",
     "up_months_12m": "Share of up months (12)",
     "range_1m": "Range of the month ÷ price",
+    "div_yield_12m": "Dividend yield (12 months)",
+    "mom_12_1m_per_vol": "12-1 month return ÷ volatility",
+    "drawdown_ath": "Drawdown from all-time high",
+    "resid_mom_12_1m": "Residual momentum (12-1, market removed)",
+    "ivol_36m": "Idiosyncratic volatility (36 months)",
+    "max_ret_12m": "Best month of the past year",
+    "seasonality_5y": "Same calendar month, past 5 years",
+    "months_in_index": "Months in the index (capped at 120)",
 }
 
 

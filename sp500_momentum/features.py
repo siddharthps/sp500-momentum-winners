@@ -32,14 +32,17 @@ from sp500_momentum.config import (
     FRED_DIR,
     FRED_SERIES,
     MARKET_SERIES,
+    MISSING_ADDS,
     MONTHLY_PANEL,
     REMOVED_SECTORS,
+    RENAMES,
     SECTOR_ETF,
     SECTOR_ETF_FALLBACK,
     WIKIPEDIA_DIR,
     YAHOO_DAILY_DIR,
     YAHOO_SUSPECT,
 )
+from sp500_momentum.membership import repair_changes
 from sp500_momentum.sources.yahoo import file_name
 
 app = typer.Typer(help="Build the feature table.")
@@ -50,7 +53,7 @@ def _main():
     """Build the feature table."""
 
 
-BAR_COLS = ["open", "high", "low", "close", "volume", "dollar_vol"]
+BAR_COLS = ["open", "high", "low", "close", "volume", "dollar_vol", "div_yield"]
 
 # ---------------------------------------------------------------------------------------------
 # 1. Monthly bars
@@ -69,9 +72,13 @@ def bars_from_daily(daily: pd.DataFrame) -> pd.DataFrame:
     Yahoo's `close` and `volume` are already split-adjusted, so close * volume is the dollar
     volume. Prices are scaled by adj_close / close (the dividend factor), and volume is put in the
     same adjusted units (volume * close / adj_close), so volume indicators stay consistent.
+
+    `div_yield`: the month's dividends, each divided by that day's close (both in the same
+    split-adjusted units), so a split during the year doesn't distort the yield.
     """
     d = daily.sort_values("date")
     f = d["adj_close"] / d["close"]
+    div = d.get("dividends", 0.0)
     x = pd.DataFrame(
         {
             "month": d["date"].dt.to_period("M"),
@@ -81,6 +88,7 @@ def bars_from_daily(daily: pd.DataFrame) -> pd.DataFrame:
             "close": d["adj_close"],
             "volume": d["volume"] / f,
             "dollar_vol": d["close"] * d["volume"],
+            "div_yield": div / d["close"],
         }
     )
     g = x.groupby("month").agg(
@@ -90,6 +98,7 @@ def bars_from_daily(daily: pd.DataFrame) -> pd.DataFrame:
         close=("close", "last"),
         volume=("volume", "sum"),
         dollar_vol=("dollar_vol", "sum"),
+        div_yield=("div_yield", "sum"),
     )
     return _contiguous(g)
 
@@ -98,12 +107,14 @@ def bars_from_av(av: pd.DataFrame, removed_date) -> pd.DataFrame:
     """Alpha Vantage monthly rows -> the same bars, cut after the removal month.
 
     Alpha Vantage's open/high/low/close and volume are raw (not split-adjusted), so they're
-    scaled by adjusted close / close, and volume by its inverse.
+    scaled by adjusted close / close, and volume by its inverse. `div_yield` is the month's
+    dividend over the month's raw close (both raw, so splits don't distort it), as for Yahoo.
     """
     a = av.sort_values("timestamp").copy()
     a["month"] = pd.to_datetime(a["timestamp"]).dt.to_period("M")
     a = a[a["month"] <= pd.Timestamp(removed_date).to_period("M")]
     f = a["adjusted close"] / a["close"]
+    div = a.get("dividend amount", 0.0)
     g = (
         pd.DataFrame(
             {
@@ -114,6 +125,7 @@ def bars_from_av(av: pd.DataFrame, removed_date) -> pd.DataFrame:
                 "close": a["adjusted close"],
                 "volume": a["volume"] / f,
                 "dollar_vol": a["close"] * a["volume"],
+                "div_yield": div / a["close"],
             }
         )
         .groupby("month")
@@ -159,9 +171,8 @@ def ta_features(b: pd.DataFrame) -> pd.DataFrame:
     r["plus_dm"] = talib.PLUS_DM(h, lo) / c
     r["ppo"] = talib.PPO(c)
     r["roc"] = talib.ROC(c)
-    r["rocp"] = talib.ROCP(c)
-    r["rocr"] = talib.ROCR(c)
-    r["rocr100"] = talib.ROCR100(c)
+    # ROCP, ROCR and ROCR100 are dropped: ROC / 100, ROC / 100 + 1 and ROC + 100, the same
+    # number rescaled (decided by the formulas, not by results; decisions.md, 3 Nov).
     r["rsi"] = talib.RSI(c)
     r["stoch_k"], r["stoch_d"] = talib.STOCH(h, lo, c)
     r["stochf_k"], r["stochf_d"] = talib.STOCHF(h, lo, c)
@@ -222,6 +233,24 @@ def stock_features(b: pd.DataFrame, spy_ret: pd.Series) -> pd.DataFrame:
     f["range_1m"] = (h - lo) / c
     f["log_dollar_vol"] = np.log1p(dv)
     f["dollar_vol_ratio"] = dv / dv.shift(1).rolling(12).mean()  # volume spike vs the past year
+
+    # Added 3 Nov (#29): information none of the above carries (course ideas and research).
+    mom_12_1 = c.shift(1) / c.shift(12) - 1
+    div = b["div_yield"] if "div_yield" in b else pd.Series(np.nan, index=b.index)
+    f["div_yield_12m"] = div.fillna(0).rolling(12).sum().where(c.notna() & div.notna().any())
+    f["mom_12_1m_per_vol"] = mom_12_1 / vol_12m  # risk-adjusted momentum (HW2's Sharpe idea)
+    f["drawdown_ath"] = c / c.cummax() - 1  # from the highest close in the data (since 2000)
+    # Residual returns: what's left after the market's part, with each month's 36-month beta.
+    resid = r - f["beta_36m"] * m
+    f["resid_mom_12_1m"] = resid.shift(1).rolling(11).sum() / resid.rolling(
+        36, min_periods=24
+    ).std().replace(0, np.nan)
+    f["ivol_36m"] = resid.rolling(36, min_periods=24).std()  # idiosyncratic volatility
+    f["max_ret_12m"] = r.rolling(12).max()  # the "lottery" effect
+    # Same calendar month in past years: at the end of month t, the next month is t+1, and its
+    # past values are r[t+1-12k] = r.shift(12k - 1) for k = 1..5 (at least 3 of the 5 years).
+    same_month = pd.concat([r.shift(12 * k - 1) for k in range(1, 6)], axis=1)
+    f["seasonality_5y"] = same_month.mean(axis=1).where(same_month.notna().sum(axis=1) >= 3)
     return f.replace([np.inf, -np.inf], np.nan)
 
 
@@ -347,6 +376,31 @@ def cross_section_features(df: pd.DataFrame, monthly_ret: pd.DataFrame) -> pd.Da
     return df
 
 
+MONTHS_IN_INDEX_CAP = 120
+
+
+def months_in_index(
+    df: pd.DataFrame, changes: pd.DataFrame, cap: int = MONTHS_IN_INDEX_CAP
+) -> pd.Series:
+    """Months since the stock's latest "added" row in the changes table, on or before each
+    decision date, capped at `cap` (10 years). With no such row it joined before the record
+    (or long ago), so it gets the cap, meaning "10 years or more".
+
+    Only the changes table is used, for every stock alike. Today's list has a "date added" column,
+    but only for current members: using it would make the feature more precise exactly for the
+    companies that survived (a source leak)."""
+    adds = changes.dropna(subset=["added_ticker"])[["added_ticker", "date"]]
+    adds = adds.rename(columns={"added_ticker": "ticker", "date": "added"})
+    adds["added"] = adds["added"].astype("datetime64[ns]")  # parquet and CSV dates differ in unit
+    adds = adds.sort_values("added")
+    left = df[["date", "ticker"]].reset_index()
+    left["date"] = left["date"].astype("datetime64[ns]")
+    left = left.sort_values("date")
+    m = pd.merge_asof(left, adds, left_on="date", right_on="added", by="ticker")
+    months = (m["date"] - m["added"]).dt.days / 30.4375
+    return months.clip(upper=cap).fillna(cap).set_axis(m["index"]).sort_index()
+
+
 # ---------------------------------------------------------------------------------------------
 # Feature sets
 # ---------------------------------------------------------------------------------------------
@@ -392,6 +446,13 @@ def feature_sets(columns) -> dict[str, list[str]]:
             "range_1m",
             "log_dollar_vol",
             "dollar_vol_ratio",
+            "div_yield_12m",
+            "mom_12_1m_per_vol",
+            "drawdown_ath",
+            "resid_mom_12_1m",
+            "ivol_36m",
+            "max_ret_12m",
+            "seasonality_5y",
         ],
         "CROSS_SECTION": [
             *[f"rank_{c}" for c in RANKED],
@@ -406,6 +467,7 @@ def feature_sets(columns) -> dict[str, list[str]]:
             "winners_excess_1m",
             "winners_excess_12m",
             "new_member_12m",
+            "months_in_index",
         ],
         "MARKET": [c for c in cols if c.startswith(("mkt_", "sector_etf_ret_"))]
         + ["vix", "vix_pct_60m"],
@@ -478,7 +540,10 @@ def sector_etf_returns(bars: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]
     return out
 
 
-def build_features(panel: pd.DataFrame, bars: dict, fred: dict) -> pd.DataFrame:
+def build_features(
+    panel: pd.DataFrame, bars: dict, fred: dict, changes: pd.DataFrame
+) -> pd.DataFrame:
+    """`changes`: Wikipedia's changes table after `repair_changes` (for months_in_index)."""
     df = panel.copy()
     df["month_p"] = pd.PeriodIndex(df["month"], freq="M")
     dates = pd.Series(sorted(df["date"].unique()))
@@ -520,6 +585,7 @@ def build_features(panel: pd.DataFrame, bars: dict, fred: dict) -> pd.DataFrame:
     priced = cross_section_features(priced, monthly_ret)
     new_cols = [c for c in priced.columns if c not in df.columns]
     df = df.join(priced[new_cols])
+    df["months_in_index"] = months_in_index(df, changes)
 
     # dummies
     moy = df["date"].dt.month
@@ -539,7 +605,12 @@ def build():
     panel = pd.read_parquet(MONTHLY_PANEL)
     bars = load_bars(panel)
     fred = {sid: pd.read_csv(FRED_DIR / f"{sid}.csv", parse_dates=["date"]) for sid in FRED_SERIES}
-    df = build_features(panel, bars, fred)
+    changes = repair_changes(
+        pd.read_csv(WIKIPEDIA_DIR / "sp500_changes.csv", parse_dates=["date"]),
+        RENAMES,
+        MISSING_ADDS,
+    )
+    df = build_features(panel, bars, fred, changes)
     df.to_parquet(FEATURES_TABLE, index=False)
     sets = feature_sets(df.columns)
     counts = {k: len(v) for k, v in sets.items()}
