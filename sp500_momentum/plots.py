@@ -95,6 +95,15 @@ FEATURE_LABELS = {
     "max_ret_12m": "Best month of the past year",
     "seasonality_5y": "Same calendar month, past 5 years",
     "months_in_index": "Months in the index (capped at 120)",
+    "ta_ppo": "Percentage price oscillator",
+    "ta_atr": "Average true range (in dollars)",
+    "ta_minus_dm": "Downward directional movement",
+    "ta_macd": "MACD (in dollars)",
+    "ta_macdfix": "MACD, fixed periods (in dollars)",
+    "ta_stochrsi_d": "Stochastic RSI (smoothed)",
+    "mkt_spy_ret_1m": "SPY, last month's return",
+    "mkt_dji_ret_1m": "Dow, last month's return",
+    "vix": "VIX",
 }
 
 
@@ -307,6 +316,86 @@ def growth_chart(
     _subtitle(ax, subtitle)
     ax.legend(loc="upper left")
     ax.margins(x=0.02)
+    fig.tight_layout()
+    return fig
+
+
+def model_cv_chart(best: pd.DataFrame, years: list[int], base_rate: float):
+    """Each model's best setting: mean top-10 precision over the CV years, with the worst and best
+    single year as a range (one series, so one colour), and the CV base rate as a line."""
+    b = best.sort_values("precision")
+    cols = [f"precision_{y}" for y in years]
+    lo, hi = b[cols].min(axis=1) * 100, b[cols].max(axis=1) * 100
+    fig, ax = plt.subplots(figsize=(8, 0.42 * len(b) + 1.6))
+    y = range(len(b))
+    ax.hlines(y, lo, hi, color=SLOTS[0], linewidth=2, alpha=0.35)
+    ax.scatter(b["precision"] * 100, y, color=SLOTS[0], s=46, zorder=3, edgecolors=SURFACE)
+    ax.axvline(base_rate * 100, color=INK_2, linewidth=1, linestyle="--")
+    ax.annotate(
+        "base rate",
+        xy=(base_rate * 100, 1),
+        xycoords=("data", "axes fraction"),
+        xytext=(4, -2),
+        textcoords="offset points",
+        va="top",
+        color=INK_2,
+        fontsize=8.5,
+    )
+    ax.set_yticks(list(y), b["label"])
+    ax.set_xlabel("% of each month's top 10 that beat SPY")
+    ax.set_title(f"Tuning: each model's best setting, {years[0]}–{years[-1]}", pad=22)
+    _subtitle(ax, "Dot: average over the six years. Line: its worst and best single year")
+    ax.grid(axis="y", visible=False)
+    fig.tight_layout()
+    return fig
+
+
+def model_compare_chart(table: pd.DataFrame, period: str, title: str, subtitle: str):
+    """Top-10 precision per candidate in one period: models blue, plain rules orange, the
+    period's base rate as a line. Values are printed at the bar ends."""
+    t = table[table["period"] == period].sort_values("precision")
+    is_rule = t["model"].str.startswith("rule_")
+    colors = [SLOTS[1] if r else SLOTS[0] for r in is_rule]
+    names = [f"{lab} (headline)" if h else lab for lab, h in zip(t["label"], t["headline"])]
+    fig, ax = plt.subplots(figsize=(8, 0.42 * len(t) + 1.6))
+    ax.barh(names, t["precision"] * 100, color=colors, height=0.62)
+    base = t["base_rate"].mean() * 100
+    ax.axvline(base, color=INK_2, linewidth=1, linestyle="--")
+    for i, v in enumerate(t["precision"] * 100):
+        ax.annotate(
+            f"{v:.1f}%",
+            (v, i),
+            xytext=(4, 0),
+            textcoords="offset points",
+            va="center",
+            fontsize=8.5,
+            color=INK,
+        )
+    ax.set_xlim(min(base, (t["precision"] * 100).min()) - 6, (t["precision"] * 100).max() + 5)
+    ax.set_xlabel(f"% of each month's top 10 that beat SPY (dashed: base rate {base:.1f}%)")
+    ax.set_title(title, pad=22)
+    _subtitle(ax, subtitle)
+    handles = [
+        mpl.patches.Patch(color=SLOTS[0], label="model"),
+        mpl.patches.Patch(color=SLOTS[1], label="plain rule"),
+    ]
+    ax.legend(handles=handles, loc="lower right")
+    ax.grid(axis="y", visible=False)
+    fig.tight_layout()
+    return fig
+
+
+def importance_chart(imp: pd.Series, title: str, n: int = 15, subtitle: str | None = None):
+    """The n most important features of a fitted model (one series), as % of the total."""
+    top = imp.sort_values(ascending=False).head(n).iloc[::-1] / imp.sum() * 100
+    fig, ax = plt.subplots(figsize=(8, 0.3 * n + 1.4))
+    ax.barh([label(i) for i in top.index], top.values, color=SLOTS[0], height=0.62)
+    ax.xaxis.set_major_formatter(mpl.ticker.PercentFormatter(decimals=1))
+    ax.set_xlabel("share of the model's total importance")
+    ax.set_title(title, pad=22 if subtitle else 12)
+    if subtitle:
+        _subtitle(ax, subtitle)
+    ax.grid(axis="y", visible=False)
     fig.tight_layout()
     return fig
 

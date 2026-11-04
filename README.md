@@ -14,7 +14,8 @@ results are backtested against SPY. The test uses **point-in-time membership** (
 aren't flattered by survivorship bias.
 
 > Status: data, the monthly table, the features, the exploratory analysis, the baseline rule grid
-> and the model setup (folds, preparation) are done; training the models is next. The
+> and the models (setup, tuning, comparison, one test) are done; trading simulations of the models
+> are next. The
 > Alpha Vantage download of delisted companies runs until ~12–14 Nov 2026. Progress is tracked in
 > [issues](https://github.com/siddharthps/sp500-momentum-winners/issues), by
 > [milestone](https://github.com/siddharthps/sp500-momentum-winners/milestones), and on the
@@ -49,6 +50,7 @@ ALPHAVANTAGE_API_KEY=your_key_here
 | 4. Delisted prices | `uv run python -m sp500_momentum.dataset av-pull` | Alpha Vantage (free tier, ~23 tickers/day, resumable) | `data/raw/alphavantage/` |
 | 5. Monthly table | `uv run python -m sp500_momentum.monthly build` | Steps 1–4 | `data/processed/monthly_panel.parquet`, plus every price series in `data/interim/monthly_prices.parquet` (for backtests) |
 | 6. Features | `uv run python -m sp500_momentum.features build` | Step 5 + monthly bars, FRED, `references/removed_sectors.csv` | `data/processed/features.parquet` (152 features in named sets) |
+| 7. Models | `uv run python -m sp500_momentum.modeling.train run` | Step 6 | `reports/model_cv_results.csv`, `reports/model_comparison.csv`, `data/processed/model_scores.parquet`, `models/` (~1¾ h; `--n-iter 1` for a quick smoke run) |
 | Progress | `uv run python -m sp500_momentum.dataset av-status` | | |
 
 Step 4 is rerun once a day (and step 5 after it) until the queue is empty (started 2 Nov 2026,
@@ -89,6 +91,7 @@ If something earlier changes, rerun from the first affected step, then everythin
 | A FRED series or its publication lag (`FRED_SERIES`) | `fred` → `features build` → … |
 | Sectors (`references/removed_sectors.csv`, `SECTOR_ETF`) or any feature (`features.py`) | `features build` → … |
 | The rule grid or its costs (`RULE_LOOKBACKS`, `RULE_TOP_NS`, `COST_PER_SIDE`, `RULE_CHECK_FROM`, `backtest.py`) | `run_notebooks run 04` |
+| The model setup or the models (`modeling/prep.py`, `models.py`, `evaluate.py`, `train.py`), or anything that changes the features | `modeling.train run` → `run_notebooks run` |
 | Anything above, or the analysis or charts (`eda.py`, `plots.py`) | … → `run_notebooks run` (refreshes the notebooks and `reports/figures/`) |
 
 Raw files are never edited by hand, so every output can be rebuilt from the downloads.
@@ -103,6 +106,7 @@ the data:
 |---|---|
 | [`01_data`](notebooks/01_data.ipynb) | Membership, the survivorship gap, the Alpha Vantage progress, prices, FRED, the monthly table and the feature sets |
 | [`02_features_eda`](notebooks/02_features_eda.ipynb) | The target, each feature's signal (2010–2022 only), its stability, duplicates, market regimes, and a preview of the plain rule |
+| [`03_models`](notebooks/03_models.ipynb) | The folds, each model's tuned setting (2014–19), the comparison on 2020–22 where the headline is chosen, the single test (2023 on), the model rule columns and what the headline looks at. Reads the training step's outputs |
 | [`04_simulation`](notebooks/04_simulation.ipynb) | Backtests. Part 1: the baseline grid (60 rules: look-back × top N × hold, staggered, 10 bps a side) vs SPY and equal weight, and the best rule chosen on 2010–2022 and followed through the test years (2023 on). Takes about a minute |
 
 They're only ever run by this command, top to bottom in a fresh kernel, so the stored outputs always
@@ -147,7 +151,7 @@ or deleting `main` are blocked.
 │   ├── processed      <- Final modelling tables
 │   └── raw            <- Downloads, one folder per source (never edited by hand)
 ├── models             <- Trained models and predictions
-├── notebooks          <- 01_data, 02_features_eda, 04_simulation (executed, with outputs); later 03 and 00_run_all
+├── notebooks          <- 01_data, 02_features_eda, 03_models, 04_simulation (executed, with outputs); later 00_run_all
 ├── references         <- Decision log, brainstorm and dated working journal
 ├── reports/figures    <- Generated charts
 ├── scripts            <- Task Scheduler setup and the daily Alpha Vantage run
@@ -169,7 +173,9 @@ or deleting `main` are blocked.
     ├── run_notebooks.py <- Executes the notebooks in a fresh kernel and checks their outputs
     ├── nb.py          <- Notebook setup (output caps, quiet logs, chart style) and the output rules
     └── modeling/      <- prep.py: feature matrix, targets, time blocks with gaps, CV folds,
-                          in-fold preparation; train.py, predict.py (to do)
+                          in-fold preparation; models.py: the candidates and search ranges;
+                          evaluate.py: top-10 scoring; train.py: tuning, comparison, the test;
+                          predict.py (to do)
 ```
 
 ## Acknowledgements

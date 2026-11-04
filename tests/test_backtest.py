@@ -32,6 +32,28 @@ def test_add_rule_preds_picks_top_n_per_date_among_eligible():
     assert out["pred_mom_1m_top2"].tolist() == [0, 1, 1, 0, 1, 0]
 
 
+def test_add_score_preds_picks_top_n_by_model_score():
+    panel = pd.DataFrame(
+        {
+            "date": pd.to_datetime(["2020-01-31"] * 3 + ["2020-02-28"] * 2),
+            "ticker": ["A", "B", "C", "A", "B"],
+            "has_price": True,
+            "entry_px": [1.0, 1.0, np.nan, 1.0, 1.0],
+        }
+    )
+    scores = pd.DataFrame(
+        {
+            "date": pd.to_datetime(["2020-01-31"] * 3),  # no scores for February
+            "ticker": ["A", "B", "C"],
+            "xgb": [0.2, 0.6, 0.9],
+        }
+    )
+    out = bt.add_score_preds(panel, scores, ["xgb"], top_ns=[1])
+    # C scores highest but can't be traded (no next open), so B is the pick; February has none
+    assert out["pred_xgb_top1"].tolist() == [0, 1, 0, 0, 0]
+    assert "xgb" not in out.columns
+
+
 def test_value_matrix_uses_last_close_then_holds_cash_and_stops_at_spy_end():
     months = [str(M + i) for i in range(4)]
     prices = pd.DataFrame(
