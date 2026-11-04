@@ -53,7 +53,9 @@ step's chapter are written; the issue's "Done when" boxes are ticked; the PR is 
 
 - **Never spend Alpha Vantage calls ad hoc** (free tier: 25 per rolling ~24 h). The Task Scheduler job
   `sp500-momentum-av-pull` pulls daily at 21:00 PC time; its log is `logs/av_pull.log`. Unregister it
-  once the queue is empty (~12–14 Nov).
+  once the queue is empty (~12–14 Nov). Each ticker is recorded in the manifest as soon as it's
+  fetched. If a run is killed (log stops after the header, task result `0xC000013A`), the next run,
+  or `av-pull --max-calls 0` now, records the saved files without any calls.
 - **Tickers get reused.** An old symbol can return a different company (FB, STI, CPWR). Always check a
   series against the removal date and trading volume. Membership repairs live in `config.py`.
 - **Features come from monthly bars for every stock.** Never add a daily-only feature: it would be

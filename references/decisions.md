@@ -207,6 +207,25 @@ a stock is the month's top gainer.
   made 60% a year vs SPY's 21%, but with 43% volatility vs 12%, a worst fall of −27% vs −8%, and a
   **lower Sharpe (1.21 vs 1.29)**. Driven by AI and memory-chip stocks.
 
+**Feature review against the course, Weeks 1–4 (3 Nov)**
+
+- **Add 8 features with new information, drop 3 exact copies (#29, before modelling):**
+  - from the course: 12-month dividend yield, risk-adjusted momentum (`ret_12_1m / vol_12m`), months in the index, drawdown from the all-time high;
+  - from research: residual momentum, idiosyncratic volatility, the maximum monthly return over 12 months, same-month seasonality (5 years);
+  - drop `ta_rocp`, `ta_rocr` and `ta_rocr100`, affine copies of `ta_roc`, dropped by formula, not by performance. 147 → 152.
+- **No split flag:** Alpha Vantage's monthly data has no split column, so the flag would be blank exactly for the delisted names.
+- **Not added from the course:** candle patterns (A6), non-US markets (A5), weekday, week-of-month and ticker dummies (rows are month-ends).
+- **Sector labels** are today's GICS applied back to 2010. Communication Services (2018) and Real Estate (2016) are anachronistic before then. That's a caveat, not a fix: no free point-in-time GICS exists, and the labels carry no future returns.
+- **Flagged moves** (>+100% or <−75% in a month) get a manual review in #20, once the list is final.
+- **Blanks in the models (#12):** XGBoost keeps NaN. Tree, RF and LogReg get the training-fold median plus a "was missing" flag, fitted inside each CV fold. Never 0-filled (the course's way), because 0 is a real value for returns and betas.
+- **Model now, not after the data:** one fit takes 1–11 s, and full tuning about 30–45 min. The missing data is in the training years (13,350 member-months) and barely in the test years (107).
+
+**Alpha Vantage pull survives a killed run (3 Nov, #30)**
+
+- The 21:00 run was killed from outside (`0xC000013A`) after saving 6 files, before writing the manifest, which used to be written only at the end.
+- Now the manifest is written after every ticker, and on start any saved file the manifest lacks is added, validated with the same rule. `--max-calls 0` does only that, with no calls.
+- The 6 were recovered with no calls. Tried 23, 192 left. The task registration is unchanged.
+
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 

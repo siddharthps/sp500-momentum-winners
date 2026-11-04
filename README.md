@@ -62,7 +62,8 @@ Each run appends to `logs/av_pull.log`.
 Step 3 takes about a minute. It saves one parquet file per ticker (unadjusted OHLC, adjusted close,
 volume, dividends, splits), ending at the previous close. Reruns skip tickers already saved, and
 `--refresh` downloads everything again. To test the setup without using API calls, run
-`scripts/av_pull_daily.ps1 -MaxCalls 0`.
+`scripts/av_pull_daily.ps1 -MaxCalls 0`. That also records any downloaded file the manifest is
+missing, for example after a run was killed (each ticker is recorded as soon as it's fetched).
 
 ### Rerunning after a change
 

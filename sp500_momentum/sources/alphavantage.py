@@ -98,6 +98,37 @@ def validate(df: pd.DataFrame | None, removed_date: pd.Timestamp) -> str:
     return "ok"
 
 
+def manifest_row(r: pd.Series, df: pd.DataFrame | None, fetched_at: pd.Timestamp) -> dict:
+    """One manifest record for a queued ticker `r` and its pulled data (None = no data)."""
+    return {
+        "ticker": r["ticker"],
+        "name": r["name"],
+        "reason_cat": r["reason_cat"],
+        "removed_date": r["removed_date"],
+        "status": validate(df, r["removed_date"]),
+        "av_months": 0 if df is None else len(df),
+        "av_first": None if df is None else df["timestamp"].min(),
+        "av_last": None if df is None else df["timestamp"].max(),
+        "fetched_at": pd.Timestamp(fetched_at).floor("s"),
+    }
+
+
+def recover_from_disk(queue: pd.DataFrame, folder) -> list[dict]:
+    """Manifest records for queued tickers whose file is already on disk.
+
+    A run that's killed after saving files but before recording them (e.g. its console was
+    closed) leaves files the manifest doesn't know about. They're validated exactly as at fetch
+    time, using the file's save time, so no API call is spent fetching them again."""
+    rows = []
+    for _, r in queue.iterrows():
+        path = folder / f"{r['ticker']}.csv"
+        if path.exists():
+            df = pd.read_csv(path, parse_dates=["timestamp"]).sort_values("timestamp")
+            saved = pd.Timestamp.fromtimestamp(path.stat().st_mtime)  # local, like fetched_at
+            rows.append(manifest_row(r, df.reset_index(drop=True), saved))
+    return rows
+
+
 def build_queue(coverage: pd.DataFrame, manifest: pd.DataFrame) -> pd.DataFrame:
     """Removed tickers yfinance can't cover, not yet pulled, highest-impact first."""
     q = coverage[~coverage["yahoo_ok"] & (coverage["reason_cat"] != "ticker_change")].copy()

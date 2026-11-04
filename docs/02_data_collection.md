@@ -69,8 +69,8 @@ monthly returns, which is what the strategy trades on.
   including the March 2023 crash (288.11 → 0.905).
 - **It's collected a little every day.** Each evening an automatic run fetches the next ~23 companies,
   most important first: failed banks, then acquisitions, then the rest. It stops when the daily limit
-  is reached. At that pace the full list takes about two weeks. **Status on 3 Nov:** 17 companies
-  fetched (16 with data; First Republic has none), 198 to go, finishing around 12–14 Nov.
+  is reached. At that pace the full list takes about two weeks. **Status on 3 Nov (evening):** 23
+  companies fetched (22 with data; First Republic has none), 192 to go, finishing around 12–14 Nov.
 
 ### 3.4 Daily prices (Yahoo Finance)
 
@@ -141,3 +141,8 @@ These are the problems found while collecting the data, and how each was handled
 - **The daily limit is stricter than it looks.** Alpha Vantage's 25 requests seem to count over a rolling
   24 hours, not per calendar day. Only 9 got through on the first scheduled day. The automatic run
   moved to the evening, which pushed the finish date back by a day or two.
+- **A run can be cut off halfway.** On 3 Nov the evening run was stopped from outside after saving six
+  companies, but before it had recorded them, so the next run would have spent six of its scarce
+  requests fetching them again. Each company is now recorded the moment it's fetched, and a run first
+  picks up any saved file that isn't recorded yet (checked the same way). An interrupted run now costs
+  at most one request.
