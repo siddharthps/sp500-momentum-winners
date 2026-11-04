@@ -1017,6 +1017,29 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - **Decision (recommended): switch to `xgboost-cpu`** (same 3.4.1 code and the same `import xgboost`, CPU only). The lock file has no NVIDIA packages now.
 - *(The discussion continues below.)*
 
+### Session 18 — Wednesday, 4 Nov 2026 (train and tune the models, #13)
+
+- **Built:**
+  - `modeling/models.py`: 7 model specs with search ranges, plus `TimeOrderedMLP`;
+  - `modeling/evaluate.py`: top-10 precision per month, yearly summaries, the selection score, best tries, importances;
+  - `modeling/train.py`: random search over the CV folds, then the 2020–22 comparison with the headline, then the single test fit; it writes the out-of-sample scores for 2014 on;
+  - `backtest.add_score_preds`: model scores become `pred_<model>_top<N>` columns for #14;
+  - three model charts and notebook `03_models`.
+- **Timed every model with `--n-iter 1` first.** LogReg with saga took ~491 s a try, so it moved to lbfgs with L2 (6.9 s). `min_samples_leaf` floats became integer lists.
+- **The full run took 105 min** (estimated ~2½ h). The random forest took 56.5 of them. No errors.
+- **The order was kept:** tuning, then 2020–22, where the headline was fixed (the XGBoost regressor), then the test, read once in the notebook.
+- **Results (preview):**
+  - On tuning, 6 of 7 best settings were above the 50% base rate. The median try of each model was 48.8–51.0%, so most of the gain is the luck of the best draw.
+  - On 2020–22, **every model was below the 49.9% base rate**; both plain rules were above it (52.5%, 53.1%).
+  - On the test, the headline scored 45.1% vs 45.2%, and its picks trailed SPY by 0.8% a month. The 6-month rule scored 52.9%, at +1.5% a month.
+  - The decision tree topped the test (54.0%, but +0.04% a month). It was below the base rate on 2020–22, so it isn't chosen after the fact.
+  - The headline's importance is spread thin: its top 15 of 152 inputs carry 24%.
+- **Claims checked:**
+  - A drafted takeaway said the median try was "below the base rate (46–49%)". That was the median *selection score*. The median precision is 48.8–51.0%. Fixed before it shipped.
+  - The importance chart showed raw column names (`ppo`, `minus dm`, `stochrsi d`). It now has labels, a % axis, and a subtitle computed in the notebook.
+- **Tests:** 81 pass.
+- **Docs:** chapter 6 Part 2 (sections 3.6–3.9, the decisions, two caveats), the index row, and `decisions.md`.
+
 ---
 
 ## 9. Decisions and Parking Lot
@@ -1038,6 +1061,7 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 | 2 Nov 2026 | **Project plan (20 small decisions, Session 5):** month-end rows; split 2010–19 / 2020–22 / 2023–26; build now, rerun after the AV pull; class FRED set + VIX, lagged; US-focused markets; TA-Lib indicators (no candle patterns); ~20 own features; sectors filled in by hand; target `is_beat_spy_1m`; Tree + RF + LogReg + XGBoost; time-series CV, test once; score = precision of the top-N picks; top 1/5/10 (headline 10); SPY + equal-weight benchmarks; vector + exact simulation; SPY > 200-day filter; notebooks per class week + `00_run_all`; Hugging Face data; monthly scheduled run; extras after the core | Mirrors the class's flow (Weeks 1–4) and the rubric's points. Fixes the class's caveats: look-ahead in macro, tuning on test, no benchmark |
 | 3 Nov 2026 | **Baseline grid:** 60 rules reported; staggered slots; 10 bps per side on the traded weight; Sharpe net of Fed Funds; the best rule **chosen on 2010–22 and followed through the test years**; a price file beyond membership. The split is unchanged (~60/18/22; ~78/22 with CV) | Every try shown, so luck can be judged. Costs and staggering make it tradable. Choosing on the same years you check is circular. One test window for every strategy |
 | 4 Nov 2026 | **Model setup:** CV folds score 2014–19 and 2020–22 is held out (A); 8 candidates (plan's 4 + XGBoost ranker, excess-return regressor, MLP, and an average); a percentile-feature switch; decile ranker label; clipped Huber regressor; in-fold preparation per model family | Fair, leak-free comparison. The new models attack the classifier's blind spots: within-month order and the size of the win |
+| 4 Nov 2026 | **Models trained (#13):** random search (seed 0, 30 tries; 20 for the MLP); selection = mean − 0.5 × std of yearly precision; one headline chosen on 2020–22 before the test; all candidates tested and simulated for reference; top-N, not thresholds; no class weights; test numbers shown only in notebook 03 | Choices fixed before the results. Result (preview): no model beat the base rate on 2020–22 or the 6-month rule on the test |
 | 3 Nov 2026 | **Feature review:** 8 new features, 3 exact copies dropped (#29, before #12); no split flag; sector labels as a caveat; flagged moves reviewed in #20; NaN-aware blanks in #12 | New information, not more columns. A field missing for one source leaks survival. Settled one at a time, all as recommended |
 | 3 Nov 2026 | **AV pull survives a kill (#30):** the manifest is written per ticker, and saved files are recovered from disk | A killed run had left 6 files unrecorded, which would have cost 6 scarce calls to fetch again |
 | 2 Nov 2026 | **Monthly table repairs:** date-windowed `RENAMES`, `MISSING_ADDS`, ticker cleaning, and a $10M median dollar-volume check that drops yfinance series belonging to another security (those go to the AV queue) | Wikipedia misses renames, so stocks counted as members too early (META from 2010). Tickers get reused (Q, UA, SUN), so a flat alias map gives wrong prices |

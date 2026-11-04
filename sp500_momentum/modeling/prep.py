@@ -182,6 +182,7 @@ class QuantileClipper(BaseEstimator, TransformerMixin):
 
     def fit(self, X, y=None):
         a = np.asarray(X, dtype="float64")
+        self.n_features_in_ = a.shape[1]
         with np.errstate(all="ignore"):
             self.lower_ = np.nanquantile(a, self.quantiles[0], axis=0)
             self.upper_ = np.nanquantile(a, self.quantiles[1], axis=0)
@@ -190,6 +191,10 @@ class QuantileClipper(BaseEstimator, TransformerMixin):
     def transform(self, X):
         a = np.asarray(X, dtype="float64")
         return np.clip(a, self.lower_, self.upper_)
+
+    def get_feature_names_out(self, input_features=None):
+        """One output per input, same names (works for models saved before this existed)."""
+        return np.asarray(input_features, dtype=object)
 
 
 def preprocessor(kind: str):

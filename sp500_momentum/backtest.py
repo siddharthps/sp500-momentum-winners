@@ -58,6 +58,29 @@ def add_rule_preds(
     return out
 
 
+def add_score_preds(
+    panel: pd.DataFrame,
+    scores: pd.DataFrame,
+    names: Iterable[str],
+    top_ns: Iterable[int] = RULE_TOP_NS,
+) -> pd.DataFrame:
+    """Add a 0/1 `pred_<name>_top<N>` column per model score: the N eligible members with the
+    highest out-of-sample score at each month-end (ties to the alphabetically first ticker).
+
+    `scores` has date, ticker and one column per name (from the training step); months or
+    members without a score get no picks."""
+    out = panel.merge(scores[["date", "ticker", *names]], on=["date", "ticker"], how="left")
+    ok = eligible(out)
+    for name in names:
+        valid = ok & out[name].notna()
+        sub = out.loc[valid, ["date", "ticker", name]].sort_values(["date", "ticker"])
+        rank = sub.groupby("date")[name].rank(method="first", ascending=False)
+        for n in top_ns:
+            col = f"pred_{name}_top{n}"
+            out[col] = (rank <= n).reindex(out.index, fill_value=False).astype("int8")
+    return out.drop(columns=list(names))
+
+
 def value_matrix(prices: pd.DataFrame, end: pd.Period | None = None) -> pd.DataFrame:
     """Month x price_ticker table of the price a position is valued at after each month-end.
 

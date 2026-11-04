@@ -54,6 +54,7 @@ FRED_SERIES = {
 FRED_START = "2005-01-01"  # a year before PRICE_START, so yearly changes exist from 2007
 
 MONTHLY_PANEL = PROCESSED_DATA_DIR / "monthly_panel.parquet"
+MODEL_SCORES = PROCESSED_DATA_DIR / "model_scores.parquet"  # out-of-sample model scores, 2014 on
 FEATURES_TABLE = PROCESSED_DATA_DIR / "features.parquet"  # the monthly panel + every feature
 
 # GICS sectors for members removed since 2010 (Wikipedia's changes table has none). Written by hand

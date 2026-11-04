@@ -258,6 +258,18 @@ a stock is the month's top gainer.
 - **Editor folders** (`.vscode/`, `.idea/`) are git-ignored: personal settings, public repo.
 - **`xgboost-cpu`, not `xgboost`:** the full package pulls ~300 MB of NVIDIA GPU libraries on Linux (CI). We never use a GPU; the CPU build has the same code and API.
 
+**Models trained and tuned (4 Nov, #13)**
+
+- **Random search** (scikit-learn's `ParameterSampler`, seed 0): 30 tries per model, 20 for the MLP. It covers wide ranges better than a grid, and gives the same tries on every rerun.
+- **Selection score:** the mean of the six yearly top-10 precisions minus 0.5 × their standard deviation. A setting has to hold up every year.
+- **One headline, chosen on 2020–22** by the same score, before the test was read. Every candidate is still tested and simulated, for reference only.
+- **Top-N rules, not probability thresholds:** the strategy buys a fixed number of stocks, so a threshold (the course's `pred` > 0.5 style) would buy a varying number, or none.
+- **No class weights:** about half of member-months beat SPY.
+- **MLP:** averaged over 5 seeds, with early stopping on the latest 15% of training rows (in time order).
+- **LogReg:** L2 penalty with lbfgs. saga took ~8 min a try, and L1 is unstable with near-duplicate features.
+- **Test-period numbers are never logged** by the training command; they're shown once, in notebook 03. Trained models are saved in `models/` (git-ignored).
+- **Result (preview):** every model was below the base rate on 2020–22, and both plain rules were above it. The headline is the XGBoost regressor (49.2% vs 49.9%). On the test it scored 45.1% vs a 45.2% base rate, and its picks trailed SPY by 0.8% a month. The 6-month rule made 52.9%, at +1.5% a month. The decision tree was top on the test (54.0%), but it wasn't chosen and won't be: it was below the base rate on 2020–22.
+
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 

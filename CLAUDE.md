@@ -72,6 +72,9 @@ step's chapter are written; the issue's "Done when" boxes are ticked; the PR is 
   - **Judge a method by its reasoning, never by its result.** Fix splits, cut-offs and metrics before
     looking at outcomes. Never change one because the conclusion would look better (a 2022 cut made the
     baseline win on Sharpe; the agreed 2023 cut makes it lose).
+- **Models:** never log or print test-period (2023+) results during development; they're shown
+  once, in notebook 03. The headline is chosen on 2020–22 before the test is read. Time every model
+  with `--n-iter 1` before a full search (a slow solver once cost ~8 min a try).
 - **Backtests:** a held stock can leave the index, so simulate from `MONTHLY_PRICES` (every price
   series), not from the member panel. Any new simulation must reproduce the table's `fwd_ret_1m` with a
   1-month hold and no costs before its results are trusted.
@@ -105,7 +108,8 @@ uv run ruff check && uv run ruff format
 uv run python -m sp500_momentum.dataset membership | coverage | yahoo-daily | fred | av-pull | av-status
 uv run python -m sp500_momentum.monthly build
 uv run python -m sp500_momentum.features build     # after monthly build
-uv run python -m sp500_momentum.run_notebooks run  # after features build; refreshes figures
+uv run python -m sp500_momentum.modeling.train run # after features build; ~1¾ h (--n-iter 1: smoke run)
+uv run python -m sp500_momentum.run_notebooks run  # after features build (and train); refreshes figures
 uv run python -m sp500_momentum.run_notebooks run 04  # just one notebook (04: the rule grid, ~1 min)
 ```
 

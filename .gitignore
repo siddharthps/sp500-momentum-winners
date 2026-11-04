@@ -1,6 +1,10 @@
 # Data
 /data/
 
+# Fitted models (large, rebuilt by the training step); keep the folder itself
+/models/*
+!/models/.gitkeep
+
 # Mac OS-specific storage files
 .DS_Store
 
