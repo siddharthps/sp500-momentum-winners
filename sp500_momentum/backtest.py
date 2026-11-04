@@ -18,6 +18,14 @@ Simulation (staggered portfolios, the standard way to test an X-month hold):
 
 Returns are labelled by the month they're earned in: a decision at the end of January buys at the
 first open of February and is valued at the first open of March, so it's February's return.
+Periods (the test years, 2020-22) are set by **decision date** for every strategy, as for the
+models: `earned_months` turns a decision window into the months its returns are earned in.
+
+Strategy versions (#14, for 1-month holds):
+- **Weighting:** equal (the main version), or inverse volatility: each pick's target weight is
+  proportional to 1 / its 3-month volatility at the decision month-end.
+- **Hold buffer:** buy the top N, but keep a holding while it still ranks within the top
+  BUFFER_MULTIPLE x N; a sold name is replaced by the best-ranked name not already held.
 """
 
 from collections.abc import Iterable
@@ -25,7 +33,15 @@ from collections.abc import Iterable
 import numpy as np
 import pandas as pd
 
-from sp500_momentum.config import COST_PER_SIDE, RULE_LOOKBACKS, RULE_TOP_NS
+from sp500_momentum.config import (
+    BUFFER_MULTIPLE,
+    COST_PER_SIDE,
+    RULE_LOOKBACKS,
+    RULE_TOP_NS,
+    START_DOLLARS,
+)
+
+Picks = dict[pd.Period, list[str] | dict[str, float]]  # names (equal weight) or target weights
 
 TINY = 1e-12  # a standard deviation below this is zero up to rounding (a constant series)
 
@@ -69,7 +85,7 @@ def add_score_preds(
 
     `scores` has date, ticker and one column per name (from the training step); months or
     members without a score get no picks."""
-    out = panel.merge(scores[["date", "ticker", *names]], on=["date", "ticker"], how="left")
+    out = merge_scores(panel, scores, names)
     ok = eligible(out)
     for name in names:
         valid = ok & out[name].notna()
@@ -79,6 +95,76 @@ def add_score_preds(
             col = f"pred_{name}_top{n}"
             out[col] = (rank <= n).reindex(out.index, fill_value=False).astype("int8")
     return out.drop(columns=list(names))
+
+
+def merge_scores(panel: pd.DataFrame, scores: pd.DataFrame, names: Iterable[str]) -> pd.DataFrame:
+    """The panel with one column per model score (blank where a member-month has none)."""
+    names = list(names)
+    return panel.merge(scores[["date", "ticker", *names]], on=["date", "ticker"], how="left")
+
+
+def ranked(panel: pd.DataFrame, signal: str) -> dict[pd.Period, list[str]]:
+    """{decision month: eligible price tickers, best `signal` first} (ties: alphabetical ticker)."""
+    ok = eligible(panel) & panel[signal].notna()
+    sub = panel.loc[ok, ["date", "ticker", "price_ticker", signal]]
+    sub = sub.sort_values(["date", signal, "ticker"], ascending=[True, False, True])
+    months = pd.PeriodIndex(sub["date"], freq="M")
+    return {m: g.tolist() for m, g in sub.groupby(months, sort=True)["price_ticker"]}
+
+
+def buffered_picks(
+    ranks: dict[pd.Period, list[str]], n: int, keep: int | None = None
+) -> dict[pd.Period, list[str]]:
+    """Top-n picks with a hold buffer: a name held from last month stays while it ranks within
+    the top `keep` (default BUFFER_MULTIPLE x n); the free places go to the best-ranked names not
+    held. `keep == n` gives the plain top n. A name with no rank this month (it left the index or
+    has no score) is sold."""
+    keep = BUFFER_MULTIPLE * n if keep is None else keep
+    if keep < n:
+        raise ValueError("the buffer must be at least the basket size")
+    held: list[str] = []
+    out = {}
+    for m in sorted(ranks):
+        order = ranks[m]
+        within = set(order[:keep])
+        kept = [t for t in held if t in within]
+        fresh = [t for t in order if t not in kept][: n - len(kept)]
+        held = sorted(kept + fresh)
+        out[m] = held
+    return out
+
+
+def inverse_vol_weights(picks: dict[pd.Period, list[str]], vol: pd.Series) -> Picks:
+    """Target weights proportional to 1 / volatility at each decision month. `vol` is indexed by
+    (decision month, price ticker). A pick with no volatility (too short a history) gets the
+    basket's median; a basket with none at all is equal weight."""
+    out = {}
+    for m, names in picks.items():
+        v = pd.Series([vol.get((m, t), np.nan) for t in names], index=names, dtype=float)
+        v = v.where(v > 0)
+        v = v.fillna(v.median()) if v.notna().any() else v.fillna(1.0)
+        w = 1 / v
+        out[m] = (w / w.sum()).to_dict()
+    return out
+
+
+def volatility_lookup(features: pd.DataFrame, column: str) -> pd.Series:
+    """`column` from the feature table, indexed by (decision month, price ticker)."""
+    idx = pd.MultiIndex.from_arrays(
+        [pd.PeriodIndex(features["date"], freq="M"), features["price_ticker"]]
+    )
+    return pd.Series(features[column].to_numpy(), index=idx).dropna()
+
+
+def earned_months(index: pd.PeriodIndex, start: str | None = None, end: str | None = None):
+    """The months in `index` whose returns come from decisions made in [start, end): a decision
+    at a month-end earns its return the next month."""
+    months = index
+    if start:
+        months = months[months >= pd.Period(start, freq="M") + 1]
+    if end:
+        months = months[months < pd.Period(end, freq="M") + 1]
+    return months
 
 
 def value_matrix(prices: pd.DataFrame, end: pd.Period | None = None) -> pd.DataFrame:
@@ -107,17 +193,18 @@ def picks_by_month(panel: pd.DataFrame, pred: str) -> dict[pd.Period, list[str]]
 
 
 def simulate(
-    picks: dict[pd.Period, list[str]],
+    picks: Picks,
     values: pd.DataFrame,
     hold: int,
     cost: float = COST_PER_SIDE,
 ) -> pd.DataFrame:
     """Staggered-portfolio simulation of one rule (see the module docstring).
 
-    Runs every month from the first decision to the end of `values`; a month without picks keeps
-    the due slot's holdings. Returns one row per month earned: `ret` (net of costs), `gross` and
-    `cost` (the fraction of the portfolio paid in costs that month), indexed by the month the
-    return is earned in.
+    `picks` maps a decision month to the names to buy (equal weight) or to target weights that
+    sum to 1. Runs every month from the first decision to the end of `values`; a month without
+    picks keeps the due slot's holdings. Returns one row per month earned: `ret` (net of costs),
+    `gross` and `cost` (the fraction of the portfolio paid in costs that month), indexed by the
+    month the return is earned in.
     """
     slots: list[dict[str, float] | None] = [None] * hold
     months = values.index[(values.index >= min(picks)) & (values.index < values.index.max())]
@@ -127,7 +214,7 @@ def simulate(
         new = picks.get(m, [])
         paid = [0.0] * hold
         if new:
-            target = {t: 1 / len(new) for t in new}
+            target = dict(new) if isinstance(new, dict) else {t: 1 / len(new) for t in new}
             old = slots[s] or {}
             # sorted: a set's order changes between runs, and so would the last digit of the sum
             names = sorted(set(target) | set(old))
@@ -186,6 +273,112 @@ def run_grid(
                 name = f"{rule_name(s, n)}_h{h}"
                 rets[name], costs[name] = sim["ret"], sim["cost"]
     return pd.DataFrame(rets), pd.DataFrame(costs)
+
+
+VERSIONS = ["equal", "equal_buffer", "inv_vol", "inv_vol_buffer"]
+
+
+def strategy_versions(ranks: dict[pd.Period, list[str]], n: int, vol: pd.Series) -> dict:
+    """The four pre-declared versions of a top-n, 1-month-hold strategy: equal or inverse-vol
+    weights, without or with the hold buffer."""
+    plain = buffered_picks(ranks, n, keep=n)
+    buffer = buffered_picks(ranks, n)
+    return {
+        "equal": plain,
+        "equal_buffer": buffer,
+        "inv_vol": inverse_vol_weights(plain, vol),
+        "inv_vol_buffer": inverse_vol_weights(buffer, vol),
+    }
+
+
+def run_strategies(
+    panel: pd.DataFrame,
+    values: pd.DataFrame,
+    signals: dict[str, str],
+    vol: pd.Series,
+    top_ns: Iterable[int] = RULE_TOP_NS,
+    cost: float = COST_PER_SIDE,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Simulate every (strategy, N, version) with a 1-month hold. `signals` maps a strategy name
+    to the panel column it ranks by (a model score or a past return). Returns (net monthly
+    returns, monthly cost paid), one column per `<strategy>_top<N>_<version>`."""
+    rets, costs = {}, {}
+    for name, col in signals.items():
+        ranks = ranked(panel, col)
+        for n in top_ns:
+            for version, picks in strategy_versions(ranks, n, vol).items():
+                sim = simulate(picks, values, hold=1, cost=cost)
+                key = f"{name}_top{n}_{version}"
+                rets[key], costs[key] = sim["ret"], sim["cost"]
+    return pd.DataFrame(rets), pd.DataFrame(costs)
+
+
+def parse_strategy(name: str) -> dict:
+    """`xgb_reg_top10_inv_vol_buffer` -> strategy xgb_reg, top_n 10, version inv_vol_buffer.
+    Any other name (a benchmark, the chosen grid rule) gets blanks."""
+    if "_top" in name:
+        strategy, rest = name.rsplit("_top", 1)
+        n, _, version = rest.partition("_")
+        if n.isdigit() and version in VERSIONS:
+            return {"strategy": strategy, "top_n": int(n), "version": version}
+    return {"strategy": name, "top_n": pd.NA, "version": pd.NA}
+
+
+def dollars(r: pd.Series, cost: pd.Series | None = None, start: float = START_DOLLARS) -> dict:
+    """What `start` dollars grow to over `r`'s months (net of costs), and the fees paid in
+    dollars: each month's cost is a fraction of the value at the start of that month."""
+    r = r.dropna()
+    value = start * (1 + r).cumprod()
+    out = {"end_value": value.iloc[-1] if len(r) else np.nan}
+    if cost is not None:
+        before = value.shift(1, fill_value=start)
+        out["fees_dollars"] = float((cost.reindex(r.index).fillna(0) * before).sum())
+    return out
+
+
+def strategy_table(
+    rets: pd.DataFrame,
+    costs: pd.DataFrame,
+    bench: pd.DataFrame,
+    rf: pd.Series,
+    start: str,
+    end: str | None = None,
+) -> pd.DataFrame:
+    """One row per strategy (plus SPY and the equal-weight basket) for the returns from decisions
+    made in [start, end): the grid's numbers, plus START_DOLLARS grown, fees in dollars and the
+    traded share of the portfolio per year (buys plus sells)."""
+    months = earned_months(rets.index, start, end)
+    spy = bench["spy"]
+    rows = []
+    for c in rets:
+        r, k = rets.loc[months, c], costs[c]
+        row = parse_strategy(c) | performance(r, spy, rf, k) | dollars(r, k.reindex(months))
+        row["traded_per_year"] = row["cost_per_year"] / COST_PER_SIDE
+        rows.append({"name": c} | row)
+    for b in bench:
+        r = bench[b].reindex(months)
+        rows.append({"name": b} | parse_strategy(b) | performance(r, spy, rf) | dollars(r))
+    out = pd.DataFrame(rows).set_index("name")
+    out["top_n"] = out["top_n"].astype("Int64")
+    out.loc["spy", ["beats_spy_months", "t_vs_spy", "cagr_vs_spy"]] = np.nan
+    return out
+
+
+def version_effect(
+    table: pd.DataFrame,
+    strategies: Iterable[str],
+    top_n: int,
+    measures: Iterable[str] = ("cagr", "sharpe", "max_drawdown", "traded_per_year"),
+) -> pd.DataFrame:
+    """Each version minus the plain equal-weight version of the same strategy, averaged over
+    `strategies` at one basket size (a `strategy_table`). One row per non-plain version."""
+    measures = list(measures)
+    t = table[(table["top_n"] == top_n) & table["strategy"].isin(list(strategies))]
+    wide = t.set_index(["version", "strategy"])[measures]
+    base = wide.loc["equal"]
+    return pd.DataFrame(
+        {v: (wide.loc[v] - base).mean() for v in VERSIONS if v != "equal"}
+    ).T.rename_axis("version")
 
 
 def risk_free(fedfunds: pd.DataFrame) -> pd.Series:
@@ -254,9 +447,9 @@ def selection_check(
     costs: pd.DataFrame,
     split: str,
 ) -> tuple[str, pd.DataFrame, int]:
-    """Pick the cell with the best Sharpe on months earned before `split`, then score it, SPY and
-    the equal-weight basket on both sides of the split. Returns (cell, table, its Sharpe rank
-    among all cells after the split)."""
+    """Pick the cell with the best Sharpe on returns from decisions before `split`, then score
+    it, SPY and the equal-weight basket on both sides of the split. Returns (cell, table, its
+    Sharpe rank among all cells after the split)."""
     before = grid_table(rets, bench, rf, costs, end=split)
     after = grid_table(rets, bench, rf, costs, start=split)
     best = before.drop(index=bench.columns).index[0]
@@ -282,13 +475,9 @@ def grid_table(
     start: str | None = None,
     end: str | None = None,
 ) -> pd.DataFrame:
-    """One row per grid cell (plus SPY and the equal-weight basket) for the months earned in
-    [start, end), sorted by Sharpe."""
-    months = rets.index
-    if start:
-        months = months[months >= pd.Period(start, freq="M")]
-    if end:
-        months = months[months < pd.Period(end, freq="M")]
+    """One row per grid cell (plus SPY and the equal-weight basket) for the returns from
+    decisions made in [start, end), sorted by Sharpe."""
+    months = earned_months(rets.index, start, end)
     spy = bench["spy"]
     rows = []
     for c in rets:

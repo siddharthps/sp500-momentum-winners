@@ -147,9 +147,83 @@ def test_selection_uses_only_months_before_the_split():
     best, table, rank = bt.selection_check(rets, bench, rf, costs, split="2022-01-01")
     assert best == "pred_mom_1m_top1_h1"  # the late winner is never seen when choosing
     assert rank == 2
-    assert table.loc[("before", best), "months"] == 12
+    # by decision date: the Dec 2021 decision earns Jan 2022, so "before" holds Jan 2021-Jan 2022
+    assert table.loc[("before", best), "months"] == 13
+    assert table.loc[("after", best), "months"] == 11
     summary = bt.grid_summary(bt.grid_table(rets, bench, rf, costs), by="top_n")
     assert summary.loc[1, "cells"] == 2
+
+
+def test_earned_months_follow_the_decision_window():
+    idx = pd.period_range("2022-10", periods=6, freq="M")
+    out = bt.earned_months(idx, start="2022-12-01", end="2023-02-01")
+    assert [str(m) for m in out] == ["2023-01", "2023-02"]  # decisions Dec 2022 and Jan 2023
+
+
+def test_buffered_picks_keep_holdings_within_twice_the_basket():
+    ranks = {
+        M: ["A", "B", "C", "D"],
+        M + 1: ["C", "D", "B", "E"],  # B is 3rd: inside the top 4 buffer, so it stays
+        M + 2: ["C", "E", "F", "G", "B"],  # B is 5th: out; A left the index
+    }
+    assert bt.buffered_picks(ranks, n=2, keep=2) == {
+        M: ["A", "B"],
+        M + 1: ["C", "D"],
+        M + 2: ["C", "E"],
+    }
+    assert bt.buffered_picks(ranks, n=2) == {M: ["A", "B"], M + 1: ["B", "C"], M + 2: ["C", "E"]}
+    with pytest.raises(ValueError):
+        bt.buffered_picks(ranks, n=2, keep=1)
+
+
+def test_inverse_vol_weights_fill_a_missing_volatility_with_the_basket_median():
+    vol = pd.Series({(M, "A"): 0.1, (M, "B"): 0.2, (M, "C"): 0.3, (M + 1, "A"): np.nan}).dropna()
+    w = bt.inverse_vol_weights({M: ["A", "B"], M + 1: ["A", "B"]}, vol)
+    assert w[M] == pytest.approx({"A": 2 / 3, "B": 1 / 3})
+    assert w[M + 1] == pytest.approx({"A": 0.5, "B": 0.5})  # no volatility at all: equal weight
+
+
+def test_simulate_takes_target_weights_and_charges_only_the_difference():
+    values = _values({"A": [10, 20, 20], "B": [10, 10, 10]})
+    picks = {M: {"A": 0.5, "B": 0.5}, M + 1: {"A": 0.5, "B": 0.5}}
+    sim = bt.simulate(picks, values, hold=1, cost=0.001)
+    # month 1: +50%; A drifts to 2/3, so getting back to 50/50 trades 1/6 + 1/6
+    assert sim["gross"].tolist() == pytest.approx([0.5, 0.0])
+    assert sim["cost"].tolist() == pytest.approx([0.001, 0.001 / 3])
+
+
+def test_dollars_and_fees_follow_the_value_path():
+    idx = pd.period_range(M, periods=2, freq="M")
+    out = bt.dollars(pd.Series([0.1, -0.5], index=idx), pd.Series([0.01, 0.02], index=idx), 100)
+    assert out["end_value"] == pytest.approx(55)
+    assert out["fees_dollars"] == pytest.approx(0.01 * 100 + 0.02 * 110)
+
+
+def test_parse_strategy_round_trips_versions():
+    assert bt.parse_strategy("xgb_reg_top10_inv_vol_buffer") == {
+        "strategy": "xgb_reg",
+        "top_n": 10,
+        "version": "inv_vol_buffer",
+    }
+    assert bt.parse_strategy("spy")["version"] is pd.NA
+
+
+def test_strategy_table_and_version_effect_on_a_tiny_market():
+    idx = pd.period_range("2022-12", periods=4, freq="M")  # months earned
+    rets = pd.DataFrame(
+        {f"m_top10_{v}": [0.01 * (i + 1)] * 4 for i, v in enumerate(bt.VERSIONS)}, index=idx
+    )
+    costs = rets * 0 + 0.001
+    bench = pd.DataFrame({"spy": [0.0] * 4, "equal_weight": [0.0] * 4}, index=idx)
+    rf = pd.Series(0.0, index=idx)
+    t = bt.strategy_table(rets, costs, bench, rf, start="2023-01-01")
+    # decisions from Jan 2023 earn Feb 2023 on: Feb and Mar of Dec 2022-Mar 2023
+    assert t.loc["m_top10_equal", "months"] == 2
+    assert t.loc["m_top10_equal", "end_value"] == pytest.approx(10_000 * 1.01**2)
+    assert t.loc["m_top10_equal", "traded_per_year"] == pytest.approx(12)
+    assert t.loc["spy", "end_value"] == pytest.approx(10_000)
+    eff = bt.version_effect(t, ["m"], top_n=10)
+    assert eff.loc["inv_vol_buffer", "cagr"] == pytest.approx(1.04**12 - 1.01**12)
 
 
 def test_prefer_alphavantage_drops_the_yahoo_copy_of_a_ticker():

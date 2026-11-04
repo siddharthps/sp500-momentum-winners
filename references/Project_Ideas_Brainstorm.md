@@ -1039,6 +1039,42 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - The importance chart showed raw column names (`ppo`, `minus dm`, `stochrsi d`). It now has labels, a % axis, and a subtitle computed in the notebook.
 - **Tests:** 81 pass.
 - **Docs:** chapter 6 Part 2 (sections 3.6–3.9, the decisions, two caveats), the index row, and `decisions.md`.
+- **Shipped:** PR #34, squash-merged with CI green. #13 is Done.
+
+### Session 19 — Wednesday, 4 Nov 2026 (model simulations, #14)
+
+- **You asked to talk #14 through first.** It was written as the course's $100 "sim1_" version. The exact staggered simulator from #11 already does more (reinvestment, costs only on what's traded), so that version was dropped.
+- **Your two questions:**
+  1. **Dollar amounts.** Yes: "$10,000 became …", with fees in dollars, taken from the same simulation.
+  2. **Are we selling and rebuying a stock that stays in the top 10?** No. The simulator charges only the weight difference (a test proves it). But turnover is high: picks kept month to month (2014–22, top 10) are 4% for the 1-month rule, 54% for the 6-month rule and 27% for the headline. That led to the **2N hold buffer**.
+- **You asked whether every stock gets the same amount.** Explained equal, inverse-vol, confidence, rank, market-cap and optimised weights.
+- **Decisions, one prompt each, all as recommended:**
+  1. equal weight plus an inverse-vol variant;
+  2. buffer at 2N;
+  3. the buffer as a variant for 1-month holds;
+  4. periods 2020–22 and test (2014–19 left out);
+  5. headline first, the rest for reference;
+  6. #14 trades, #15 curves plus the trend filter (issues retitled and rewritten).
+- **Found while reading the simulator: the test window was off by a month.** The grid counted the Dec 2022 decision (earned Jan 2023) as test, while the models count it as validation. Decided (recommended) that every window is set by decision date, the grid included. Decided before any number was seen.
+- **Built (`backtest.py`):**
+  - `earned_months`; target weights in `simulate`; `ranked`, `buffered_picks`, `inverse_vol_weights`, `volatility_lookup`;
+  - `strategy_versions` / `run_strategies` (121 strategies), `parse_strategy`, `dollars`, `strategy_table`, `version_effect`;
+  - in `plots.py`: `strategy_label` and a two-panel `strategy_value_chart`;
+  - in config: `START_DOLLARS`, `BUFFER_MULTIPLE`, `INVERSE_VOL_FEATURE`.
+- **Checks:**
+  - **Reproduction (CLAUDE.md rule):** the plain version picks exactly what the `pred_*` columns pick, and reproduces `fwd_ret_1m` to 3e-16 (201 months for the 6-month rule, 153 for the headline). The buffer always holds 10 names.
+  - **Tests:** 88 pass (7 new).
+- **Traps found:**
+  - **My bug:** 2020–22 first had 35 months. SPLIT's end dates are inclusive, the table's end is exclusive, so the Dec 2022 decision was dropped. The fix: the validation window ends where the test starts. Added to CLAUDE.md.
+  - **The notebook hit 332 KB** (the limit is 300). Two charts became one two-panel chart (the same rows, both periods), at 278 KB. The check wasn't loosened.
+  - **The value chart's bars started at an axis edge** (~$6.5k), so a loss looked like nearly nothing. The bars now start at $10,000: gains go right, losses left.
+  - **A claim checked and fixed:** "no strategy beats SPY's test Sharpe" was false. 12 of 121 do, mostly top-1. Also "the buffer helps the 6-month rule" holds only at top 10.
+- **Results (preview):**
+  - The headline loses to SPY and to every plain rule shown, in both periods ($11,640 vs SPY's $19,650 on the test).
+  - Its best 2020–22 version was its worst on the test.
+  - The buffer cuts trading by about 3 turns a year. Inverse vol isn't consistent.
+  - The window change made the chosen rule tie SPY's test Sharpe (1.21 vs 1.21; it used to be 1.21 vs 1.29).
+- **Docs:** chapter 7 (Part 1 numbers refreshed, Part 2 sections 3.4–3.7, decisions, a caveat), the index row, README (status, notebook 04 row, rerun row), CLAUDE.md (windows by decision date), and `decisions.md`.
 
 ---
 
@@ -1061,6 +1097,7 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 | 2 Nov 2026 | **Project plan (20 small decisions, Session 5):** month-end rows; split 2010–19 / 2020–22 / 2023–26; build now, rerun after the AV pull; class FRED set + VIX, lagged; US-focused markets; TA-Lib indicators (no candle patterns); ~20 own features; sectors filled in by hand; target `is_beat_spy_1m`; Tree + RF + LogReg + XGBoost; time-series CV, test once; score = precision of the top-N picks; top 1/5/10 (headline 10); SPY + equal-weight benchmarks; vector + exact simulation; SPY > 200-day filter; notebooks per class week + `00_run_all`; Hugging Face data; monthly scheduled run; extras after the core | Mirrors the class's flow (Weeks 1–4) and the rubric's points. Fixes the class's caveats: look-ahead in macro, tuning on test, no benchmark |
 | 3 Nov 2026 | **Baseline grid:** 60 rules reported; staggered slots; 10 bps per side on the traded weight; Sharpe net of Fed Funds; the best rule **chosen on 2010–22 and followed through the test years**; a price file beyond membership. The split is unchanged (~60/18/22; ~78/22 with CV) | Every try shown, so luck can be judged. Costs and staggering make it tradable. Choosing on the same years you check is circular. One test window for every strategy |
 | 4 Nov 2026 | **Model setup:** CV folds score 2014–19 and 2020–22 is held out (A); 8 candidates (plan's 4 + XGBoost ranker, excess-return regressor, MLP, and an average); a percentile-feature switch; decile ranker label; clipped Huber regressor; in-fold preparation per model family | Fair, leak-free comparison. The new models attack the classifier's blind spots: within-month order and the size of the win |
+| 4 Nov 2026 | **Model simulations (#14):** exact simulator, no $100 vector version; 1-month hold; dollars from $10,000; equal weight (main) + inverse vol; a 2N hold buffer as a variant; 2020–22 and test only; headline first, others for reference; **every window by decision date** (grid included) | All fixed before results. Choosing among versions or periods after the fact would turn the test into tuning |
 | 4 Nov 2026 | **Models trained (#13):** random search (seed 0, 30 tries; 20 for the MLP); selection = mean − 0.5 × std of yearly precision; one headline chosen on 2020–22 before the test; all candidates tested and simulated for reference; top-N, not thresholds; no class weights; test numbers shown only in notebook 03 | Choices fixed before the results. Result (preview): no model beat the base rate on 2020–22 or the 6-month rule on the test |
 | 3 Nov 2026 | **Feature review:** 8 new features, 3 exact copies dropped (#29, before #12); no split flag; sector labels as a caveat; flagged moves reviewed in #20; NaN-aware blanks in #12 | New information, not more columns. A field missing for one source leaks survival. Settled one at a time, all as recommended |
 | 3 Nov 2026 | **AV pull survives a kill (#30):** the manifest is written per ticker, and saved files are recovered from disk | A killed run had left 6 files unrecorded, which would have cost 6 scarce calls to fetch again |

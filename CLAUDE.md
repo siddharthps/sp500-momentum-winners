@@ -69,6 +69,10 @@ step's chapter are written; the issue's "Done when" boxes are ticked; the PR is 
   - Never choose settings by looking at the test period (2023–26). Tune with time-series CV inside 2010–22.
   - **One test window for every strategy.** Rules and models are chosen on 2010–22 only and scored on
     `SPLIT["test"]` (2023 on). Any cut-off or check window comes from `SPLIT`, never a new date.
+  - **Windows are set by decision date.** Returns are labelled by the month earned (decision + 1), so
+    convert with `backtest.earned_months`. SPLIT's end dates are inclusive and table windows are
+    `[start, end)`: a period ends where the next one starts. (A Dec 2022 decision counted as "test"
+    once scored a strategy on a month it was chosen on.)
   - **Judge a method by its reasoning, never by its result.** Fix splits, cut-offs and metrics before
     looking at outcomes. Never change one because the conclusion would look better (a 2022 cut made the
     baseline win on Sharpe; the agreed 2023 cut makes it lose).

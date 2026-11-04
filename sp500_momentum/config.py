@@ -137,9 +137,17 @@ SPLIT = {
 # Anything that could steer modelling choices (feature analysis, tuning) uses decisions up to this
 # date only, so the test period stays unseen until the final evaluation.
 RESEARCH_END = SPLIT["validation"][1]
-# The best baseline rule is chosen on returns earned before this date and followed after it: the
+# The best baseline rule is chosen on decisions before this date and followed after it: the
 # models' test window, so rules and models are scored on exactly the same untouched months.
+# Windows are set by decision date for every strategy: a decision at a month-end earns its return
+# the next month, so the test returns start the month after this (decisions.md, 4 Nov).
 RULE_CHECK_FROM = SPLIT["test"][0]
+# Model and rule strategies (#14): the starting amount shown in dollars, the hold-buffer width
+# (keep a holding while it ranks within BUFFER_MULTIPLE x N), and the volatility used for the
+# inverse-volatility weights (known at the month-end close).
+START_DOLLARS = 10_000
+BUFFER_MULTIPLE = 2
+INVERSE_VOL_FEATURE = "vol_3m"
 
 # Renames: the same company kept trading under a new ticker. In Wikipedia's changes table,
 # rows dated inside [from, to] get `old` rewritten to `new`. That way the stock is one member

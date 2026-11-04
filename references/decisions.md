@@ -270,6 +270,33 @@ a stock is the month's top gainer.
 - **Test-period numbers are never logged** by the training command; they're shown once, in notebook 03. Trained models are saved in `models/` (git-ignored).
 - **Result (preview):** every model was below the base rate on 2020–22, and both plain rules were above it. The headline is the XGBoost regressor (49.2% vs 49.9%). On the test it scored 45.1% vs a 45.2% base rate, and its picks trailed SPY by 0.8% a month. The 6-month rule made 52.9%, at +1.5% a month. The decision tree was top on the test (54.0%), but it wasn't chosen and won't be: it was below the base rate on 2020–22.
 
+**Model simulations (4 Nov, #14), settled one question at a time, all as recommended, before any results**
+
+- **No $100 vector (sim1_) version.** The exact staggered simulator from #11 already reinvests. It charges costs only on the traded weight, so a stock kept from last month isn't sold and rebought (it's only trimmed back to its target weight).
+- **Dollar amounts:** "$10,000 invested" next to CAGR, and fees in dollars (your question).
+- **Weighting:** equal weight is the main version. Inverse volatility (∝ 1 / 3-month volatility, known at month-end) is one pre-declared variant.
+  - Confidence weighting was rejected: it would amplify a signal that's close to noise.
+  - Rank weighting was rejected for the same reason.
+  - Market-cap weighting was rejected: no shares outstanding for the delisted names, and it would tilt towards the index giants.
+  - Optimised weights were rejected: unstable on noisy return forecasts.
+- **Hold buffer, 2N:** buy the top N, but keep a holding while it ranks within the top 2N. A sold name is replaced by the best-ranked name not already held.
+  - Your question: a momentum strategy shouldn't churn stocks that stay strong.
+  - Picks kept from one month to the next (2014–22, top 10): 4% for the 1-month rule, 54% for the 6-month rule, 27% for the headline model, 32% for the tree.
+  - It's a variant for every 1-month-hold strategy. The grid's longer holds are unchanged.
+- **Periods:** 2020–22 and the test only. 2014–19 is left out because its scores come from the folds the settings were chosen on.
+- **Presentation:**
+  - Main result: the headline at top 10 in 4 versions (weighting × buffer), against SPY, equal weight, the rule chosen on 2010–22, and the 1-month rules with the same top N.
+  - Reference: all 8 candidates at top 10. Every cell goes to `reports/`.
+- **Issues:** #14 is now "Model simulations: costs, buffer, weighting". #15 is "Equity curves, rolling returns and the SPY trend filter".
+- **Every window is set by decision date (this changes #11's check window by one month).** The grid used to count returns earned from Jan 2023 as "test". But the Dec 2022 decision that earns January belongs to 2022, and the headline model was chosen partly on it.
+  - Now every strategy's test is the returns from decisions in `SPLIT["test"]` (earned Feb 2023 on). 2020–22 is the decisions 2020–22 (earned Feb 2020 – Jan 2023).
+  - Decided before the numbers were seen. Its effect: SPY's test Sharpe went from 1.29 to 1.21 (January 2023 was strong for SPY). The chosen rule is unchanged and now ties SPY on Sharpe (1.21 vs 1.21) instead of losing.
+- **Result (preview):**
+  - The headline at top 10 turned $10,000 into $11,858 on 2020–22 (SPY $13,146) and $11,640 on the test years (SPY $19,650; Sharpe 0.12 vs 1.21). That's below every plain rule shown, in both periods.
+  - Its best version on 2020–22 (inverse vol + buffer) was its worst on the test.
+  - The buffer cut the models' trading by about 3 portfolio-turns a year, and lifted the 6-month top-10 rule in both periods. Inverse vol helped on 2020–22 and hurt on the test.
+  - 12 of 121 strategies edge SPY's test Sharpe, mostly single-stock ones. Of those declared in advance, only the chosen rule does, and that's a tie.
+
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 

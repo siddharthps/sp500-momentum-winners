@@ -22,7 +22,7 @@ Each chapter has the same shape:
 | 4 | [Features](04_features.md) | Draft |
 | 5 | [Exploratory analysis](05_eda.md) | Draft |
 | 6 | [Modelling](06_modelling.md) | Draft (setup and results; preview numbers) |
-| 7 | [Trading simulation and results](07_simulation.md) | Draft (Part 1: the baseline rule) |
+| 7 | [Trading simulation and results](07_simulation.md) | Draft (Parts 1–2: the baseline rule, the models traded) |
 | 8 | Automation | To do |
 | 9 | Limitations, lessons and next steps | To do |
 
