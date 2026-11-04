@@ -18,7 +18,11 @@ import os
 import re
 
 from loguru import logger
-from nbconvert.preprocessors import ClearMetadataPreprocessor, ExecutePreprocessor
+from nbconvert.preprocessors import (
+    ClearMetadataPreprocessor,
+    CoalesceStreamsPreprocessor,
+    ExecutePreprocessor,
+)
 import nbformat
 import typer
 
@@ -98,6 +102,9 @@ def run(prefix: str = typer.Argument("", help="Only notebooks whose name starts 
         ExecutePreprocessor(timeout=1800, kernel_name="python3").preprocess(
             nb, {"metadata": {"path": str(NOTEBOOKS_DIR)}}
         )
+        # The kernel may split one print into several stream chunks, differently each run;
+        # merging them keeps the stored outputs (and their diffs) identical for identical results.
+        CoalesceStreamsPreprocessor().preprocess(nb, {})
         ClearMetadataPreprocessor(
             preserve_nb_metadata_mask={("kernelspec",), ("language_info", "name")}
         ).preprocess(nb, {})

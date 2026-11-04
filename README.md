@@ -13,8 +13,8 @@ results are backtested against SPY. The test uses **point-in-time membership** (
 *on each date*), including companies that were later acquired, failed or dropped, so the results
 aren't flattered by survivorship bias.
 
-> Status: data, the monthly table, the features, the exploratory analysis and the baseline rule grid
-> are done; the models are next. The
+> Status: data, the monthly table, the features, the exploratory analysis, the baseline rule grid
+> and the model setup (folds, preparation) are done; training the models is next. The
 > Alpha Vantage download of delisted companies runs until ~12–14 Nov 2026. Progress is tracked in
 > [issues](https://github.com/siddharthps/sp500-momentum-winners/issues), by
 > [milestone](https://github.com/siddharthps/sp500-momentum-winners/milestones), and on the
@@ -168,7 +168,8 @@ or deleting `main` are blocked.
     ├── plots.py       <- Chart style (validated palette) and the charts
     ├── run_notebooks.py <- Executes the notebooks in a fresh kernel and checks their outputs
     ├── nb.py          <- Notebook setup (output caps, quiet logs, chart style) and the output rules
-    └── modeling/      <- train.py, predict.py (to do)
+    └── modeling/      <- prep.py: feature matrix, targets, time blocks with gaps, CV folds,
+                          in-fold preparation; train.py, predict.py (to do)
 ```
 
 ## Acknowledgements

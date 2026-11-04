@@ -106,7 +106,9 @@ def simulate(
         if new:
             target = {t: 1 / len(new) for t in new}
             old = slots[s] or {}
-            turnover = sum(abs(target.get(t, 0) - old.get(t, 0)) for t in set(target) | set(old))
+            # sorted: a set's order changes between runs, and so would the last digit of the sum
+            names = sorted(set(target) | set(old))
+            turnover = sum(abs(target.get(t, 0) - old.get(t, 0)) for t in names)
             paid[s] = cost * turnover
             slots[s] = target
         gross, net, fees = [], [], []
