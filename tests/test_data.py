@@ -308,6 +308,81 @@ def test_suspect_tickers_only_counts_member_months():
     assert out.index.tolist() == ["JUNK"]
 
 
+def _queue(tickers, removed="2020-06-30"):
+    return pd.DataFrame(
+        {
+            "ticker": tickers,
+            "name": [f"{t} Inc" for t in tickers],
+            "reason_cat": "acquired",
+            "removed_date": pd.Timestamp(removed),
+            "yahoo_ok": False,
+        }
+    )
+
+
+def _av_file(folder, ticker, start="2010-01-31", end="2020-06-30"):
+    ts = pd.date_range(start, end, freq="ME")
+    pd.DataFrame({"timestamp": ts, "adjusted close": range(len(ts))}).to_csv(
+        folder / f"{ticker}.csv", index=False
+    )
+
+
+def test_recover_from_disk_validates_files_the_manifest_missed(tmp_path):
+    _av_file(tmp_path, "OK1")
+    _av_file(tmp_path, "REUSED", start="2022-01-31", end="2024-01-31")  # after its removal
+    rows = av.recover_from_disk(_queue(["OK1", "NOFILE", "REUSED"]), tmp_path)
+    assert [(r["ticker"], r["status"]) for r in rows] == [
+        ("OK1", "ok"),
+        ("REUSED", "reused_ticker"),
+    ]
+    assert rows[0]["av_months"] == 126
+
+
+def _patch_av(monkeypatch, tmp_path, queue):
+    from sp500_momentum import dataset
+
+    monkeypatch.setattr(dataset, "AV_MANIFEST", tmp_path / "_manifest.csv")
+    monkeypatch.setattr(dataset, "AV_MONTHLY_DIR", tmp_path)
+    monkeypatch.setattr(dataset, "AV_SLEEP_SECONDS", 0)
+    monkeypatch.setattr(dataset, "_coverage_for_av", lambda: queue)
+    monkeypatch.setattr(dataset, "av_status", lambda: None)
+    monkeypatch.setattr(av, "api_key", lambda: "test-key")
+    return dataset
+
+
+def test_av_pull_records_each_ticker_so_a_killed_run_keeps_its_work(tmp_path, monkeypatch):
+    dataset = _patch_av(monkeypatch, tmp_path, _queue(["A", "B", "C"]))
+    calls = []
+
+    def fake_fetch(symbol, key):
+        calls.append(symbol)
+        if len(calls) == 2:
+            raise KeyboardInterrupt  # the run is killed during the second call
+        ts = pd.date_range("2010-01-31", "2020-06-30", freq="ME")
+        return pd.DataFrame({"timestamp": ts, "adjusted close": 1.0})
+
+    monkeypatch.setattr(av, "fetch_monthly_adjusted", fake_fetch)
+    with pytest.raises(KeyboardInterrupt):
+        dataset.av_pull(max_calls=3)
+    manifest = pd.read_csv(tmp_path / "_manifest.csv")
+    assert manifest["ticker"].tolist() == ["A"]  # recorded before the kill
+    assert manifest["status"].tolist() == ["ok"]
+
+
+def test_av_pull_with_zero_calls_recovers_files_without_calling(tmp_path, monkeypatch):
+    dataset = _patch_av(monkeypatch, tmp_path, _queue(["A", "B"]))
+    _av_file(tmp_path, "A")
+
+    def no_calls(symbol, key):
+        raise AssertionError("no API call expected")
+
+    monkeypatch.setattr(av, "fetch_monthly_adjusted", no_calls)
+    dataset.av_pull(max_calls=0)
+    manifest = pd.read_csv(tmp_path / "_manifest.csv")
+    assert manifest["ticker"].tolist() == ["A"]
+    assert av.build_queue(_queue(["A", "B"]), manifest)["ticker"].tolist() == ["B"]
+
+
 def test_coverage_for_av_treats_suspects_as_missing(tmp_path, monkeypatch):
     from sp500_momentum import dataset
 

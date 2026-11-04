@@ -187,46 +187,48 @@ def av_pull(max_calls: int = AV_DAILY_BUDGET):
     cov = _coverage_for_av()
     manifest = _read_manifest()
     queue = av.build_queue(cov, manifest)
+    # Files saved by a run that was killed before recording them: add them without a call.
+    recovered = av.recover_from_disk(queue, AV_MONTHLY_DIR)
+    if recovered:
+        manifest = _append_manifest(manifest, recovered)
+        logger.success(
+            f"Recovered {len(recovered)} files already on disk into the manifest: "
+            f"{', '.join(r['ticker'] for r in recovered)}"
+        )
+        queue = av.build_queue(cov, manifest)
     if queue.empty:
         logger.success("Queue is empty: every missing ticker has been tried.")
         return
     logger.info(f"{len(queue)} tickers left in the queue; pulling up to {max_calls} now")
+    if max_calls <= 0:
+        av_status()
+        return
     key = av.api_key()
     AV_MONTHLY_DIR.mkdir(parents=True, exist_ok=True)
-    rows = []
     try:
         for _, r in queue.head(max_calls).iterrows():
             df = av.fetch_monthly_adjusted(r["ticker"], key)
-            status = av.validate(df, r["removed_date"])
             if df is not None:
                 df.to_csv(AV_MONTHLY_DIR / f"{r['ticker']}.csv", index=False)
-            rows.append(
-                {
-                    "ticker": r["ticker"],
-                    "name": r["name"],
-                    "reason_cat": r["reason_cat"],
-                    "removed_date": r["removed_date"],
-                    "status": status,
-                    "av_months": 0 if df is None else len(df),
-                    "av_first": None if df is None else df["timestamp"].min(),
-                    "av_last": None if df is None else df["timestamp"].max(),
-                    "fetched_at": pd.Timestamp.now().floor("s"),
-                }
-            )
-            logger.info(f"{r['ticker']:6s} {r['reason_cat']:15s} -> {status}")
+            row = av.manifest_row(r, df, pd.Timestamp.now())
+            # Recorded straight away, so a killed run loses at most the call in flight.
+            manifest = _append_manifest(manifest, [row])
+            logger.info(f"{r['ticker']:6s} {r['reason_cat']:15s} -> {row['status']}")
             time.sleep(AV_SLEEP_SECONDS)
     except av.QuotaExhausted as e:
         # Alpha Vantage's quota message quotes the API key; don't write it to the log.
         msg = str(e).replace(key, "***")
         logger.warning(f"Alpha Vantage quota reached, stopping for today: {msg}")
-    finally:
-        if rows:
-            new = pd.DataFrame(rows)
-            out = new if manifest.empty else pd.concat([manifest, new], ignore_index=True)
-            AV_MANIFEST.parent.mkdir(parents=True, exist_ok=True)
-            out.to_csv(AV_MANIFEST, index=False)
-            logger.success(f"Saved {len(new)} results to the manifest ({len(out)} total)")
     av_status()
+
+
+def _append_manifest(manifest: pd.DataFrame, rows: list[dict]) -> pd.DataFrame:
+    """Add rows to the manifest and write it to disk at once."""
+    new = pd.DataFrame(rows)
+    out = new if manifest.empty else pd.concat([manifest, new], ignore_index=True)
+    AV_MANIFEST.parent.mkdir(parents=True, exist_ok=True)
+    out.to_csv(AV_MANIFEST, index=False)
+    return out
 
 
 @app.command("av-status")

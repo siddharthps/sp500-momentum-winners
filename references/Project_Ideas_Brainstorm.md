@@ -898,6 +898,42 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - two charts (a Sharpe-vs-SPY heatmap using the validated blue↔red diverging pair, and growth of $1 for the chosen rule with the test-window line).
   - Growth-chart end labels are now nudged further apart (they touched).
 - **Docs:** Chapter 7 drafted (Part 1). Also updated: the index, the README (status, pipeline step 5, a rerun row, the notebook table, the tree) and `decisions.md`.
+- **Merged** as PR #28 (`a7e7bc4`). Milestone 6 closed.
+
+### Session 15 — Tuesday, 3 Nov 2026 (step back: course features, review of the steps so far; the 21:00 run)
+
+- **Your question: model now, or wait for the full data?**
+  - Measured rather than guessed: one fit on the 64,960 training rows × 147 features takes 0.9 s (LogReg), 4 s (tree), 5.5 s (histogram boosting, standing in for XGBoost) and 10.6 s (RF, 300 trees). Full tuning is about 30–45 min for all four.
+  - The missing data is almost all in the training years: 13,350 member-months missing in 2010–22, but only 107 in 2023–26.
+  - **Recommendation:** build the pipeline now, keep tuning automatic, and draw no conclusions until #20.
+- **Recap of the 14 steps so far**, at your request.
+- **Course features (Weeks 1–4) vs ours.**
+  - Nearly everything is in already, adapted to monthly bars.
+  - Rejected on purpose:
+    - candle patterns (A6);
+    - non-US markets (A5);
+    - weekday, week-of-month and ticker dummies;
+    - **the split flag**: Alpha Vantage's monthly files have no split column, so it would be blank exactly for the delisted names (a source leak).
+  - Worth adding from the course: dividend yield (both sources have dividends, checked), risk-adjusted momentum, months in the index, drawdown from the all-time high.
+  - New, from research: residual momentum, idiosyncratic volatility, the maximum monthly return (lottery), same-month seasonality.
+- **Decisions (one at a time, each the recommended option):**
+  1. **The 8 features plus dropping 3 exact ROC copies get their own issue before #12** (#29, milestone 7). 147 → 152.
+  2. **Sector labels** are today's GICS applied back to 2010 (Communication Services only exists from Sept 2018, Real Estate from Sept 2016). **Documented as a caveat** (no free point-in-time GICS).
+  3. **Huge one-month moves** (`price_flags.csv`) get **reviewed by eye in #20**, once the list is final. Added as a box on #20.
+  4. **Blank values in the models:** XGBoost keeps NaN; Tree, RF and LogReg get the training-fold median plus a "was missing" flag, fitted inside each CV fold, never 0-filled. Written into #12's checklist.
+- **Your request: every decision through the question prompt, one at a time, recommended first.** I'd drifted into a prose question at the end of a long answer. Now explicit in `CLAUDE.local.md` and in memory.
+- **I got the time wrong.** I said "about 18:35" without checking; it was 21:19. Check the clock before quoting it.
+- **The 21:00 Alpha Vantage run was killed halfway** (result `0xC000013A`, which means Ctrl+C or the console closing; likely a console window in the interactive session being closed).
+  - It had saved 6 files (MRO, PXD, ATVI, ABMD, TWTR, NLSN) between 21:00:02 and 21:00:13, but `av-pull` wrote the manifest only at the end, and a hard kill skips that.
+  - So the queue didn't know about the 6, and the next run would have spent 6 of its 23 calls fetching them again.
+  - **You picked "only recover the 6" by mistake** and asked for the choices again with more detail. Re-chosen: **both fixes, own issue (#30)**.
+- **#30 fix:**
+  - The manifest is written after every ticker.
+  - On start, files on disk that the manifest lacks are added, validated with the same `validate()` and the file's save time, with no API calls.
+  - `--max-calls 0` now runs only that recovery.
+  - 3 new tests, including a run killed mid-call that keeps its first ticker. 53 pass.
+  - **Recovered with zero calls through the task's own script:** all 6 are `ok`, each ending within days of its removal date. Tried 23, left 192.
+- **Rebuild check with the new data:** priced rows 86.7% → 87.4%, and all 3 notebooks pass. The committed notebooks were left unchanged; refreshing the numbers is a separate PR.
 - *(The discussion continues below.)*
 
 ---
@@ -920,6 +956,8 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 | 2 Nov 2026 | **Hold periods:** rule baseline X = 1, 3, 6, 12 months over the full 2010–2026 period, as a look-back × hold grid with staggered portfolios, ~10 bps per side and top 1/5/10. **ML model: 1 month only**, with the time split. **24 months dropped** | The rule fits nothing, so it can use every month. A ~4-year test set leaves only ~2 independent 12-month periods for ML. 24 months is past the momentum range and needs long gaps |
 | 2 Nov 2026 | **Project plan (20 small decisions, Session 5):** month-end rows; split 2010–19 / 2020–22 / 2023–26; build now, rerun after the AV pull; class FRED set + VIX, lagged; US-focused markets; TA-Lib indicators (no candle patterns); ~20 own features; sectors filled in by hand; target `is_beat_spy_1m`; Tree + RF + LogReg + XGBoost; time-series CV, test once; score = precision of the top-N picks; top 1/5/10 (headline 10); SPY + equal-weight benchmarks; vector + exact simulation; SPY > 200-day filter; notebooks per class week + `00_run_all`; Hugging Face data; monthly scheduled run; extras after the core | Mirrors the class's flow (Weeks 1–4) and the rubric's points. Fixes the class's caveats: look-ahead in macro, tuning on test, no benchmark |
 | 3 Nov 2026 | **Baseline grid:** 60 rules reported; staggered slots; 10 bps per side on the traded weight; Sharpe net of Fed Funds; the best rule **chosen on 2010–22 and followed through the test years**; a price file beyond membership. The split is unchanged (~60/18/22; ~78/22 with CV) | Every try shown, so luck can be judged. Costs and staggering make it tradable. Choosing on the same years you check is circular. One test window for every strategy |
+| 3 Nov 2026 | **Feature review:** 8 new features, 3 exact copies dropped (#29, before #12); no split flag; sector labels as a caveat; flagged moves reviewed in #20; NaN-aware blanks in #12 | New information, not more columns. A field missing for one source leaks survival. Settled one at a time, all as recommended |
+| 3 Nov 2026 | **AV pull survives a kill (#30):** the manifest is written per ticker, and saved files are recovered from disk | A killed run had left 6 files unrecorded, which would have cost 6 scarce calls to fetch again |
 | 2 Nov 2026 | **Monthly table repairs:** date-windowed `RENAMES`, `MISSING_ADDS`, ticker cleaning, and a $10M median dollar-volume check that drops yfinance series belonging to another security (those go to the AV queue) | Wikipedia misses renames, so stocks counted as members too early (META from 2010). Tickers get reused (Q, UA, SUN), so a flat alias map gives wrong prices |
 
 ### Parking lot (ideas to keep but not pursue now)
