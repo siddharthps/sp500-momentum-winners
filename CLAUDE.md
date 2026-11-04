@@ -65,6 +65,14 @@ step's chapter are written; the issue's "Done when" boxes are ticked; the PR is 
 - **Results:**
   - Label every result a *preview* until the AV pull is finished.
   - Never choose settings by looking at the test period (2023–26). Tune with time-series CV inside 2010–22.
+  - **One test window for every strategy.** Rules and models are chosen on 2010–22 only and scored on
+    `SPLIT["test"]` (2023 on). Any cut-off or check window comes from `SPLIT`, never a new date.
+  - **Judge a method by its reasoning, never by its result.** Fix splits, cut-offs and metrics before
+    looking at outcomes. Never change one because the conclusion would look better (a 2022 cut made the
+    baseline win on Sharpe; the agreed 2023 cut makes it lose).
+- **Backtests:** a held stock can leave the index, so simulate from `MONTHLY_PRICES` (every price
+  series), not from the member panel. Any new simulation must reproduce the table's `fwd_ret_1m` with a
+  1-month hold and no costs before its results are trusted.
 - **Rebuild order:** after new raw data (the AV pull, any download), rerun `monthly build` before
   anything downstream.
 - **Secrets:** never print, log or commit the Alpha Vantage key or `.env`.
@@ -82,7 +90,8 @@ step's chapter are written; the issue's "Done when" boxes are ticked; the PR is 
   with the skill's validator; Node is at `C:\Program Files\nodejs\node.exe`), one y-axis, and every
   chart gets looked at before it ships.
 - **Editing on Windows:** change code with the Edit/Write tools. Shell heredocs with Python patches
-  break on `\n` inside strings (this happened 3 times).
+  break on `\n` inside strings (this happened 3 times). Never name a scratch script after a standard
+  module (`numbers.py` broke numpy's import).
 - Raw data in `data/raw/` is never edited by hand.
 
 ## Commands
@@ -95,6 +104,7 @@ uv run python -m sp500_momentum.dataset membership | coverage | yahoo-daily | fr
 uv run python -m sp500_momentum.monthly build
 uv run python -m sp500_momentum.features build     # after monthly build
 uv run python -m sp500_momentum.run_notebooks run  # after features build; refreshes figures
+uv run python -m sp500_momentum.run_notebooks run 04  # just one notebook (04: the rule grid, ~1 min)
 ```
 
 ## Conventions

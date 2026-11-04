@@ -13,8 +13,8 @@ results are backtested against SPY. The test uses **point-in-time membership** (
 *on each date*), including companies that were later acquired, failed or dropped, so the results
 aren't flattered by survivorship bias.
 
-> Status: data, the monthly table, the features and the exploratory analysis are done; the baseline
-> rule grid is next. The
+> Status: data, the monthly table, the features, the exploratory analysis and the baseline rule grid
+> are done; the models are next. The
 > Alpha Vantage download of delisted companies runs until ~12–14 Nov 2026. Progress is tracked in
 > [issues](https://github.com/siddharthps/sp500-momentum-winners/issues), by
 > [milestone](https://github.com/siddharthps/sp500-momentum-winners/milestones), and on the
@@ -47,7 +47,7 @@ ALPHAVANTAGE_API_KEY=your_key_here
 | 3. Daily prices | `uv run python -m sp500_momentum.dataset yahoo-daily` | yfinance: current members, removed members it covers, SPY, sector ETFs, VIX, Dow, gold, WTI (from 2000) | `data/raw/yahoo/` |
 | 3b. Macro | `uv run python -m sp500_momentum.dataset fred` | FRED: core CPI, Fed Funds, 1/5/10-year yields, potential GDP (from 2005) | `data/raw/fred/` |
 | 4. Delisted prices | `uv run python -m sp500_momentum.dataset av-pull` | Alpha Vantage (free tier, ~23 tickers/day, resumable) | `data/raw/alphavantage/` |
-| 5. Monthly table | `uv run python -m sp500_momentum.monthly build` | Steps 1–4 | `data/processed/monthly_panel.parquet` |
+| 5. Monthly table | `uv run python -m sp500_momentum.monthly build` | Steps 1–4 | `data/processed/monthly_panel.parquet`, plus every price series in `data/interim/monthly_prices.parquet` (for backtests) |
 | 6. Features | `uv run python -m sp500_momentum.features build` | Step 5 + monthly bars, FRED, `references/removed_sectors.csv` | `data/processed/features.parquet` (147 features in named sets) |
 | Progress | `uv run python -m sp500_momentum.dataset av-status` | | |
 
@@ -87,6 +87,7 @@ If something earlier changes, rerun from the first affected step, then everythin
 | Hold periods, the delisting cutoff or the targets (`monthly.py`) | `monthly build` → … |
 | A FRED series or its publication lag (`FRED_SERIES`) | `fred` → `features build` → … |
 | Sectors (`references/removed_sectors.csv`, `SECTOR_ETF`) or any feature (`features.py`) | `features build` → … |
+| The rule grid or its costs (`RULE_LOOKBACKS`, `RULE_TOP_NS`, `COST_PER_SIDE`, `RULE_CHECK_FROM`, `backtest.py`) | `run_notebooks run 04` |
 | Anything above, or the analysis or charts (`eda.py`, `plots.py`) | … → `run_notebooks run` (refreshes the notebooks and `reports/figures/`) |
 
 Raw files are never edited by hand, so every output can be rebuilt from the downloads.
@@ -101,6 +102,7 @@ the data:
 |---|---|
 | [`01_data`](notebooks/01_data.ipynb) | Membership, the survivorship gap, the Alpha Vantage progress, prices, FRED, the monthly table and the feature sets |
 | [`02_features_eda`](notebooks/02_features_eda.ipynb) | The target, each feature's signal (2010–2022 only), its stability, duplicates, market regimes, and a preview of the plain rule |
+| [`04_simulation`](notebooks/04_simulation.ipynb) | Backtests. Part 1: the baseline grid (60 rules: look-back × top N × hold, staggered, 10 bps a side) vs SPY and equal weight, and the best rule chosen on 2010–2022 and followed through the test years (2023 on). Takes about a minute |
 
 They're only ever run by this command, top to bottom in a fresh kernel, so the stored outputs always
 match the code. They show summaries, never raw tables (full results are saved under `reports/`).
@@ -144,7 +146,7 @@ or deleting `main` are blocked.
 │   ├── processed      <- Final modelling tables
 │   └── raw            <- Downloads, one folder per source (never edited by hand)
 ├── models             <- Trained models and predictions
-├── notebooks          <- 01_data, 02_features_eda (executed, with outputs); later 03, 04 and 00_run_all
+├── notebooks          <- 01_data, 02_features_eda, 04_simulation (executed, with outputs); later 03 and 00_run_all
 ├── references         <- Decision log, brainstorm and dated working journal
 ├── reports/figures    <- Generated charts
 ├── scripts            <- Task Scheduler setup and the daily Alpha Vantage run
@@ -161,6 +163,7 @@ or deleting `main` are blocked.
     ├── monthly.py     <- The monthly member table: prices, past and forward returns
     ├── features.py    <- Features from monthly bars (TA-Lib, risk, ranks, market, macro) and feature sets
     ├── eda.py         <- Exploratory analysis: summary tables, IC, stability, plain-rule preview
+    ├── backtest.py    <- `pred*` rule columns, staggered-portfolio simulation with costs, the rule grid
     ├── plots.py       <- Chart style (validated palette) and the charts
     ├── run_notebooks.py <- Executes the notebooks in a fresh kernel and checks their outputs
     ├── nb.py          <- Notebook setup (output caps, quiet logs, chart style) and the output rules

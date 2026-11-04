@@ -853,6 +853,51 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 - **Your request: keep the new rules in `CLAUDE.md` and `CLAUDE.local.md`.**
   - `CLAUDE.md`: "done means" now includes `run_notebooks run` passing its output checks, and there's a new working rule, **check every claim against the actual output before writing it** (from the wrong subtitle in this session).
   - `CLAUDE.local.md` is unchanged. It holds only personal preferences (commits, one question at a time, time zones, the commit email), and nothing new this session is personal.
+
+### Session 14 — Tuesday, 3 Nov 2026 (baseline rule grid, #11)
+
+- **Branch `11-baseline-grid`; #11 moved to In Progress.** The 21:00 Alpha Vantage run hadn't happened yet, so this was built on the same data as #10.
+- **New module, `backtest.py`, in the class's flow:**
+  - Each rule is a 0/1 `pred_mom_<look-back>_top<N>` column (15 of them).
+  - Any `pred*` column can be simulated, so the models will plug into the same code.
+  - Picks are the top N eligible members (priced, with a next-open price). Ties go to the alphabetically first ticker.
+- **Simulation:**
+  - Staggered slots: for an X-month hold, X slots, and one is refreshed each month. Each slot is buy-and-hold, and the slots are averaged monthly.
+  - 10 bps per side on the weight actually traded, so a stock kept from one month's picks to the next pays only the difference.
+  - Returns are labelled by the month earned (a January decision earns February).
+- **Trap found: held stocks leave the index.** The monthly table only has member months, but a 12-month slot keeps holding a stock after it's removed. So `monthly build` now also writes **every usable price series** (`monthly_prices.parquet`). Positions are valued at the next open, or at the last close in a series' final month, then held flat as cash.
+- **Bug fixed (latent):** once Alpha Vantage returns one of the six wrong-security tickers (CPWR, EP, ...), it would share a ticker with the bad yfinance file. Both series would have been merged in one return calculation, then both dropped. Now Alpha Vantage wins, and the liquidity check drops only the yfinance copy. It isn't hit yet; it would have broken the final rerun.
+- **Checks before trusting the numbers:**
+  - The hold-1 simulation reproduces the table's `fwd_ret_1m` exactly (max difference 3e-16).
+  - SPY's monthly returns match exactly.
+  - 11 new tests, including staggering by hand, costs only on what's traded, delisted names to cash, and a missing price failing loudly. **50 tests pass** with `-W error`.
+- **Two more traps:**
+  - `simulate` first stepped only through months with picks, so holdings after the last pick were never valued. A delisting test caught it; it now runs every month to the data end.
+  - A constant return series has a std of 6e-18, not 0, which gives an absurd Sharpe. Zero is now compared with a tolerance.
+- **Reading of the plan:** "best cell checked on 2022+" means **chosen on earlier returns only, then followed after**. Choosing on the full period and then "checking" a part of it would be circular. I first built it with a 2022 cut.
+- **Your follow-up: "train till 2022, test after", and is the split close to 70/15/15?**
+  - **The split stays.** In months it's about 60/18/22, not 70/15/15; with time-series CV over 2010–22 it's about 78/22, close to the usual 80/20. A 70/15/15 split would leave a ~30-month test, too few for a monthly strategy. The boundaries are calendar years set before any result.
+  - **The baseline cut moved to 2023** (`RULE_CHECK_FROM = SPLIT["test"][0]`), so rules and models are judged on the same untouched months.
+  - **Your rule: "don't change it because the conclusion might look better."** The move is on principle. The 2023 cut is in fact the less flattering one: with 2022 in the "after" window, SPY's bear year made the rule win on Sharpe (0.91 vs 0.54); from 2023 it loses (1.21 vs 1.29).
+- **Findings (preview):**
+  - SPY made 14.3% a year (Sharpe 0.88, worst fall −23%); equal-weight members 13.8% (0.79, −30%).
+  - **53 of 60 rules beat SPY on return, only 6 on Sharpe, and all 60 have a deeper worst fall.**
+  - The 6-month look-back is best on every median measure, and last month's alone is worst.
+  - Top 1 has a median worst fall of −56%.
+  - Costs are 1.4% a year with a 1-month hold and 0.2% with 12 months.
+  - The best rule (top 5 by 6-month return, held 6 months) made 28.2% a year with a Sharpe of 0.96. Its t-statistic vs SPY is 2.8; 11 rules clear 2 and none clears 3.
+  - **Chosen on 2010–22, it's the same rule** (Sharpe 0.89 vs SPY's 0.79).
+  - **In the test years (2023 on)** it made 60% a year vs SPY's 21% and ranked 4th of 60. But with 43% volatility vs 12% and a worst fall of −27% vs −8%, its **Sharpe is lower: 1.21 vs 1.29**.
+  - It was driven by NVDA, WDC, PLTR, STX, GEV and SNDK (picked at 9–14 month-ends each): an AI and memory-chip theme, not a broad edge.
+  - The best top-10 rule has a Sharpe of 0.90 vs SPY's 0.88: that's the bar for the models.
+  - The EDA preview's top-10 1-month rule (15.2% a year with no costs) makes 12.6% after costs (2.3% a year in costs).
+- **Claims checked against outputs:** one drafted line said the best rule's volatility "nearly tripled" (20.9% → 42.3% is a doubling). Fixed before it ran.
+- **Outputs:**
+  - `notebooks/04_simulation.ipynb` (Part 1; 155 KB, checks pass; the grid takes about a minute);
+  - `reports/baseline_grid_2010_2026.csv` (all 60 rules and the benchmarks);
+  - two charts (a Sharpe-vs-SPY heatmap using the validated blue↔red diverging pair, and growth of $1 for the chosen rule with the test-window line).
+  - Growth-chart end labels are now nudged further apart (they touched).
+- **Docs:** Chapter 7 drafted (Part 1). Also updated: the index, the README (status, pipeline step 5, a rerun row, the notebook table, the tree) and `decisions.md`.
 - *(The discussion continues below.)*
 
 ---
@@ -874,6 +919,7 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 | 2 Nov 2026 | **Delisted names: keep prices up to the month that contains the removal date, then stop.** An open position is valued at that last price, then held as cash. **No AV vs yfinance cross-check** | Removes the OTC penny-price noise (SBNY +3,102% in Dec 2023) without hiding the crash month. The prices compared so far all match |
 | 2 Nov 2026 | **Hold periods:** rule baseline X = 1, 3, 6, 12 months over the full 2010–2026 period, as a look-back × hold grid with staggered portfolios, ~10 bps per side and top 1/5/10. **ML model: 1 month only**, with the time split. **24 months dropped** | The rule fits nothing, so it can use every month. A ~4-year test set leaves only ~2 independent 12-month periods for ML. 24 months is past the momentum range and needs long gaps |
 | 2 Nov 2026 | **Project plan (20 small decisions, Session 5):** month-end rows; split 2010–19 / 2020–22 / 2023–26; build now, rerun after the AV pull; class FRED set + VIX, lagged; US-focused markets; TA-Lib indicators (no candle patterns); ~20 own features; sectors filled in by hand; target `is_beat_spy_1m`; Tree + RF + LogReg + XGBoost; time-series CV, test once; score = precision of the top-N picks; top 1/5/10 (headline 10); SPY + equal-weight benchmarks; vector + exact simulation; SPY > 200-day filter; notebooks per class week + `00_run_all`; Hugging Face data; monthly scheduled run; extras after the core | Mirrors the class's flow (Weeks 1–4) and the rubric's points. Fixes the class's caveats: look-ahead in macro, tuning on test, no benchmark |
+| 3 Nov 2026 | **Baseline grid:** 60 rules reported; staggered slots; 10 bps per side on the traded weight; Sharpe net of Fed Funds; the best rule **chosen on 2010–22 and followed through the test years**; a price file beyond membership. The split is unchanged (~60/18/22; ~78/22 with CV) | Every try shown, so luck can be judged. Costs and staggering make it tradable. Choosing on the same years you check is circular. One test window for every strategy |
 | 2 Nov 2026 | **Monthly table repairs:** date-windowed `RENAMES`, `MISSING_ADDS`, ticker cleaning, and a $10M median dollar-volume check that drops yfinance series belonging to another security (those go to the AV queue) | Wikipedia misses renames, so stocks counted as members too early (META from 2010). Tickers get reused (Q, UA, SUN), so a flat alias map gives wrong prices |
 
 ### Parking lot (ideas to keep but not pursue now)
