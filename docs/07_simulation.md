@@ -2,6 +2,8 @@
 
 > **Part 1** (sections 3.1–3.3): the baseline rule. **Part 2** (sections 3.4–3.7): the models from
 > Chapter 6, traded. **Part 3** (sections 3.8–3.11): the paths over time, and a market-trend filter.
+> **Part 4** (sections 3.12–3.15): why the model loses, what each strategy buys, and ideas for future
+> work.
 
 ## 1. Goal
 
@@ -253,6 +255,67 @@ lowers risk-adjusted returns. So the conclusion of Part 2 stands. The ML models 
 plain 6-month momentum rule. That rule earned far more than SPY in the test years, but through more
 risk and one market theme. **No strategy chosen in advance clearly beats SPY per unit of risk.**
 
+### 3.12 Part 4: why the model loses
+
+Part 4 compares the headline model with the 6-month rule, both buying the top 10 and holding one
+month, to see where each wins and loses. **It is descriptive only.** Cutting results many ways always
+finds some slice that looks good by chance, so nothing here is turned into a strategy or tested on
+these years. Every slice is averaged within each month first and then over months, because ten
+picks made in the same month move together. The margins of error come from that month-level spread.
+
+**What each strategy actually buys** (average percentile among that month's members; 50 = average):
+
+| | Volatility | Beta | Size | 6-month return | Last month's return |
+| --- | --- | --- | --- | --- | --- |
+| Headline model, 2020–2022 | 83 | 77 | 55 | **24** | **20** |
+| Headline model, test years | 90 | 67 | 54 | **20** | **33** |
+| 6-month rule, 2020–2022 | 79 | 70 | 70 | 99 | 74 |
+| 6-month rule, test years | 86 | 75 | 79 | 99 | 75 |
+
+![What each strategy buys](../reports/figures/diag_exposures.png)
+
+**The headline model isn't a momentum strategy. It buys volatile, beaten-down stocks**: in effect,
+a bet on rebounds. The 6-month rule buys the period's winners, which are also volatile but larger.
+
+### 3.13 The model's results follow the market
+
+![Where each strategy beats a random pick](../reports/figures/diag_regimes.png)
+
+- **In months when SPY fell, the model's picks beat SPY only 33% of the time on 2020–2022 and 39% in
+  the test years,** against 53% and 51% for all members. That's 20 and 13 points worse, about 3 and 2.6
+  standard errors, the only slices of the model clearly beyond noise. In SPY's up months its picks did
+  10 and 5 points better, which is within the noise. The down months cost more than the up months
+  earn: that's how a portfolio of volatile, beaten-down stocks behaves.
+- **The 6-month rule is a market bet too, but a winning one in the test years.** In SPY's up months
+  its picks beat the base rate by 13.5 points (3.3 standard errors); in down months they trailed by
+  6.5. Its edge in hit rate shows up in 6 of the 7 years; the model's in 3.
+- **The rule's test years are a technology bet.** 46% of its picks were technology stocks, against 14%
+  of members. The model leaned towards energy and financials on 2020–2022 (energy: 21% of its picks
+  against 5% of members), but no sector slice of the model is clearly beyond noise.
+
+### 3.14 Each strategy's typical mistake
+
+- **The model buys falling knives.** Its worst picks came at the end of February 2020, when it bought
+  beaten-down cruise and energy stocks just before the Covid crash. 16% of its picks left the index
+  within a year, against 2% of all members and under 1% of the rule's.
+- **The rule buys at the top of a run.** Its worst picks came in 2026, after enormous run-ups (one
+  stock had risen over 800% in six months). Several then did 30% or more worse than SPY in a single
+  month.
+
+### 3.15 Ideas for future work
+
+None of these was built or tested. There's no untouched data left here to test them on honestly,
+so each would need new months or a separate earlier period.
+
+1. **Take the market's direction out of the model.** Rank on returns after removing each stock's
+   market exposure, or choose within volatility bands, to see whether any stock-picking skill
+   remains once the bet on SPY rising is gone.
+2. **Give the model a risk-adjusted target** (excess return divided by volatility, or the rank within
+   the month), so the largest swings stop dominating its top picks.
+3. **Use the model to filter the rule rather than replace it:** drop the rule's candidates the model
+   scores worst, to test whether it has learned what precedes a collapse.
+4. **Cap the rule's sector weights,** so its result depends less on one theme.
+
 ---
 
 ## 4. Decisions and why
@@ -277,6 +340,9 @@ risk and one market theme. **No strategy chosen in advance clearly beats SPY per
 | "Out" sells the whole portfolio | That's what the filter means: out of the market. Only stopping new buys would take six months to get out of a six-month hold |
 | Every strategy filtered, but only the average effect and the pre-declared ones reported | An average over many strategies is hard to fool; picking the best filtered one would be choosing on the results |
 | Strategies compared only on months they share | A line starting ten years earlier would look better from compounding alone |
+| The diagnosis is descriptive; ideas are written as hypotheses, not tested | Building the best-looking slice into a strategy and testing it on the same years would be choosing on the test |
+| Margins of error across months, not picks | Picks in the same month move together; counting them separately would overstate the certainty |
+| Calendar months not broken down | Six or seven observations per month: almost pure noise |
 
 ---
 

@@ -314,6 +314,25 @@ a stock is the month's top gainer.
   - It shortened long falls (the headline's 2020–22 worst fall: −55% → −28%), but deepened the rules' worst falls since 2010.
   - **The filter is not adopted.**
 
+**Deeper analysis of the predictions (4 Nov, #16), settled one question at a time, all as recommended**
+
+- **Descriptive only.** Every breakdown shows its sample size and a margin of error. Improvement ideas are written up as hypotheses with their reasoning, and are not built or tested on the test years (no untouched data is left to test them honestly).
+- **Strategies:** the headline model and the 6-month rule, both top 10, held 1 month, main version (equal weight, no buffer). Like for like.
+- **Breakdowns:**
+  - regime: SPY above/below its 10-month average, VIX above/below its 2010–22 median (fixed in advance), and SPY's up vs down months;
+  - sector;
+  - year.
+
+  Calendar month is left out (6–7 observations each). Always included: the wrong picks, and what the picks look like against the average member (within-month percentiles of volatility, size, beta and past return).
+- **Margins of error are computed across months, not picks:** ten picks in one month move together, so counting them as ten independent tries would overstate the certainty.
+- **Periods:** 2020–22 and the test years, separately.
+- **A new notebook, `06_diagnostics`**; chapter 7 Part 4.
+- **Findings (preview):**
+  - The headline model buys volatile, beaten-down stocks (volatility in the 83rd–90th percentile, 6-month return in the 20th–24th): a rebound bet, not momentum.
+  - In SPY's down months its picks beat SPY 33% / 39% of the time vs 53% / 51% for all members (about −3 and −2.6 standard errors). 16% of its picks left the index within a year (2% of members).
+  - The 6-month rule is a winning market bet in the test years (+13.5 points in up months), with 46% of its picks in technology.
+- **Hypotheses, not tested:** remove market exposure; a risk-adjusted target; the model as a filter on the rule; sector caps on the rule.
+
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 

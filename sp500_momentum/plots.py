@@ -593,6 +593,108 @@ def paths_chart(
     return fig
 
 
+def exposure_chart(table: pd.DataFrame, names: dict[str, str], title: str, subtitle: str):
+    """Average within-month percentile of each exposure among each strategy's picks, one panel
+    per period (rows: exposures; one bar per strategy). 50 = the average member (line)."""
+    periods = list(dict.fromkeys(table.index.get_level_values("period")))
+    fig, axes = plt.subplots(
+        1, len(periods), figsize=(11, 0.55 * table.shape[1] + 2.0), sharey=True, squeeze=False
+    )
+    y = np.arange(table.shape[1])
+    h = 0.8 / len(names)
+    for ax, period in zip(axes[0], periods):
+        for i, (s, label) in enumerate(names.items()):
+            v = table.loc[(period, s)].to_numpy()
+            ax.barh(
+                y + (len(names) - 1 - i) * h - 0.4 + h / 2,
+                v,
+                height=h * 0.9,
+                color=SLOTS[i],
+                label=label,
+            )
+            for yy, vv in zip(y + (len(names) - 1 - i) * h - 0.4 + h / 2, v):
+                ax.annotate(
+                    f"{vv:.0f}",
+                    (vv, yy),
+                    xytext=(3, 0),
+                    textcoords="offset points",
+                    va="center",
+                    fontsize=8,
+                    color=INK,
+                )
+        ax.axvline(50, color=INK_2, linewidth=1, linestyle="--")
+        ax.set_xlim(0, 105)
+        ax.set_yticks(y, table.columns)
+        ax.invert_yaxis()
+        ax.set_xlabel("percentile among that month's members (dashed: the average member)")
+        ax.set_title(period, fontsize=10, pad=6, loc="left")
+        ax.grid(axis="y", visible=False)
+    fig.legend(
+        *axes[0][0].get_legend_handles_labels(),
+        loc="lower center",
+        ncol=len(names),
+        fontsize=8.5,
+        frameon=False,
+    )
+    fig.suptitle(title, x=0.01, ha="left", fontsize=12, fontweight="bold")
+    fig.text(0.01, 0.9, subtitle, ha="left", color=INK_2, fontsize=9)
+    fig.tight_layout(rect=(0, 0.06, 1, 0.88))
+    return fig
+
+
+def lift_chart(tables: dict[str, pd.DataFrame], names: dict[str, str], title: str, subtitle: str):
+    """Hit rate minus the base rate, with a 95% margin (±1.96 month-level standard errors), per
+    slice and strategy; one panel per period. `tables`: {strategy: slice_table output}."""
+    first = next(iter(tables.values()))
+    periods = list(dict.fromkeys(first.index.get_level_values(0)))
+    slices = list(dict.fromkeys(first.index.get_level_values(1)))
+    fig, axes = plt.subplots(
+        1,
+        len(periods),
+        figsize=(11, 0.5 * len(slices) + 2.0),
+        sharey=True,
+        sharex=True,
+        squeeze=False,
+    )
+    y = np.arange(len(slices))
+    off = np.linspace(-0.15, 0.15, len(tables))
+    for ax, period in zip(axes[0], periods):
+        for i, (s, t) in enumerate(tables.items()):
+            sub = t.loc[period].reindex(slices)
+            ax.errorbar(
+                sub["lift"] * 100,
+                y + off[i],
+                xerr=1.96 * sub["hit_se"] * 100,
+                fmt="o",
+                color=SLOTS[i],
+                ecolor=SLOTS[i],
+                elinewidth=1.2,
+                capsize=0,
+                markersize=5,
+                label=names[s],
+            )
+        ax.axvline(0, color=INK_2, linewidth=1)
+        ax.set_yticks(y, slices)
+        ax.invert_yaxis()
+        ax.xaxis.set_major_formatter(
+            mpl.ticker.FuncFormatter(lambda v, _: f"{v:+.0f} pts" if round(v) else "0")
+        )
+        ax.set_xlabel("share of picks beating SPY minus all members' share (95% margin)")
+        ax.set_title(period, fontsize=10, pad=6, loc="left")
+        ax.grid(axis="y", visible=False)
+    fig.legend(
+        *axes[0][0].get_legend_handles_labels(),
+        loc="lower center",
+        ncol=len(tables),
+        fontsize=8.5,
+        frameon=False,
+    )
+    fig.suptitle(title, x=0.01, ha="left", fontsize=12, fontweight="bold")
+    fig.text(0.01, 0.9, subtitle, ha="left", color=INK_2, fontsize=9)
+    fig.tight_layout(rect=(0, 0.06, 1, 0.88))
+    return fig
+
+
 def cell_label(lookback: str, top_n: int, hold: int) -> str:
     """'Top 5 by 6-month return, held 6 months'."""
     lb = LOOKBACK_LABELS[lookback].replace(" months", "-month").replace(" month", "-month")
