@@ -28,6 +28,10 @@ step's chapter are written; the issue's "Done when" boxes are ticked; the PR is 
   - Tick the issue's "Done when" boxes as items are finished, and set its board status (Todo → In
     Progress → Done).
   - Open a PR whose body says `Closes #<issue>`, and squash-merge it once CI is green.
+    **Wait for CI by PR number in its own step** (right after `gh pr create`, `gh pr checks
+    --watch` returns "no checks" at once), and set the board to Done only once the PR is MERGED.
+  - GitHub's API sometimes errors mid-batch (GraphQL errors, 502). A failed write may still have
+    happened: list the actual state before retrying, so nothing is duplicated.
   - **`main` is protected** (ruleset "Protect main"): a PR is required, the CI check `checks` must pass
     on an up-to-date branch, and force-pushes, deletion and bypasses are blocked. Merged branches are
     deleted automatically. If a push to `main` is rejected (GH013), that's the ruleset working.
@@ -91,6 +95,10 @@ step's chapter are written; the issue's "Done when" boxes are ticked; the PR is 
   the main version only (its best 2020–22 version was its worst on the test).
 - **Rebuild order:** after new raw data (the AV pull, any download), rerun `monthly build` before
   anything downstream.
+- **Until #20, `data/` is newer than the notebooks.** The monthly run (5 Nov) rebuilt `data/` with
+  more delisted names and Kenvue's sector, while notebooks 01–06 and the chapters show the 4 Nov
+  snapshot (agreed). Don't rerun notebooks or retrain before #20: the numbers would drift from the
+  book. #20 reruns everything once on the complete data.
 - **Secrets:** never print, log or commit the Alpha Vantage key, the Telegram or Hugging Face
   tokens, or `.env`. Verify a token by asking its service who it belongs to, never by printing it.
   Request errors can carry the token in their URL: report them by type only.
@@ -140,7 +148,11 @@ uv run python -m sp500_momentum.dataset membership | coverage | yahoo-daily | fr
 uv run python -m sp500_momentum.monthly build
 uv run python -m sp500_momentum.features build     # after monthly build
 uv run python -m sp500_momentum.modeling.train run # after features build; ~1¾ h (--n-iter 1: smoke run)
-uv run python -m sp500_momentum.modeling.predict run  # the monthly run (~2 min; --no-download, --force)
+uv run python -m sp500_momentum.modeling.predict run  # the monthly run (~2 min; --no-download, --force,
+                                                      # --from-file, --dry-run-notify, --no-publish)
+uv run python -m sp500_momentum.hub push --target private|public|both [--tag X] | pull   # HF datasets
+uv run python -m sp500_momentum.notify test [--dry-run] | find-chats                    # Telegram
+uv run streamlit run dashboard/app.py               # the dashboard locally (live: sp500-momentum-winners.streamlit.app)
 uv run python -m sp500_momentum.run_notebooks run  # after features build (and train); refreshes figures
 uv run python -m sp500_momentum.run_notebooks run 04  # just one notebook (04: rule grid + model strategies, ~2 min)
 ```
