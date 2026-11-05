@@ -93,7 +93,9 @@ step's chapter are written; the issue's "Done when" boxes are ticked; the PR is 
     and applies the chart style.
   - **Show summaries, never raw data:** aggregates, rates, `.head(n)`. Full results go to files in
     `reports/`. One table or chart per question, each with a sentence saying what it shows.
-  - Keep logic in the package (`eda.py`, `plots.py`), not in cells.
+  - Keep logic in the package (`eda.py`, `backtest.py`, `diagnostics.py`, `plots.py`), not in cells.
+  - Breakdowns (by sector, regime, year) are descriptive: margins of error across months, never
+    turned into a strategy tested on the same years.
   - Feature analysis uses decisions up to `RESEARCH_END` only.
   - **The runner fails** on: a cell output over 50 lines; anything on stderr; a local path, e-mail or
     the AV key in any output; a notebook over 300 KB. Fix the cause, never loosen the check.

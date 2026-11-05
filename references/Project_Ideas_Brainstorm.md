@@ -1122,6 +1122,39 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - the index row; README (status, notebook 05, rerun row);
   - CLAUDE.md (palette PNGs and date locators);
   - `decisions.md`.
+- **Shipped:** PR #36, squash-merged with CI green. #15 is Done.
+
+### Session 21 — Wednesday, 4 Nov 2026, late evening (the 21:00 AV run; diagnosis of the picks, #16)
+
+- **The 21:00 AV run** (the console window you saw was the task, closing itself after about 75 s): result 0.
+  - 20 tickers ok and 3 rejected as `reused_ticker` (DISCA, INFO, STI); 46 tried, 169 left, about 8 more nights (~12 Nov).
+  - DISCA became Warner Bros. Discovery (WBD), so it's a possible rename repair; to check in #20.
+  - No rebuild: every number stays a preview until the queue is empty.
+- **#16 talked through:** a diagnosis, not a new strategy. The danger is slicing until something looks good.
+- **Decisions, one prompt each, all as recommended:**
+  1. descriptive only, with ideas as hypotheses;
+  2. the headline model and the 6-month rule (top 10, 1 month, main version);
+  3. breakdowns by regime, sector and year (calendar month left out);
+  4. a new notebook `06_diagnostics`.
+
+  My own method choice: margins of error across months, not picks.
+- **Built:** `sp500_momentum/diagnostics.py`:
+  - `universe` (eligible member-months with within-month exposure percentiles, period, left-the-index flag);
+  - `mark_picks`, `regimes`, `slice_table` (month-level SEs), `exposures`, `sector_mix`, `left_index`, `worst_picks`;
+  - `plots.exposure_chart` and `plots.lift_chart`;
+  - 4 tests (97 pass).
+- **Findings (preview):**
+  - The model buys volatile, beaten-down stocks.
+  - In SPY's down months its picks did 20 / 13 points worse than all members (the only clear slices).
+  - 16% of its picks left the index within a year.
+  - The rule wins in up months (+13.5 points in the test years) and was 46% technology in the test years.
+  - The worst picks: the model bought cruise and energy stocks in Feb 2020; the rule bought after +800% run-ups in 2026.
+- **Claims checked:**
+  - "the only slices beyond noise" was true for the model's slices only, so it was narrowed;
+  - "fell 30–40%" became "30% or more" (the worst was over 41%);
+  - an uncomputed "three times overstated" was removed from the chapter.
+- **Charts:** the regime chart's panels now share an x-axis, so a point means the same in both; "0" replaces "+0 pts".
+- **Docs:** chapter 7 Part 4 (3.12–3.15, three decisions), the index row, README (status, notebook 06, rerun row, module tree), and `decisions.md`.
 
 ---
 
@@ -1144,6 +1177,7 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 | 2 Nov 2026 | **Project plan (20 small decisions, Session 5):** month-end rows; split 2010–19 / 2020–22 / 2023–26; build now, rerun after the AV pull; class FRED set + VIX, lagged; US-focused markets; TA-Lib indicators (no candle patterns); ~20 own features; sectors filled in by hand; target `is_beat_spy_1m`; Tree + RF + LogReg + XGBoost; time-series CV, test once; score = precision of the top-N picks; top 1/5/10 (headline 10); SPY + equal-weight benchmarks; vector + exact simulation; SPY > 200-day filter; notebooks per class week + `00_run_all`; Hugging Face data; monthly scheduled run; extras after the core | Mirrors the class's flow (Weeks 1–4) and the rubric's points. Fixes the class's caveats: look-ahead in macro, tuning on test, no benchmark |
 | 3 Nov 2026 | **Baseline grid:** 60 rules reported; staggered slots; 10 bps per side on the traded weight; Sharpe net of Fed Funds; the best rule **chosen on 2010–22 and followed through the test years**; a price file beyond membership. The split is unchanged (~60/18/22; ~78/22 with CV) | Every try shown, so luck can be judged. Costs and staggering make it tradable. Choosing on the same years you check is circular. One test window for every strategy |
 | 4 Nov 2026 | **Model setup:** CV folds score 2014–19 and 2020–22 is held out (A); 8 candidates (plan's 4 + XGBoost ranker, excess-return regressor, MLP, and an average); a percentile-feature switch; decile ranker label; clipped Huber regressor; in-fold preparation per model family | Fair, leak-free comparison. The new models attack the classifier's blind spots: within-month order and the size of the win |
+| 4 Nov 2026 | **Diagnosis of the picks (#16):** descriptive only, with ideas as untested hypotheses; headline model vs the 6-month rule; regime, sector and year breakdowns with month-level margins of error; a new notebook 06 | No untouched data is left to test new ideas honestly. Finding (preview): the model is a volatile rebound bet that loses in SPY's down months |
 | 4 Nov 2026 | **Trend filter and risk over time (#15):** SPY vs its 10-month average (not tuned); cash at Fed Funds; "off" sells everything; all strategies filtered, average effect reported; new notebook 05; shared-window charts plus rules from 2010 | Fixed before results. Result (preview): it lowers risk-adjusted returns everywhere by missing rebounds, so it's not adopted |
 | 4 Nov 2026 | **Model simulations (#14):** exact simulator, no $100 vector version; 1-month hold; dollars from $10,000; equal weight (main) + inverse vol; a 2N hold buffer as a variant; 2020–22 and test only; headline first, others for reference; **every window by decision date** (grid included) | All fixed before results. Choosing among versions or periods after the fact would turn the test into tuning |
 | 4 Nov 2026 | **Models trained (#13):** random search (seed 0, 30 tries; 20 for the MLP); selection = mean − 0.5 × std of yearly precision; one headline chosen on 2020–22 before the test; all candidates tested and simulated for reference; top-N, not thresholds; no class weights; test numbers shown only in notebook 03 | Choices fixed before the results. Result (preview): no model beat the base rate on 2020–22 or the 6-month rule on the test |
