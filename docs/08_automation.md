@@ -1,8 +1,8 @@
 # Chapter 8: Automation
 
 > **Part 1** (sections 3.1–3.4): the monthly run. **Part 2** (section 3.5): notifications.
-> **Part 3** (section 3.6): the data snapshots. The live dashboard, the cloud run and the run-all
-> notebook are added as they're built.
+> **Part 3** (section 3.6): the data snapshots. **Part 4** (section 3.7): the live dashboard. The
+> cloud run and the run-all notebook are added as they're built.
 
 ## 1. Goal
 
@@ -132,6 +132,47 @@ scan covered 700 files and found none.
 Each upload is a commit in the dataset's history. The final snapshot after the last rebuild will be
 tagged, so the numbers in this book can always be traced to the exact data behind them.
 
+### 3.7 Part 4: the live dashboard
+
+A public web page shows the project at a glance and keeps itself up to date:
+
+| Tab | Shows |
+| --- | --- |
+| Overview | The idea, what the backtests found, "research output, not advice" |
+| This month's picks | Both lists, with sectors and scores, and the date to trade at |
+| Live record | Each live month's return for both strategies against SPY's, how many picks beat it, and the base rate. Empty until January 2027, and it says so |
+| Backtest | $10,000 month by month, for the test years or 2020–2022, and the summary table: the same numbers as Chapter 7 |
+| Model monitoring | **Input drift** for the model's ten most important stock-level inputs, and the live hit rate once months accrue |
+
+**It reads only the public dataset,** so the page holds no secret and shows only public data. Each
+monthly run pushes new tables there, and the page picks them up within six hours. The page never
+downloads the large feature table: the run precomputes four small tables for it.
+
+**Input drift is the monitoring that works before any result exists.** For each of the model's most
+important inputs, the page compares this month's spread of values across stocks with the training
+years' spread, using the Population Stability Index. It's the standard measure in credit and
+model-risk work: under 0.1 is stable, 0.1–0.25 a moderate shift, over 0.25 a major one. A major
+shift means the model is being asked about a market unlike the one it learned from, which is worth
+knowing before trusting its picks. Market-wide inputs (such as SPY's last month) are left out:
+they have one value per month, so a month has no spread to compare.
+
+**The page's numbers match the book's.** Its test-year figures (the chosen rule 60.7% a year, the
+6-month rule 33.0%, the headline model 4.1%, SPY 19.7%) are recomputed from the same simulation and
+agree with Chapter 7.
+
+**Where it's hosted.** The plan was Hugging Face Spaces, next to the datasets. Deploying found that
+Spaces now host Streamlit only through paid plans (only static pages are free). It runs instead on
+Streamlit Community Cloud, Streamlit's own free host, straight from the public repository. Because
+the page reads its data from the dataset rather than bundling it, moving hosts changed no code.
+An idle page sleeps; the next visitor wakes it in about half a minute.
+
+**Found while building it: two inputs were one.** The drift chart showed two volatility inputs with
+exactly the same score. One turned out to be exactly 100 times the other. Both are average true
+range divided by the price, so they're the same number rescaled. It's the same kind of copy dropped
+earlier for three other indicators, and it's removed before the final rebuild. The same check showed
+that two chart labels had wrongly called such inputs "in dollars". Every price-like indicator here
+is divided by the price, so none is in dollars.
+
 ---
 
 ## 4. Decisions and why
@@ -150,6 +191,9 @@ tagged, so the numbers in this book can always be traced to the exact data behin
 | A private full snapshot and a public derived one | Reproducible for anyone given access, open for everyone else, and within the price vendors' terms |
 | Every upload scanned for secrets first | A leaked token can only be revoked, never removed from the history |
 | A preview snapshot now, the final one tagged after the last rebuild | The dashboard and cloud run can be built on real files now; the book's numbers stay traceable |
+| A dashboard that reads only the public dataset | No secret on a public page; it can't show licensed prices by mistake |
+| Drift measured on stock-level inputs only | A market-wide input has one value a month: nothing to compare |
+| Hosted on Streamlit Community Cloud | Free and made for this; Hugging Face now charges for Streamlit hosting |
 
 ---
 

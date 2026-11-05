@@ -378,6 +378,27 @@ a stock is the month's top gainer.
 - **Every upload scans the files for any secret from `.env` and refuses if one is found** (file names only are reported). The first scan: 704 files, none.
 - **`predict run --from-file`** starts from the private snapshot; with `--no-download` it uses no data source at all.
 
+**The live dashboard (5 Nov, #40), settled one question at a time, all as recommended**
+
+- **Streamlit, hosted on Streamlit Community Cloud** (free, deployed from GitHub `main`, entry point `dashboard/app.py`). It reads the **public** dataset only, so the page holds no token, and it shows only public data.
+  - The plan was HF Spaces, but deploying found that Spaces no longer offer a Streamlit type, and that Docker/Gradio Spaces on free hardware now need PRO (~$9/month).
+  - Probed with throwaway Spaces, deleted at once: only static Spaces are free.
+  - You chose Community Cloud (as recommended) over PRO or a static page. The code was unchanged; the Dockerfile and `hub deploy` were removed.
+- **The ruff `include` list lacked `dashboard/`,** so lint and format silently skipped it (the same trap as `tests/` on 3 Nov). Fixed, and a comment now says every new code folder goes there.
+- **Found while building drift: `ta_natr` is exactly 100 × `ta_atr`** (both are divided by the price, by design), so the "(in dollars)" labels added in #13 were wrong.
+  - The labels are corrected now (the figure refreshes in #20).
+  - Dropping `ta_natr` is added to #20's checklist, under the same rule as ROCP/ROCR.
+- **The monthly run pushes both datasets after the picks.** The page re-reads within a day (cached). A failed push alerts the private chat and never fails the run.
+- **Pages:**
+  1. the overview, with the finding and "not advice";
+  2. this month's picks;
+  3. the live record (empty until Jan 2027, and saying so);
+  4. backtest paths and the strategy table;
+  5. model monitoring: the live hit rate against the base rate, plus input drift (PSI of the headline's most important features, this month against 2010–22).
+
+  The "why the model loses" page was left out; the exposure analysis stays in notebook 06 and chapter 7.
+- **Small precomputed public tables** (strategy returns, the live record, monitoring), so the page never downloads the 77 MB feature table. The page logic is plain pandas, tested in CI, with a Streamlit smoke test.
+
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 

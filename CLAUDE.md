@@ -94,6 +94,12 @@ step's chapter are written; the issue's "Done when" boxes are ticked; the PR is 
 - **Secrets:** never print, log or commit the Alpha Vantage key, the Telegram or Hugging Face
   tokens, or `.env`. Verify a token by asking its service who it belongs to, never by printing it.
   Request errors can carry the token in their URL: report them by type only.
+- **Ruff only checks the folders in `pyproject.toml`'s `include`.** `tests/` (3 Nov) and
+  `dashboard/` (5 Nov) were both silently skipped at first. Add every new code folder.
+- **The dashboard** (`dashboard/`, Streamlit Community Cloud from `main`) can't import the package:
+  its calculations live in `dashboard/logic.py`, tested against the package where they overlap.
+  It reads only the public HF dataset. HF Spaces now need PRO for Streamlit/Docker (only static
+  Spaces are free).
 - **Hugging Face:** raw vendor prices (`close_adj`, `entry_px`, `dollar_vol`) go only to the
   **private** dataset; the public one gets derived tables (`hub.without_prices`). `hub push` scans
   for secrets and refuses; keep it that way.

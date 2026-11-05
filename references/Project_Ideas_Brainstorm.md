@@ -1234,6 +1234,37 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - a pull into a temp folder: 700 of 700 files byte-identical to local.
 - **Docs:** chapter 8 Part 3 (section 3.6, three decisions), README (the snapshots section, dataset links), CLAUDE.md (token handling, the HF rules), and `decisions.md`.
 - **To consider before #39:** a fine-grained token limited to these two datasets (least privilege) instead of a general write token.
+- **Shipped:** PR #43. #18 is Done.
+
+### Session 25 — Thursday, 5 Nov 2026 (the live dashboard, #40)
+
+- **Decisions, one prompt each, all as recommended:**
+  1. Streamlit, hosted on HF Spaces (changed later; see below);
+  2. the monthly run pushes both datasets after the picks;
+  3. pages: overview + picks + live record, backtest paths, model monitoring. "Why the model loses" was left out.
+- **Built:**
+  - `sp500_momentum/monitoring.py`: PSI drift, `drift_table`, `drift_level`, `live_record` (all finished, tradeable months, with a base rate), `strategy_returns`;
+  - `notify.live_result` now delegates to `live_record`, so the dashboard and Telegram agree;
+  - `hub.dashboard_tables` (four small public tables + `meta.json`; window dates from SPLIT);
+  - `dashboard/logic.py` (pandas only) and `dashboard/app.py` (five tabs, Plotly, a 6-hour cache);
+  - `predict run --publish` (default on; a failed push alerts and never fails the run);
+  - config `DATA_STATUS`; dev tools streamlit, plotly, kaleido;
+  - 13 tests (131 pass), including a full offline run of the app with Streamlit's AppTest.
+- **Checks:**
+  - **The dashboard's numbers match chapter 7:** chosen rule 60.7%, 6-month rule 33.0%, model 4.1%, SPY 19.7% a year in the test years.
+  - The chosen rule is picked with the Fed Funds rate as in notebook 04. My first draft used a zero rate "to keep it simple", which could have picked a different rule. Caught before running.
+  - Real-data preview: the app ran without exceptions; the charts were rendered to PNG and viewed. Fixed the drift labels (cut off), the threshold labels, the "$" on log ticks, and `use_container_width` (deprecated).
+- **Traps found:**
+  - **Drift on market-wide features is meaningless** (one value per month), so drift covers stock-level inputs only.
+  - **Two drift scores were identical (0.443):** `ta_natr` is exactly 100 × `ta_atr`, both divided by the price by design. My "(in dollars)" labels from #13 were wrong, and **so was what I told you about drift** ("dollar features drift because prices rose"); corrected in the chat. Labels fixed; dropping `ta_natr` (the ROCP/ROCR rule) added to #20; the importance figure refreshes there.
+  - **Ruff's `include` lacked `dashboard/`**, so lint and format silently skipped it (the `tests/` trap again). Fixed, with a comment.
+  - **Hosting:**
+    - HF Spaces no longer offer a Streamlit type (only gradio, docker, static);
+    - a Docker Space then returned 402: Docker and Gradio Spaces on free hardware now need PRO (~$9/month);
+    - throwaway probe Spaces were created and deleted to confirm: static is free.
+  - **You chose Streamlit Community Cloud** (as recommended): free, deployed from GitHub `main`, code unchanged. The Dockerfile and `hub deploy` were removed.
+- **Docs:** chapter 8 Part 4 (section 3.7, three decisions), README (the dashboard section), `dashboard/README.md`, CLAUDE.md (the ruff include list, dashboard rules), and `decisions.md`.
+- **Next:** merge, then you connect the app at share.streamlit.io (one time); then a small PR adds the live link and closes #40.
 
 ---
 
@@ -1256,6 +1287,7 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 | 2 Nov 2026 | **Project plan (20 small decisions, Session 5):** month-end rows; split 2010–19 / 2020–22 / 2023–26; build now, rerun after the AV pull; class FRED set + VIX, lagged; US-focused markets; TA-Lib indicators (no candle patterns); ~20 own features; sectors filled in by hand; target `is_beat_spy_1m`; Tree + RF + LogReg + XGBoost; time-series CV, test once; score = precision of the top-N picks; top 1/5/10 (headline 10); SPY + equal-weight benchmarks; vector + exact simulation; SPY > 200-day filter; notebooks per class week + `00_run_all`; Hugging Face data; monthly scheduled run; extras after the core | Mirrors the class's flow (Weeks 1–4) and the rubric's points. Fixes the class's caveats: look-ahead in macro, tuning on test, no benchmark |
 | 3 Nov 2026 | **Baseline grid:** 60 rules reported; staggered slots; 10 bps per side on the traded weight; Sharpe net of Fed Funds; the best rule **chosen on 2010–22 and followed through the test years**; a price file beyond membership. The split is unchanged (~60/18/22; ~78/22 with CV) | Every try shown, so luck can be judged. Costs and staggering make it tradable. Choosing on the same years you check is circular. One test window for every strategy |
 | 4 Nov 2026 | **Model setup:** CV folds score 2014–19 and 2020–22 is held out (A); 8 candidates (plan's 4 + XGBoost ranker, excess-return regressor, MLP, and an average); a percentile-feature switch; decile ranker label; clipped Huber regressor; in-fold preparation per model family | Fair, leak-free comparison. The new models attack the classifier's blind spots: within-month order and the size of the win |
+| 5 Nov 2026 | **Live dashboard (#40):** Streamlit on Community Cloud (HF Spaces now need PRO for it); reads the public dataset only; five tabs incl. input drift (PSI, stock-level inputs); the monthly run pushes both datasets | No secret on a public page; free hosting that needs no code change; drift works before any result exists |
 | 5 Nov 2026 | **Hugging Face (#18):** a private full snapshot (`sp500-momentum-data`) plus a public derived one (`sp500-momentum-winners`, no vendor price columns); every upload scanned for secrets; a preview now, final tagged in #20; `--from-file` | Reproducible for those given access, open for everyone, within the vendors' terms |
 | 5 Nov 2026 | **Telegram (#38):** picks to the public channel `sp500_momentum_picks`; failures and nightly AV summaries to a private chat; last month's live result from Jan 2027; send-only, never fails a run, never logs the token | Public face and an independent timestamp for the live record; operational alerts for the operator only |
 | 5 Nov 2026 | **Extras and the monthly run (#17):** Telegram, the dashboard and the cloud run as issues (Docker left out); both strategies' picks published; monthly refit with fixed settings; first weekday at 07:00 with catch-up; full re-download of active prices; loud checks (last trading day, prices, sectors, columns) | Live picks must come from exactly the tested method, and a scheduled run must stop rather than publish from stale or mis-shaped data |

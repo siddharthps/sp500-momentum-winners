@@ -105,42 +105,14 @@ def live_result(
     """How the most recent tradeable picks with a finished month since did, per strategy: the
     average of each pick's return from the next open to the following month-end close, SPY's
     over the same span, and how many picks beat it. `asof` is the current (unfinished) month:
-    a decision counts only once the month after it has ended. None when there's no such month."""
-    if record is None or record.empty:
-        return None
-    ok = record[[tradeable(m, d) for m, d in zip(record["made_at"], record["decision_date"])]]
-    months = pd.PeriodIndex(pd.to_datetime(ok["decision_date"]), freq="M")
-    p = prices.assign(month=pd.PeriodIndex(prices["month"], freq="M")).set_index(
-        ["price_ticker", "month"]
-    )
-    done = months[months + 1 < asof]  # the month the picks were held has ended
-    if done.empty:
-        return None
-    m = done.max()
-    picks = ok[months == m]
+    a decision counts only once the month after it has ended. None when there's no such month.
+    The latest rows of the dashboard's live record (one calculation for both)."""
+    from sp500_momentum.monitoring import live_record
 
-    def ret(ticker: str) -> float:
-        try:
-            return p.loc[(ticker, m + 1), "close_adj"] / p.loc[(ticker, m), "entry_px"] - 1
-        except KeyError:
-            return float("nan")
-
-    spy = ret("SPY")
-    rows = []
-    for s, g in picks.groupby("strategy"):
-        r = pd.Series([ret(t) for t in g["price_ticker"]])
-        rows.append(
-            {
-                "strategy": s,
-                "decision": str(m),
-                "ret": r.mean(),
-                "spy": spy,
-                "beat": int((r > spy).sum()),
-                "priced": int(r.notna().sum()),
-                "picks": len(g),
-            }
-        )
-    return pd.DataFrame(rows)
+    table = live_record(record, prices, asof, tradeable)
+    if table.empty:
+        return None
+    return table[table["decision"] == table["decision"].max()].reset_index(drop=True)
 
 
 def picks_message(
