@@ -148,6 +148,10 @@ RULE_CHECK_FROM = SPLIT["test"][0]
 START_DOLLARS = 10_000
 BUFFER_MULTIPLE = 2
 INVERSE_VOL_FEATURE = "vol_3m"
+# SPY trend filter (#15): invested only when SPY's month-end close is above its TREND_MONTHS-month
+# average (Faber 2007's monthly version of the 200-day rule; a convention, not tuned). Otherwise
+# everything is sold and the cash earns the Fed Funds rate.
+TREND_MONTHS = 10
 
 # Renames: the same company kept trading under a new ticker. In Wikipedia's changes table,
 # rows dated inside [from, to] get `old` rewritten to `new`. That way the stock is one member

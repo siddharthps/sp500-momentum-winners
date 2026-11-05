@@ -15,7 +15,8 @@ aren't flattered by survivorship bias.
 
 > Status: data, the monthly table, the features, the exploratory analysis, the baseline rule grid
 > and the models (setup, tuning, comparison, one test) and their trading simulations are done;
-> equity curves and the SPY trend filter are next. The
+> equity curves, risk over time and the SPY trend filter are done too; the deeper analysis of the
+> predictions and the automation are next. The
 > Alpha Vantage download of delisted companies runs until ~12–14 Nov 2026. Progress is tracked in
 > [issues](https://github.com/siddharthps/sp500-momentum-winners/issues), by
 > [milestone](https://github.com/siddharthps/sp500-momentum-winners/milestones), and on the
@@ -90,7 +91,7 @@ If something earlier changes, rerun from the first affected step, then everythin
 | Hold periods, the delisting cutoff or the targets (`monthly.py`) | `monthly build` → … |
 | A FRED series or its publication lag (`FRED_SERIES`) | `fred` → `features build` → … |
 | Sectors (`references/removed_sectors.csv`, `SECTOR_ETF`) or any feature (`features.py`) | `features build` → … |
-| The rule grid, the strategy versions or their costs (`RULE_LOOKBACKS`, `RULE_TOP_NS`, `COST_PER_SIDE`, `RULE_CHECK_FROM`, `START_DOLLARS`, `BUFFER_MULTIPLE`, `INVERSE_VOL_FEATURE`, `backtest.py`) | `run_notebooks run 04` |
+| The rule grid, the strategy versions or their costs (`RULE_LOOKBACKS`, `RULE_TOP_NS`, `COST_PER_SIDE`, `RULE_CHECK_FROM`, `START_DOLLARS`, `BUFFER_MULTIPLE`, `INVERSE_VOL_FEATURE`, `TREND_MONTHS`, `backtest.py`) | `run_notebooks run 04` and `run 05` |
 | The model setup or the models (`modeling/prep.py`, `models.py`, `evaluate.py`, `train.py`), or anything that changes the features | `modeling.train run` → `run_notebooks run` |
 | Anything above, or the analysis or charts (`eda.py`, `plots.py`) | … → `run_notebooks run` (refreshes the notebooks and `reports/figures/`) |
 
@@ -108,6 +109,7 @@ the data:
 | [`02_features_eda`](notebooks/02_features_eda.ipynb) | The target, each feature's signal (2010–2022 only), its stability, duplicates, market regimes, and a preview of the plain rule |
 | [`03_models`](notebooks/03_models.ipynb) | The folds, each model's tuned setting (2014–19), the comparison on 2020–22 where the headline is chosen, the single test (2023 on), the model rule columns and what the headline looks at. Reads the training step's outputs |
 | [`04_simulation`](notebooks/04_simulation.ipynb) | Backtests. Part 1: the baseline grid (60 rules: look-back × top N × hold, staggered, 10 bps a side) vs SPY and equal weight, and the best rule chosen on decisions 2010–2022 and followed through the test years (decisions from 2023). Part 2: the models traded (1-month hold; equal or inverse-vol weights, with or without a 2N hold buffer) vs SPY and the rules, in dollars from $10,000, for 2020–2022 and the test years. Takes about two minutes |
+| [`05_risk`](notebooks/05_risk.ipynb) | The paths: $10,000 month by month, falls from the peak, and rolling 12-month returns minus SPY's, for 2020–2022 and the test years, plus the rules from 2010. The SPY trend filter (out of the market when SPY is below its 10-month average, cash at the Fed Funds rate) applied to every strategy, with its average effect. Takes about two minutes |
 
 They're only ever run by this command, top to bottom in a fresh kernel, so the stored outputs always
 match the code. They show summaries, never raw tables (full results are saved under `reports/`).
@@ -151,7 +153,7 @@ or deleting `main` are blocked.
 │   ├── processed      <- Final modelling tables
 │   └── raw            <- Downloads, one folder per source (never edited by hand)
 ├── models             <- Trained models and predictions
-├── notebooks          <- 01_data, 02_features_eda, 03_models, 04_simulation (executed, with outputs); later 00_run_all
+├── notebooks          <- 01_data, 02_features_eda, 03_models, 04_simulation, 05_risk (executed, with outputs); later 00_run_all
 ├── references         <- Decision log, brainstorm and dated working journal
 ├── reports/figures    <- Generated charts
 ├── scripts            <- Task Scheduler setup and the daily Alpha Vantage run

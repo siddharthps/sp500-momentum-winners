@@ -10,12 +10,14 @@ One style for every chart:
 - Sign (positive / negative) uses the diverging pair blue vs red.
 """
 
+import io
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from sp500_momentum.backtest import parse_strategy
+from sp500_momentum.backtest import TREND, parse_strategy
 from sp500_momentum.config import FIGURES_DIR, START_DOLLARS
 
 SURFACE = "#fcfcfb"
@@ -118,7 +120,7 @@ def apply_style():
     mpl.rcParams.update(
         {
             # Inline (notebook) display only; save() writes the book's PNGs at its own, higher dpi.
-            "figure.dpi": 80,
+            "figure.dpi": INLINE_DPI,
             "figure.facecolor": SURFACE,
             "axes.facecolor": SURFACE,
             "savefig.facecolor": SURFACE,
@@ -149,10 +151,39 @@ def apply_style():
     )
 
 
+INLINE_DPI = 80  # notebook display; the book's PNGs use BOOK_DPI
+BOOK_DPI = 110
+
+
+def _palette_png(fig, dpi: int) -> bytes:
+    """The figure as a 256-colour PNG. Charts have a few flat colours plus their smoothed edges,
+    so this looks the same as full colour at about a third of the bytes (it keeps the committed
+    notebooks and figures small: every rerun stores new copies in git)."""
+    from PIL import Image
+
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png", dpi=dpi, bbox_inches="tight")
+    img = Image.open(io.BytesIO(buf.getvalue())).convert("RGB")
+    pal = img.quantize(colors=256, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
+    out = io.BytesIO()
+    pal.save(out, format="PNG", optimize=True)
+    return out.getvalue()
+
+
 def save(fig, name: str):
-    """Save to reports/figures/<name>.png at a size that keeps notebooks small."""
+    """Save to reports/figures/<name>.png and, in a notebook, show it: both as palette PNGs, so
+    notebooks and the repo stay small. The figure is closed afterwards (shown once)."""
     FIGURES_DIR.mkdir(parents=True, exist_ok=True)
-    fig.savefig(FIGURES_DIR / f"{name}.png", dpi=110, bbox_inches="tight")
+    (FIGURES_DIR / f"{name}.png").write_bytes(_palette_png(fig, BOOK_DPI))
+    try:
+        from IPython import get_ipython
+        from IPython.display import Image as IPyImage
+        from IPython.display import display
+    except ImportError:  # plain Python: nothing to show
+        get_ipython = None
+    if get_ipython is not None and get_ipython() is not None:
+        display(IPyImage(data=_palette_png(fig, INLINE_DPI), format="png"))
+    plt.close(fig)
 
 
 def _subtitle(ax, text: str):
@@ -480,6 +511,85 @@ def strategy_value_chart(
     fig.suptitle(title, x=0.01, ha="left", fontsize=12, fontweight="bold")
     fig.text(0.01, 0.93, subtitle, ha="left", color=INK_2, fontsize=9)
     fig.tight_layout(rect=(0, 0, 1, 0.92))
+    return fig
+
+
+def paths_chart(
+    panels: dict[str, pd.DataFrame],
+    lines: dict[str, tuple[str, str]],
+    title: str,
+    subtitle: str,
+    kind: str,
+    mark: str | None = None,
+):
+    """Monthly paths, one panel per period (shared y-axis only for drawdowns and excess).
+
+    `panels`: {period title: DataFrame of monthly values, Period index, one column per line}.
+    `lines`: {column: (strategy label, colour)}; a column ending in `_trend` is drawn dashed in
+    its strategy's colour. `kind`: 'value' (dollars, log scale), 'drawdown' (% below the peak) or
+    'excess' (% vs SPY, zero line). `mark`: a decision date for a vertical line (e.g. the test)."""
+    fig, axes = plt.subplots(
+        1,
+        len(panels),
+        figsize=(11 if len(panels) > 1 else 9, 4.6),
+        squeeze=False,
+        sharey=kind != "value",
+    )
+    for ax, (period, frame) in zip(axes[0], panels.items()):
+        x = frame.index.to_timestamp(how="end").normalize()
+        for col in frame:
+            label, color = lines[col.removesuffix(TREND)]
+            dashed = col.endswith(TREND)
+            ax.plot(
+                x,
+                frame[col].to_numpy(),
+                color=color,
+                linewidth=1.2 if dashed else 1.8,
+                linestyle="--" if dashed else "-",
+                label=None if dashed else label,
+            )
+        years = (x.max() - x.min()).days / 365.25
+        if years > 6:  # explicit ticks: the automatic date locator warns on short ranges
+            ax.xaxis.set_major_locator(mpl.dates.YearLocator(base=2 if years > 10 else 1))
+            ax.xaxis.set_major_formatter(mpl.dates.DateFormatter("%Y"))
+        else:
+            ax.xaxis.set_major_locator(mpl.dates.MonthLocator(bymonth=(1, 7)))
+            ax.xaxis.set_major_formatter(mpl.dates.DateFormatter("%b %Y"))
+        if kind == "value":
+            ax.set_yscale("log")
+            ax.yaxis.set_major_locator(mpl.ticker.LogLocator(base=10, subs=(1.0, 2.0, 5.0)))
+            ax.yaxis.set_major_formatter(
+                mpl.ticker.FuncFormatter(lambda v, _: f"${v / 1000:,.0f}k")
+            )
+            ax.yaxis.set_minor_formatter(mpl.ticker.NullFormatter())
+            ax.axhline(START_DOLLARS, color=AXIS, linewidth=1, zorder=0)
+        else:
+            ax.yaxis.set_major_formatter(mpl.ticker.PercentFormatter(1.0, decimals=0))
+            ax.axhline(0, color=INK_2, linewidth=1, zorder=0)
+        if mark:
+            m = pd.Period(mark, freq="M").to_timestamp(how="end").normalize()
+            if x.min() <= m <= x.max():
+                ax.axvline(m, color=AXIS, linewidth=1, linestyle="--", zorder=0)
+        ax.set_title(period, fontsize=10, pad=6, loc="left")
+        ax.margins(x=0.01)
+    handles = [
+        mpl.lines.Line2D([], [], color=c, linewidth=1.8, label=lab) for lab, c in lines.values()
+    ]
+    handles.append(
+        mpl.lines.Line2D(
+            [],
+            [],
+            color=INK_2,
+            linewidth=1.2,
+            linestyle="--",
+            label="dashed: with the trend filter",
+        )
+    )
+    # one legend under the panels, so it never covers a line
+    fig.legend(handles=handles, loc="lower center", ncol=len(handles), fontsize=8.5, frameon=False)
+    fig.suptitle(title, x=0.01, ha="left", fontsize=12, fontweight="bold")
+    fig.text(0.01, 0.905, subtitle, ha="left", color=INK_2, fontsize=9)
+    fig.tight_layout(rect=(0, 0.07, 1, 0.9))
     return fig
 
 

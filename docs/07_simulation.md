@@ -1,7 +1,7 @@
 # Chapter 7: Trading simulation and results
 
 > **Part 1** (sections 3.1–3.3): the baseline rule. **Part 2** (sections 3.4–3.7): the models from
-> Chapter 6, traded. Equity curves over time and the market-trend filter are added in a later part.
+> Chapter 6, traded. **Part 3** (sections 3.8–3.11): the paths over time, and a market-trend filter.
 
 ## 1. Goal
 
@@ -142,6 +142,11 @@ slips from 9th to 12th hasn't really changed, so selling it pays fees for noise.
 left out, because the models' scores for those years come from the folds their settings were chosen
 on. Each period starts with **$10,000**.
 
+**What each period is clean for.** "Untouched" depends on what was chosen on which months. The plain
+1-month rules chose nothing, so both periods are clean for them. The headline model was chosen on
+2020–2022, and the Part 1 rule on 2010–2022, so for those two only the test years are a fair
+judgement. The 2020–2022 column shows where they were chosen, not how well the choice held up.
+
 ### 3.5 The headline model loses to SPY and to the plain rules
 
 | What $10,000 became | 2020–2022 (36 months) | Test years (45 months) | Sharpe, test years |
@@ -185,6 +190,69 @@ a weak 2020–2022 ($10,748). Picking it now would be choosing on the test.
 **On this data, the models add nothing that a plain 6-month momentum rule doesn't already do better,
 and no strategy chosen in advance clearly beats SPY per unit of risk.**
 
+### 3.8 Part 3: the paths, and a market-trend filter
+
+The end values above hide the path. This part follows each strategy month by month, and tests one
+classic defence against the worst stretches.
+
+**The trend filter.** At each month-end, compare SPY's close with the average of its last ten
+month-end closes (about its 200-day average). Above it, invest as usual. Below it, sell everything at
+the next open and hold cash, earning the Fed Funds rate, until SPY is back above. The ten months are a
+published convention, not a setting tuned here. The idea behind it: momentum's worst losses tend to
+come during and just after bear markets, and a trend filter is out of the market for most of a long
+decline. Its known weakness is a fast fall and recovery, where it sells near the bottom and buys back
+higher.
+
+Every strategy from Part 2 was run with and without the filter, and SPY too. The filter's average
+effect over all of them is reported, along with the pre-declared strategies in full. No filtered
+version was picked from the list.
+
+### 3.9 The filter lowered risk-adjusted returns everywhere
+
+| What $10,000 became | 2020–2022 | with the filter | Test years | with the filter |
+| --- | --- | --- | --- | --- |
+| SPY | $13,146 | $11,764 | $19,650 | $15,660 |
+| Rule chosen in Part 1 | $17,516 | $13,770 | $59,209 | $25,945 |
+| Rule: 6-month top 10, held 1 | $15,488 | $13,010 | $29,150 | $19,302 |
+| Headline model, top 10 | $11,858 | $12,113 | $11,640 | $8,787 |
+
+- **It lowered the Sharpe ratio of SPY and of every pre-declared strategy, in every period.** Over
+  2010–2026, filtered SPY earned 7.8% a year against 14.3%, with a Sharpe ratio of 0.58 against 0.88.
+- **The cause: it kept missing the rebound.** It was out of the market at 31 of the 201 month-ends
+  since 2010. In exactly the months that followed, SPY rose 3.5% on average, against 0.8% in the
+  months it was in. The months it sat out included April 2020 (+15%), January 2019 (+10%) and July
+  2022 (+9%).
+- **It made falls shallower only where they were long.** On 2020–2022 it cut the headline model's
+  worst fall from −55% to −28%. Averaged over all strategies, the worst falls were 12–14 points
+  shallower there. Yet the Sharpe ratio rose for only 37–53% of them.
+- **In the test years it rarely triggered,** at 4 of 45 month-ends, each after SPY had already fallen.
+  The worst falls barely changed, and the Sharpe ratio rose for only 10–13% of the strategies.
+- **Since 2010 it even deepened the rules' worst falls** (the 6-month rule: −30% → −37%), because it
+  sold low and bought back higher. Most downturns since 2010 recovered quickly, the setting where
+  trend filters do worst.
+
+![The rules from 2010, with and without the filter](../reports/figures/risk_rules_2010.png)
+
+### 3.10 What the paths show
+
+![What $10,000 became, month by month](../reports/figures/risk_paths.png)
+
+- **The rules' test-year lead arrived in one burst.** The 6-month rule ran roughly level with SPY until
+  mid-2025. The chosen rule was ahead from 2024, but most of both leads came in late 2025 and 2026,
+  during the AI and memory-chip rally behind the stocks listed in section 3.3. A lead that comes in
+  one burst is a bet that paid off, not a steady edge.
+- **The headline model has the most violent path:** on 2020–2022 it fell as far as −55% from its
+  previous peak, against SPY's −23%.
+
+![Rolling 12-month return minus SPY's](../reports/figures/risk_rolling.png)
+
+### 3.11 The bottom line of the simulations
+
+The filter is **not adopted**. It was declared in advance and tested honestly, and on this data it
+lowers risk-adjusted returns. So the conclusion of Part 2 stands. The ML models add nothing over a
+plain 6-month momentum rule. That rule earned far more than SPY in the test years, but through more
+risk and one market theme. **No strategy chosen in advance clearly beats SPY per unit of risk.**
+
 ---
 
 ## 4. Decisions and why
@@ -205,6 +273,10 @@ and no strategy chosen in advance clearly beats SPY per unit of risk.**
 | Inverse volatility as the only other weighting | It needs a risk forecast, not a return forecast, and volatility is fairly predictable. Weighting by the model's confidence would amplify a signal close to noise |
 | Results shown in dollars from $10,000 | Easier to read than a yearly rate, and fees can be shown as an amount |
 | 2014–2019 left out of the model results | The models' settings were chosen on those years, which flatters them |
+| The trend filter at ten months, with cash earning the Fed Funds rate | A published convention, so nothing is tuned on this data; cash earns what a money-market fund would |
+| "Out" sells the whole portfolio | That's what the filter means: out of the market. Only stopping new buys would take six months to get out of a six-month hold |
+| Every strategy filtered, but only the average effect and the pre-declared ones reported | An average over many strategies is hard to fool; picking the best filtered one would be choosing on the results |
+| Strategies compared only on months they share | A line starting ten years earlier would look better from compounding alone |
 
 ---
 
@@ -219,6 +291,9 @@ and no strategy chosen in advance clearly beats SPY per unit of risk.**
 - **The model strategies have only 36 and 45 months each.** Differences of a few hundred dollars
   between versions can be chance. The conclusion rests on the headline losing in both periods to every
   plain rule shown, not on any one gap.
+- **The trend filter met few downturns.** Since 2010 there were only a handful, and most recovered
+  fast. Published tests credit trend filters mainly with long bear markets like 2000–2002 and 2008,
+  and none falls in these years. The result says it didn't help here, not that it never does.
 - **Rebalancing between the parts of a staggered portfolio isn't charged.** That trading is small next
   to the monthly picks, but it isn't zero.
 - **The equal-weight yardstick has no costs,** so it's slightly flattered compared with the rules.
