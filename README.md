@@ -100,6 +100,13 @@ private snapshot, `hub pull` replaces steps 1–4, so `monthly build` onwards ru
 download or API key. Without it, the public tables are enough to follow the analysis. Prices can be
 rebuilt with your own access through steps 1–4.
 
+### Live dashboard
+
+[`dashboard/`](dashboard/README.md) holds a Streamlit app, hosted free on Streamlit Community Cloud
+from this repository's `main` branch. It has five tabs: the overview, this month's picks, the live
+record, the backtest, and model monitoring (input drift). It reads only the public dataset, so it
+holds no token. `uv run streamlit run dashboard/app.py` runs it locally.
+
 ### Telegram notifications (optional)
 
 The monthly picks go to a public channel,

@@ -24,6 +24,7 @@ import pandas as pd
 import typer
 
 from sp500_momentum.config import (
+    DATA_STATUS,
     FEATURES_TABLE,
     INTERIM_DATA_DIR,
     LIVE_PICKS,
@@ -140,18 +141,75 @@ def stage_public(folder: Path, status: str) -> list[str]:
     for csv in sorted(REPORTS_DIR.glob("*.csv")):
         shutil.copy(csv, folder / "reports" / csv.name)
         written.append(f"reports/{csv.name}")
+    written += dashboard_tables(folder, status)
     (folder / "README.md").write_text(DATASET_CARD.format(status=status), encoding="utf-8")
     written.append("README.md")
     return written
+
+
+def dashboard_tables(folder: Path, status: str) -> list[str]:
+    """The small tables the live dashboard reads (#40), so it never downloads the feature table:
+    strategy returns, the live record, input drift, and labels."""
+    import json
+
+    import joblib
+
+    from sp500_momentum import backtest as bt
+    from sp500_momentum import monitoring, notify, plots
+    from sp500_momentum.config import FRED_DIR, MONTHLY_PRICES, RULE_CHECK_FROM, SPLIT
+    from sp500_momentum.modeling import evaluate, prep, train
+    from sp500_momentum.modeling.models import SPECS
+
+    feats = pd.read_parquet(FEATURES_TABLE)
+    panel = pd.read_parquet(MONTHLY_PANEL)
+    prices = pd.read_parquet(MONTHLY_PRICES)
+    scores = pd.read_parquet(MODEL_SCORES)
+    comparison = pd.read_csv(train.COMPARISON)
+    headline = comparison.loc[comparison["headline"].astype(bool), "model"].iloc[0]
+    rf = bt.risk_free(pd.read_csv(FRED_DIR / "FEDFUNDS.csv"))
+
+    rets = monitoring.strategy_returns(panel, prices, scores, headline, rf)
+    rets.to_parquet(folder / "strategy_returns.parquet", index=False)
+
+    record = pd.read_csv(LIVE_PICKS) if LIVE_PICKS.exists() else None
+    members = feats.loc[feats["has_price"].astype(bool), ["date", "price_ticker"]]
+    asof = pd.Timestamp.now().to_period("M")
+    live = monitoring.live_record(record, prices, asof, notify.tradeable, members)
+    live.to_parquet(folder / "live_record.parquet", index=False)
+
+    imp = evaluate.feature_importance(
+        joblib.load(MODELS_DIR / f"{headline}.joblib"), prep.feature_columns(feats.columns)
+    )
+    # drift only makes sense for stock-level features: a market or macro feature has one value
+    # per month, so its within-month "distribution" is a single spike
+    stock_level = set(prep.rankable_columns(feats.columns))
+    top = (
+        [c for c in imp.sort_values(ascending=False).index if c in stock_level][:10]
+        if imp is not None
+        else []
+    )
+    drift = monitoring.drift_table(feats, top, since="2020-01-01")
+    drift.to_parquet(folder / "monitoring.parquet", index=False)
+
+    meta = {
+        "status": status,
+        "updated": pd.Timestamp.now().strftime("%Y-%m-%d %H:%M"),
+        "headline": SPECS[headline].label,
+        # first months earned from each block's decisions (windows by decision date, from SPLIT)
+        "validation_from": str(pd.Period(SPLIT["validation"][0], freq="M") + 1),
+        "test_from": str(pd.Period(RULE_CHECK_FROM, freq="M") + 1),
+        "drift_features": {c: plots.label(c) for c in top},
+        "latest_decision": pd.Timestamp(feats["date"].max()).strftime("%Y-%m-%d"),
+    }
+    (folder / "meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
+    return ["strategy_returns.parquet", "live_record.parquet", "monitoring.parquet", "meta.json"]
 
 
 @app.command()
 def push(
     target: str = typer.Option("private", help="private, public or both"),
     tag: str = typer.Option("", help="Also tag this version (e.g. final-2026-11)"),
-    status: str = typer.Option(
-        "preview: the download of delisted companies is still running", help="For the card"
-    ),
+    status: str = typer.Option(DATA_STATUS, help="Shown on the card and the dashboard"),
 ):
     """Upload the snapshot(s). Each upload is one commit in the dataset's history."""
     from huggingface_hub import HfApi

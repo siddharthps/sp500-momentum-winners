@@ -44,8 +44,15 @@ requires-python = "~=3.12.0"
 [tool.ruff]
 line-length = 99
 src = ["sp500_momentum"]
-# tests/ was missing from the template's list, so `ruff check` silently skipped it (found 3 Nov 2026)
-include = ["pyproject.toml", "sp500_momentum/**/*.py", "tests/**/*.py", "notebooks/**/*.ipynb"]
+# tests/ was missing from the template's list, so `ruff check` silently skipped it (found 3 Nov 2026);
+# dashboard/ likewise when it was added (5 Nov). Every new top-level code folder goes here.
+include = [
+    "pyproject.toml",
+    "sp500_momentum/**/*.py",
+    "tests/**/*.py",
+    "notebooks/**/*.ipynb",
+    "dashboard/**/*.py",
+]
 
 [tool.ruff.lint]
 extend-select = ["I"]  # Add import sorting
@@ -56,7 +63,10 @@ force-sort-within-sections = true
 
 [dependency-groups]
 dev = [
+    "kaleido>=1.5.0",
+    "plotly>=7.1.0",
     "pre-commit>=4.7.0",
     "pytest>=9.2.0",
     "ruff>=0.17.3",
+    "streamlit>=1.66.1",
 ]

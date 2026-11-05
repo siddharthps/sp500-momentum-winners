@@ -31,6 +31,7 @@ import typer
 
 from sp500_momentum import notify
 from sp500_momentum.config import (
+    DATA_STATUS,
     FEATURES_TABLE,
     FRED_START,
     LIVE_MIN_PRICED,
@@ -258,6 +259,10 @@ def run(
     download: bool = typer.Option(True, help="Update the raw data first (off: rebuild only)"),
     force: bool = typer.Option(False, help="Redo a decision month that's already been done"),
     dry_run_notify: bool = typer.Option(False, help="Print the Telegram messages, don't send"),
+    publish: bool = typer.Option(
+        True,
+        help="Push both Hugging Face datasets afterwards (the dashboard reads the public one)",
+    ),
     from_file: bool = typer.Option(
         False,
         help="Start from the private Hugging Face snapshot (with --no-download: no sources at all)",
@@ -269,7 +274,7 @@ def run(
             from sp500_momentum import hub
 
             hub.pull_snapshot()
-        _run(download, force, dry_run_notify)
+        _run(download, force, dry_run_notify, publish)
     except typer.Exit:
         raise  # a failed check: already reported
     except Exception as e:  # anything unexpected: alert, then fail as usual
@@ -279,7 +284,7 @@ def run(
         raise
 
 
-def _run(download: bool, force: bool, dry_run_notify: bool) -> None:
+def _run(download: bool, force: bool, dry_run_notify: bool, publish: bool = True) -> None:
     t0 = time.time()
     if download:
         update_data()
@@ -335,6 +340,21 @@ def _run(download: bool, force: bool, dry_run_notify: bool) -> None:
         latest["has_price"].astype(bool).mean(),
     )
     notify.public(message, dry_run_notify)
+
+    # Both datasets: the dashboard reads the public one. A failed push alerts, never fails the run.
+    if publish:
+        try:
+            from sp500_momentum import hub
+
+            hub.push(target="both", tag="", status=DATA_STATUS)
+        # Deliberately broad: nothing in publishing may fail the run (the picks are saved).
+        # Reported, not hidden: by type only, since an HTTP error's text can carry the token.
+        except Exception as e:  # noqa: BLE001
+            logger.warning(f"Hugging Face push failed: {type(e).__name__}")
+            notify.private(
+                notify.alert_message("Hugging Face push", [f"{type(e).__name__}: picks saved"]),
+                dry_run_notify,
+            )
 
     summary = "\n".join(
         f"  {STRATEGY_LABELS[s]}: {', '.join(picks.loc[picks['strategy'] == s, 'ticker'])}"

@@ -63,6 +63,8 @@ LIVE_MODEL = MODELS_DIR / "live_headline.joblib"
 LIVE_TOP_N = 10
 LIVE_RULE_SIGNAL = "ret_6m"  # the plain rule published next to the model (decisions.md, 5 Nov)
 LIVE_MIN_PRICED = 0.95  # share of the month's members that must have a month-end price
+# Shown on the public dataset card and the dashboard; changes to "final" in #20.
+DATA_STATUS = "preview: the download of delisted companies is still running"
 FEATURES_TABLE = PROCESSED_DATA_DIR / "features.parquet"  # the monthly panel + every feature
 
 # GICS sectors for members removed since 2010 (Wikipedia's changes table has none). Written by hand

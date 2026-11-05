@@ -49,6 +49,7 @@ def test_stage_public_writes_derived_tables_and_a_card(tmp_path, monkeypatch):
     monkeypatch.setattr(hub, "MODEL_SCORES", src / "model_scores.parquet")
     monkeypatch.setattr(hub, "LIVE_PICKS", src / "missing.csv")
     monkeypatch.setattr(hub, "REPORTS_DIR", src / "reports")
+    monkeypatch.setattr(hub, "dashboard_tables", lambda folder, status: [])  # tested separately
 
     out = tmp_path / "out"
     files = hub.stage_public(out, status="preview")
