@@ -1,5 +1,7 @@
 # S&P 500 momentum winners: live dashboard
 
+**Live at [sp500-momentum-winners.streamlit.app](https://sp500-momentum-winners.streamlit.app/).**
+
 A Streamlit app, hosted free on [Streamlit Community Cloud](https://streamlit.io/cloud) from this
 repository's `main` branch (entry point `dashboard/app.py`, Python 3.12). Each month-end, the
 point-in-time S&P 500 members are ranked two ways, a model and the plain 6-month rule, and the

@@ -1265,6 +1265,10 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - **You chose Streamlit Community Cloud** (as recommended): free, deployed from GitHub `main`, code unchanged. The Dockerfile and `hub deploy` were removed.
 - **Docs:** chapter 8 Part 4 (section 3.7, three decisions), README (the dashboard section), `dashboard/README.md`, CLAUDE.md (the ruff include list, dashboard rules), and `decisions.md`.
 - **Next:** merge, then you connect the app at share.streamlit.io (one time); then a small PR adds the live link and closes #40.
+- **Shipped:** PR #44 (refs #40).
+  - You deployed it at **https://sp500-momentum-winners.streamlit.app/** (Python 3.12, from `main`, `dashboard/app.py`, no secrets).
+  - Checked: the page returns 200, and the app's own health endpoint (`/~/+/_stcore/health`) answers `ok`.
+  - The link was added to the README, `dashboard/README.md` and chapter 8, closing #40.
 
 ---
 
