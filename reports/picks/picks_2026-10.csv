@@ -1,21 +1,21 @@
-decision_date,strategy,rank,ticker,sector,score,made_at
-2026-10-30,model,1,FICO,Information Technology,0.001049,2026-11-05 10:26
-2026-10-30,model,2,RDDT,Communication Services,-0.002005,2026-11-05 10:26
-2026-10-30,model,3,APP,Communication Services,-0.003528,2026-11-05 10:26
-2026-10-30,model,4,INTC,Information Technology,-0.00457,2026-11-05 10:26
-2026-10-30,model,5,SNDK,Information Technology,-0.005476,2026-11-05 10:26
-2026-10-30,model,6,CHTR,Communication Services,-0.005966,2026-11-05 10:26
-2026-10-30,model,7,GLW,Information Technology,-0.006354,2026-11-05 10:26
-2026-10-30,model,8,COHR,Information Technology,-0.007443,2026-11-05 10:26
-2026-10-30,model,9,SKYD,Communication Services,-0.007983,2026-11-05 10:26
-2026-10-30,model,10,BE,Industrials,-0.008698,2026-11-05 10:26
-2026-10-30,rule,1,MRNA,Health Care,3.826295,2026-11-05 10:26
-2026-10-30,rule,2,OKTA,Information Technology,1.827427,2026-11-05 10:26
-2026-10-30,rule,3,CRWD,Information Technology,1.247269,2026-11-05 10:26
-2026-10-30,rule,4,CRL,Health Care,1.152542,2026-11-05 10:26
-2026-10-30,rule,5,PANW,Information Technology,1.040319,2026-11-05 10:26
-2026-10-30,rule,6,DELL,Information Technology,1.036802,2026-11-05 10:26
-2026-10-30,rule,7,VEEV,Health Care,1.00654,2026-11-05 10:26
-2026-10-30,rule,8,HPE,Information Technology,0.925302,2026-11-05 10:26
-2026-10-30,rule,9,ILMN,Health Care,0.862001,2026-11-05 10:26
-2026-10-30,rule,10,RVTY,Health Care,0.814458,2026-11-05 10:26
+decision_date,strategy,rank,ticker,price_ticker,sector,score,made_at
+2026-10-30,model,1,FICO,FICO,Information Technology,0.001049,2026-11-05 10:37
+2026-10-30,model,2,RDDT,RDDT,Communication Services,-0.002005,2026-11-05 10:37
+2026-10-30,model,3,APP,APP,Communication Services,-0.003528,2026-11-05 10:37
+2026-10-30,model,4,INTC,INTC,Information Technology,-0.00457,2026-11-05 10:37
+2026-10-30,model,5,SNDK,SNDK,Information Technology,-0.005476,2026-11-05 10:37
+2026-10-30,model,6,CHTR,CHTR,Communication Services,-0.005966,2026-11-05 10:37
+2026-10-30,model,7,GLW,GLW,Information Technology,-0.006354,2026-11-05 10:37
+2026-10-30,model,8,COHR,COHR,Information Technology,-0.007443,2026-11-05 10:37
+2026-10-30,model,9,SKYD,SKYD,Communication Services,-0.007983,2026-11-05 10:37
+2026-10-30,model,10,BE,BE,Industrials,-0.008698,2026-11-05 10:37
+2026-10-30,rule,1,MRNA,MRNA,Health Care,3.826295,2026-11-05 10:37
+2026-10-30,rule,2,OKTA,OKTA,Information Technology,1.827427,2026-11-05 10:37
+2026-10-30,rule,3,CRWD,CRWD,Information Technology,1.247269,2026-11-05 10:37
+2026-10-30,rule,4,CRL,CRL,Health Care,1.152542,2026-11-05 10:37
+2026-10-30,rule,5,PANW,PANW,Information Technology,1.040319,2026-11-05 10:37
+2026-10-30,rule,6,DELL,DELL,Information Technology,1.036802,2026-11-05 10:37
+2026-10-30,rule,7,VEEV,VEEV,Health Care,1.00654,2026-11-05 10:37
+2026-10-30,rule,8,HPE,HPE,Information Technology,0.925302,2026-11-05 10:37
+2026-10-30,rule,9,ILMN,ILMN,Health Care,0.862001,2026-11-05 10:37
+2026-10-30,rule,10,RVTY,RVTY,Health Care,0.814458,2026-11-05 10:37

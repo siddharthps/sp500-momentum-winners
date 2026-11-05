@@ -29,6 +29,7 @@ import numpy as np
 import pandas as pd
 import typer
 
+from sp500_momentum import notify
 from sp500_momentum.config import (
     FEATURES_TABLE,
     FRED_START,
@@ -43,13 +44,23 @@ from sp500_momentum.config import (
     PRICE_START,
     SPLIT,
     START_DATE,
+    WIKIPEDIA_DIR,
 )
 from sp500_momentum.modeling import prep, train
 from sp500_momentum.modeling.models import SPECS
 
 app = typer.Typer(help="The monthly run: fresh data, then next month's picks.")
 
-PICK_COLUMNS = ["decision_date", "strategy", "rank", "ticker", "sector", "score", "made_at"]
+PICK_COLUMNS = [
+    "decision_date",
+    "strategy",
+    "rank",
+    "ticker",
+    "price_ticker",
+    "sector",
+    "score",
+    "made_at",
+]
 STRATEGY_LABELS = {"model": "Headline model", "rule": "Rule: 6-month return"}
 
 
@@ -139,6 +150,7 @@ def top_picks(rows: pd.DataFrame, score: pd.Series, n: int, strategy: str) -> pd
             "strategy": strategy,
             "rank": np.arange(1, len(t) + 1),
             "ticker": t["ticker"].to_numpy(),
+            "price_ticker": t.get("price_ticker", t["ticker"]).to_numpy(),
             "sector": t.get("sector", pd.Series(pd.NA, index=t.index)).to_numpy(),
             "score": t["score"].astype("float64").round(6).to_numpy(),  # float32 rounds noisily
         }
@@ -213,9 +225,9 @@ def append_record(record: pd.DataFrame | None, picks: pd.DataFrame) -> pd.DataFr
     else:
         months = set(picks["decision_date"])
         out = pd.concat([record[~record["decision_date"].isin(months)], picks])
-    return out.sort_values(["decision_date", "strategy", "rank"]).reset_index(drop=True)[
-        PICK_COLUMNS
-    ]
+    # reindex, not select: a record written before a column existed gets it blank
+    out = out.sort_values(["decision_date", "strategy", "rank"]).reset_index(drop=True)
+    return out.reindex(columns=PICK_COLUMNS)
 
 
 # ---------------------------------------------------------------------------------------------
@@ -245,8 +257,21 @@ def rebuild() -> None:
 def run(
     download: bool = typer.Option(True, help="Update the raw data first (off: rebuild only)"),
     force: bool = typer.Option(False, help="Redo a decision month that's already been done"),
+    dry_run_notify: bool = typer.Option(False, help="Print the Telegram messages, don't send"),
 ):
-    """The monthly update: data, rebuild, checks, both strategies' picks."""
+    """The monthly update: data, rebuild, checks, both strategies' picks, the messages."""
+    try:
+        _run(download, force, dry_run_notify)
+    except typer.Exit:
+        raise  # a failed check: already reported
+    except Exception as e:  # anything unexpected: alert, then fail as usual
+        notify.private(
+            notify.alert_message("Monthly run", [f"{type(e).__name__}: {e}"]), dry_run_notify
+        )
+        raise
+
+
+def _run(download: bool, force: bool, dry_run_notify: bool) -> None:
     t0 = time.time()
     if download:
         update_data()
@@ -263,6 +288,7 @@ def run(
     if problems:
         for p in problems:
             logger.error(p)
+        notify.private(notify.alert_message("Monthly run", problems), dry_run_notify)
         raise typer.Exit(code=1)
 
     decision = pd.Timestamp(feats["date"].max())
@@ -285,7 +311,22 @@ def run(
     PICKS_DIR.mkdir(parents=True, exist_ok=True)
     picks.to_csv(out_file, index=False)
     record = pd.read_csv(LIVE_PICKS) if LIVE_PICKS.exists() else None
-    append_record(record, picks).to_csv(LIVE_PICKS, index=False)
+    record = append_record(record, picks)
+    record.to_csv(LIVE_PICKS, index=False)
+
+    # The public message: both lists, last month's live result, what changed in the index.
+    changes = pd.read_csv(WIKIPEDIA_DIR / "sp500_changes.csv")
+    previous = decision - pd.offsets.BMonthEnd(1)
+    result = notify.live_result(record, prices, pd.Timestamp.now().to_period("M"))
+    latest = feats[feats["date"] == decision]
+    message = notify.picks_message(
+        picks,
+        decision,
+        result,
+        notify.index_changes(changes, previous, decision),
+        latest["has_price"].astype(bool).mean(),
+    )
+    notify.public(message, dry_run_notify)
 
     summary = "\n".join(
         f"  {STRATEGY_LABELS[s]}: {', '.join(picks.loc[picks['strategy'] == s, 'ticker'])}"

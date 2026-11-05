@@ -355,6 +355,20 @@ a stock is the month's top gainer.
 - **The first picks file (decisions at the end of Oct 2026) was made on 5 Nov,** after the open it would trade at. Nothing leaks, but it wasn't tradeable. `made_at` records this. The first truly live month is the run on 1 Dec 2026.
 - **Notebooks stay on the 4 Nov data snapshot until #20 (your call, as recommended).** The run refreshed `data/` (20 more delisted names, Kenvue's sector). #20 reruns everything once, on the complete data.
 
+**Telegram notifications (5 Nov, #38), settled one question at a time, all as recommended**
+
+- **Events:** the monthly run's picks and any failure; the nightly Alpha Vantage summary until the queue is empty (it ends with a reminder to unregister the task). Manual `--max-calls 0` checks stay silent.
+- **Recipients, split by audience:** the picks go to a public channel, and failures plus the AV summaries go to a private chat.
+  - You asked what there'd be to show if everything went to you only. The picks are already public in `reports/picks/`; a channel makes them viewable at `t.me/s/<name>` without an account and timestamps them independently.
+  - That changed my first recommendation (a private chat only) to the split.
+- **The live record in each message from Jan 2027:** last month's picks, from the next open to the month-end close, against SPY, and how many beat it. Only tradeable picks count (made before the next 08:30 Central open), so the Oct 2026 file is left out.
+- **Defaults:**
+  - plain `requests` (send-only, no bot framework or server);
+  - a failed message never fails the run;
+  - the token is never logged (errors by type only, since a request error's text holds the URL, and the URL holds the token);
+  - `--dry-run`, a `find-chats` setup helper, and the token added to the notebook runner's secret scan.
+- `append_record` tolerates a record written before a column existed (`price_ticker` was added for the live result).
+
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 

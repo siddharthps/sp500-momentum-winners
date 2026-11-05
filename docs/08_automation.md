@@ -1,7 +1,7 @@
 # Chapter 8: Automation
 
-> **This draft covers Part 1, the monthly run.** Notifications, the live dashboard, the cloud run
-> and the run-all notebook are added as they're built.
+> **Part 1** (sections 3.1–3.4): the monthly run. **Part 2** (section 3.5): notifications. The live
+> dashboard, the cloud run and the run-all notebook are added as they're built.
 
 ## 1. Goal
 
@@ -77,6 +77,30 @@ have traded at. It uses only data up to 30 October, so nothing leaks, but it cou
 been traded. Every pick records when it was made, so this one can be set apart. The first truly live
 month is the one made on 1 December 2026.
 
+### 3.5 Part 2: notifications
+
+A scheduled job's most likely failure is a silent one. So every run now reports, and the messages
+are split by who they're for:
+
+| Message | Where | When |
+| --- | --- | --- |
+| Both strategies' picks, the index changes that month, and the share of members priced | **A public channel** | Each monthly run |
+| How last month's picks did: each list's return from the next open to the month-end close, against SPY's, and how many of the ten beat it | The same message | From January 2027, once a full month of live picks has passed |
+| Why a run stopped, exactly as its checks put it (for example "no sector for KVUE") | A private chat | On any failure |
+| The night's Alpha Vantage pull: how many tickers were tried, how they came back, and how many are left; a reminder to retire the job when the queue is empty | The private chat | Each night until the download ends |
+
+**The channel is public on purpose.** The picks are already published in the repository each month,
+so the channel reveals nothing new. Its value is that Telegram timestamps each post independently of
+the repository, which shows the picks existed before their results were known. Anyone can read its
+history in a browser, without an account. Operational alerts would only be noise there, so they go
+to a private chat.
+
+Every picks message ends with the same line: a research output, not advice; in backtests the model
+didn't beat the plain 6-month rule, and neither clearly beat SPY per unit of risk.
+
+A message that fails to send never fails the run, so the picks are saved either way. The bot only
+sends: it never listens, so it needs no server.
+
 ---
 
 ## 4. Decisions and why
@@ -89,6 +113,9 @@ month is the one made on 1 December 2026.
 | Re-download whole price histories for active stocks | Appending would mix two dividend adjustments |
 | First weekday of the month, 07:00, with catch-up | The month-end data is final, and the picks are ready before the open |
 | Fail loudly on an incomplete month, a missing sector or changed columns | An automated run has nobody watching; stale or mis-shaped data must stop it |
+| Picks to a public channel; failures and the nightly pull to a private chat | The public message is the project's face and an independent timestamp; operational alerts are for the operator |
+| Last month's live result in each message, scored from the next open to the month-end close | That's the honest live record; it's ready on the first weekday of the next month, before the backtest's next-open-to-next-open return could be |
+| A failed message never fails a run | Notifications report on the job; they must never become a reason it fails |
 
 ---
 
@@ -98,6 +125,9 @@ month is the one made on 1 December 2026.
   plain 6-month rule, and that nothing chosen in advance clearly beats SPY per unit of risk.
 - **The run depends on free sources** (Wikipedia, Yahoo, FRED), which can change format or limit
   requests. The checks catch an incomplete month, not every possible error in the data.
+- **The live result is measured slightly differently from the backtest:** from the next open to the
+  following month-end close, rather than to the open after it. The difference is one overnight
+  move, the price of reporting on the first weekday of the month.
 - **It runs on one computer for now.** A copy in the cloud, so it doesn't depend on the computer
   being on, is a separate step.
 - **New companies need their price history and sector.** Additions to the index are picked up from
