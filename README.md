@@ -102,8 +102,9 @@ rebuilt with your own access through steps 1–4.
 
 ### Live dashboard
 
-[`dashboard/`](dashboard/README.md) holds a Streamlit app, hosted free on Streamlit Community Cloud
-from this repository's `main` branch. It has five tabs: the overview, this month's picks, the live
+**[sp500-momentum-winners.streamlit.app](https://sp500-momentum-winners.streamlit.app/)**: a
+Streamlit app ([`dashboard/`](dashboard/README.md)), hosted free on Streamlit Community Cloud from
+this repository's `main` branch. It may take ~30 s to wake if nobody has visited for a while. It has five tabs: the overview, this month's picks, the live
 record, the backtest, and model monitoring (input drift). It reads only the public dataset, so it
 holds no token. `uv run streamlit run dashboard/app.py` runs it locally.
 

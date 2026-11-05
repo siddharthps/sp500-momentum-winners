@@ -134,7 +134,8 @@ tagged, so the numbers in this book can always be traced to the exact data behin
 
 ### 3.7 Part 4: the live dashboard
 
-A public web page shows the project at a glance and keeps itself up to date:
+A public web page, **[sp500-momentum-winners.streamlit.app](https://sp500-momentum-winners.streamlit.app/)**,
+shows the project at a glance and keeps itself up to date:
 
 | Tab | Shows |
 | --- | --- |
