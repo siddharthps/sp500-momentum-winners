@@ -51,18 +51,26 @@ def _main():
 # ---------------------------------------------------------------------------------------------
 
 
-def fit_and_score(spec: ModelSpec, params: dict, data: prep.ModelData, fold: prep.Fold):
-    """Fit on the fold's training rows (preparation included), score its scoring rows."""
+def fit_pipeline(spec: ModelSpec, params: dict, data: prep.ModelData, train_rows):
+    """Fit one model (preparation included) on the given row positions. The monthly run
+    (`predict`) reuses this, so live picks come from exactly the backtest's fitting code."""
     X = data.X(params.get("ranked", False))
-    tr, sc = fold.train, fold.score
-    y = data.y[spec.target].iloc[tr]
+    y = data.y[spec.target].iloc[train_rows]
     if spec.target == "excess":
         y = prep.clip_target(y)
     pipe = spec.pipeline(params)
     kw = {}
     if spec.grouped:
-        kw["model__qid"] = pd.factorize(data.rows["date"].iloc[tr])[0]
-    pipe.fit(X.iloc[tr], y.to_numpy(), **kw)
+        kw["model__qid"] = pd.factorize(data.rows["date"].iloc[train_rows])[0]
+    pipe.fit(X.iloc[train_rows], y.to_numpy(), **kw)
+    return pipe
+
+
+def fit_and_score(spec: ModelSpec, params: dict, data: prep.ModelData, fold: prep.Fold):
+    """Fit on the fold's training rows (preparation included), score its scoring rows."""
+    pipe = fit_pipeline(spec, params, data, fold.train)
+    X = data.X(params.get("ranked", False))
+    sc = fold.score
     return pd.Series(spec.scores(pipe, X.iloc[sc]), index=data.rows.index[sc]), pipe
 
 

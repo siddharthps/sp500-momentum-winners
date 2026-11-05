@@ -333,6 +333,28 @@ a stock is the month's top gainer.
   - The 6-month rule is a winning market bet in the test years (+13.5 points in up months), with 46% of its picks in technology.
 - **Hypotheses, not tested:** remove market exposure; a risk-adjusted target; the model as a filter on the rule; sector caps on the rule.
 
+**Extras (5 Nov), your choice from my assessment**
+
+- **Three extras, each its own issue in the Automation milestone:** the Telegram bot (#38), a live dashboard on Hugging Face Spaces with model monitoring (#40), and the monthly run on GitHub Actions (#39). Built in that order, after the core step each one needs. If time runs short they're dropped from the bottom, and never at the cost of #20 or the write-up.
+- **Docker was left out** (it was ranked lowest): reproducibility is already covered by uv's lock file and CI.
+- Every published pick says it's a research output, not advice, and what the backtest found.
+
+**The monthly run (5 Nov, #17), settled one question at a time, all as recommended**
+
+- **Both strategies' picks are published, labelled:** the headline model's top 10 and the 6-month rule's top 10. This starts a live head-to-head.
+- **The headline is refitted monthly with fixed settings** on every month with a known result, using the backtest's one-month gap. It's never re-tuned.
+  - Proven equal to the backtest: run as of Jan 2023, it reproduces the test fit's scores for all 497 members exactly, with the same top 10.
+- **Schedule:** the first weekday of each month at 07:00 PC time, with catch-up. The task (registered with your approval) starts daily at 07:00 but exits at once unless it's a weekday and last month's picks are missing. PowerShell's task tools have no monthly trigger.
+- **Prices for active tickers are re-downloaded in full, never appended:** the adjusted close is recomputed backwards after every dividend or split.
+- **Checks that stop the run and write nothing:**
+  - the latest decision isn't the month's last trading day (Good Friday, Memorial Day and Thanksgiving allowed for);
+  - SPY lacks a close, or under 95% of members are priced;
+  - a member has no sector;
+  - the feature columns differ from the tuned model's.
+- **Found on the first run:** Kenvue (KVUE) had left today's list, so its sector became "Unknown" and created a 153rd feature column. KVUE was added to `references/removed_sectors.csv`, and the run now stops on any missing sector.
+- **The first picks file (decisions at the end of Oct 2026) was made on 5 Nov,** after the open it would trade at. Nothing leaks, but it wasn't tradeable. `made_at` records this. The first truly live month is the run on 1 Dec 2026.
+- **Notebooks stay on the 4 Nov data snapshot until #20 (your call, as recommended).** The run refreshed `data/` (20 more delisted names, Kenvue's sector). #20 reruns everything once, on the complete data.
+
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 

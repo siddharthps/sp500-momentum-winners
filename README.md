@@ -15,8 +15,9 @@ aren't flattered by survivorship bias.
 
 > Status: data, the monthly table, the features, the exploratory analysis, the baseline rule grid
 > and the models (setup, tuning, comparison, one test) and their trading simulations are done;
-> equity curves, risk over time, the SPY trend filter and the diagnosis of the picks are done too;
-> the automation is next. The
+> equity curves, risk over time, the SPY trend filter and the diagnosis of the picks are done too.
+> The monthly run (next month's picks) is scheduled; notifications, a live dashboard and a cloud run
+> are next. The
 > Alpha Vantage download of delisted companies runs until ~12–14 Nov 2026. Progress is tracked in
 > [issues](https://github.com/siddharthps/sp500-momentum-winners/issues), by
 > [milestone](https://github.com/siddharthps/sp500-momentum-winners/milestones), and on the
@@ -52,6 +53,7 @@ ALPHAVANTAGE_API_KEY=your_key_here
 | 5. Monthly table | `uv run python -m sp500_momentum.monthly build` | Steps 1–4 | `data/processed/monthly_panel.parquet`, plus every price series in `data/interim/monthly_prices.parquet` (for backtests) |
 | 6. Features | `uv run python -m sp500_momentum.features build` | Step 5 + monthly bars, FRED, `references/removed_sectors.csv` | `data/processed/features.parquet` (152 features in named sets) |
 | 7. Models | `uv run python -m sp500_momentum.modeling.train run` | Step 6 | `reports/model_cv_results.csv`, `reports/model_comparison.csv`, `data/processed/model_scores.parquet`, `models/` (~1¾ h; `--n-iter 1` for a quick smoke run) |
+| 8. Monthly run | `uv run python -m sp500_momentum.modeling.predict run` | Steps 1–3 (current members only), 5–6, the step 7 settings | `reports/picks/picks_<YYYY-MM>.csv` (the headline model's and the 6-month rule's top 10), `data/processed/live_picks.csv` (every pick so far), `models/live_headline.joblib` (~2 min; `--no-download` rebuilds from the files on disk; `--force` redoes a month) |
 | Progress | `uv run python -m sp500_momentum.dataset av-status` | | |
 
 Step 4 is rerun once a day (and step 5 after it) until the queue is empty (started 2 Nov 2026,
@@ -61,6 +63,21 @@ reused the ticker) are added to its queue automatically.
 
 On Windows, `scripts/register_av_task.ps1` schedules it daily at 21:00 (PC local time) with Task Scheduler.
 Each run appends to `logs/av_pull.log`.
+
+**Step 8, the monthly run,** is scheduled by `scripts/register_monthly_task.ps1` (task
+`sp500-momentum-monthly-run`). It starts at 07:00 every day, but only does anything on a weekday when
+last month's picks don't exist yet: in practice the first weekday of each month, with catch-up if
+the PC was off. Each run appends to `logs/monthly_run.log`, and `scripts/monthly_run.ps1 -Force`
+runs it by hand. It re-downloads the full history of today's members and the benchmarks (the
+adjusted close is recomputed after every dividend, so appending new days would mix two adjustments).
+It refits the headline model with its tuned settings (never re-tuned), and **stops without writing
+anything** when:
+- the latest month-end isn't the month's last trading day;
+- SPY or more than 5% of members lack a price;
+- a member has no sector (add it to `references/removed_sectors.csv`);
+- the feature columns differ from the tuned model's.
+
+The picks are a research output, not advice.
 
 Step 3 takes about a minute. It saves one parquet file per ticker (unadjusted OHLC, adjusted close,
 volume, dividends, splits), ending at the previous close. Reruns skip tickers already saved, and
@@ -156,8 +173,8 @@ or deleting `main` are blocked.
 ├── models             <- Trained models and predictions
 ├── notebooks          <- 01_data, 02_features_eda, 03_models, 04_simulation, 05_risk, 06_diagnostics (executed, with outputs); later 00_run_all
 ├── references         <- Decision log, brainstorm and dated working journal
-├── reports/figures    <- Generated charts
-├── scripts            <- Task Scheduler setup and the daily Alpha Vantage run
+├── reports/figures    <- Generated charts (reports/picks: the monthly picks)
+├── scripts            <- Task Scheduler setup: the daily Alpha Vantage run and the monthly run
 ├── logs               <- Run logs (git-ignored)
 ├── tests              <- pytest tests (offline, no network)
 ├── mkdocs.yml         <- Optional website build for docs/
@@ -180,7 +197,7 @@ or deleting `main` are blocked.
     └── modeling/      <- prep.py: feature matrix, targets, time blocks with gaps, CV folds,
                           in-fold preparation; models.py: the candidates and search ranges;
                           evaluate.py: top-10 scoring; train.py: tuning, comparison, the test;
-                          predict.py (to do)
+                          predict.py: the monthly run (fresh data, checks, refit, picks)
 ```
 
 ## Acknowledgements

@@ -183,6 +183,8 @@ class QuantileClipper(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         a = np.asarray(X, dtype="float64")
         self.n_features_in_ = a.shape[1]
+        if hasattr(X, "columns"):  # like scikit-learn's transformers: remember the input names
+            self.feature_names_in_ = np.asarray(X.columns, dtype=object)
         with np.errstate(all="ignore"):
             self.lower_ = np.nanquantile(a, self.quantiles[0], axis=0)
             self.upper_ = np.nanquantile(a, self.quantiles[1], axis=0)

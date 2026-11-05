@@ -27,6 +27,7 @@ dependencies = [
     "pillow>=13",
     "pip",
     "pyarrow>=26.0.0",
+    "python-dateutil>=4.0.0",
     "python-dotenv",
     "requests>=2.34.2",
     "scikit-learn",

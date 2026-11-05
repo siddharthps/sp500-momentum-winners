@@ -1155,6 +1155,39 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - an uncomputed "three times overstated" was removed from the chapter.
 - **Charts:** the regime chart's panels now share an x-axis, so a point means the same in both; "0" replaces "+0 pts".
 - **Docs:** chapter 7 Part 4 (3.12–3.15, three decisions), the index row, README (status, notebook 06, rerun row, module tree), and `decisions.md`.
+- **Shipped:** PR #37, squash-merged with CI green. #16 is Done. A slip: a chained command marked the board Done before CI had registered. The merge was correctly refused; I reset the board, merged after the green check, and saved a memory note to wait for CI separately.
+
+### Session 22 — Thursday, 5 Nov 2026 (status, extras, the monthly run, #17)
+
+- **09:50 status:** 16 issues done, 7 open, ~16–20 h of required work, 15 days left; the AV pull finishes ~12 Nov.
+- **Your ideas assessed:** a dashboard (made live through HF Spaces reading the #18 dataset), a Telegram bot, Docker, and a cloud deployment (GitHub Actions cron rather than a VM).
+  - You chose Telegram, the dashboard and the cloud run; Docker was left out. All three match my ranking.
+  - Issues #38, #39, #40 created. GitHub's API threw GraphQL and 502 errors mid-batch, so every write was checked against the actual lists before retrying (no duplicates).
+- **#17 decisions, one prompt each, all as recommended:**
+  1. both strategies' picks;
+  2. a monthly refit with fixed settings;
+  3. the first weekday at 07:00;
+  4. register the task (your approval);
+  5. keep the 4 Nov notebook snapshot until #20.
+- **Design found while reading the code:** appending new days to Yahoo files would mix dividend adjustments, so active tickers are re-downloaded in full (`yahoo-daily --active-only`, about 45 s).
+- **Built:**
+  - `modeling/predict.py`: `last_trading_day` (with Good Friday, Memorial Day and Thanksgiving), `month_end_problems`, `column_problems`, `trained_columns`, `headline_settings`, `refit_and_score`, `top_picks`, `append_record`, and the `run` command;
+  - `train.fit_pipeline`, split out of `fit_and_score`;
+  - `QuantileClipper` now records its input names;
+  - config `PICKS_DIR`, `LIVE_*`;
+  - `scripts/monthly_run.ps1` and `register_monthly_task.ps1`;
+  - 12 tests (109 pass).
+- **Checks:**
+  - **The refit equals the backtest:** as of Jan 2023 it reproduced all 497 test-fit scores with a difference of 0.00.
+  - **First real run:** 105 s, exit 0. The picks were sanity-checked: the rule's 10 are exactly the 10 highest 6-month returns; the model's 10 all have negative 6-month returns, the pattern found in #16.
+  - The wrapper is a silent no-op when the picks exist; `-Force` runs end to end (112 s) and logs.
+- **Traps found:**
+  - **Kenvue had left the index, so it got an "Unknown" sector and a 153rd feature.** Fixed in `removed_sectors.csv`, and the run now stops on a missing sector or changed columns.
+  - **`Pipeline.feature_names_in_` fails with a passthrough first step**, so `trained_columns` asks the first step that knows its columns.
+  - The first draft's month-end check allowed "3 business days early", which would have let through exactly the incomplete download it's meant to catch. Replaced with an exact last-trading-day rule.
+  - The first picks file was made after its trade date: kept, with `made_at`, and the docs say so.
+- **Task registered:** `sp500-momentum-monthly-run`, Ready, daily 07:00. The first real run is Tue 1 Dec 2026. The AV task is untouched.
+- **Docs:** chapter 8 Part 1 (new; index, mkdocs nav), README (status, pipeline step 8, the monthly-run section, the tree), CLAUDE.md (a monthly-run trap, the command), and `decisions.md`.
 
 ---
 
@@ -1177,6 +1210,7 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 | 2 Nov 2026 | **Project plan (20 small decisions, Session 5):** month-end rows; split 2010–19 / 2020–22 / 2023–26; build now, rerun after the AV pull; class FRED set + VIX, lagged; US-focused markets; TA-Lib indicators (no candle patterns); ~20 own features; sectors filled in by hand; target `is_beat_spy_1m`; Tree + RF + LogReg + XGBoost; time-series CV, test once; score = precision of the top-N picks; top 1/5/10 (headline 10); SPY + equal-weight benchmarks; vector + exact simulation; SPY > 200-day filter; notebooks per class week + `00_run_all`; Hugging Face data; monthly scheduled run; extras after the core | Mirrors the class's flow (Weeks 1–4) and the rubric's points. Fixes the class's caveats: look-ahead in macro, tuning on test, no benchmark |
 | 3 Nov 2026 | **Baseline grid:** 60 rules reported; staggered slots; 10 bps per side on the traded weight; Sharpe net of Fed Funds; the best rule **chosen on 2010–22 and followed through the test years**; a price file beyond membership. The split is unchanged (~60/18/22; ~78/22 with CV) | Every try shown, so luck can be judged. Costs and staggering make it tradable. Choosing on the same years you check is circular. One test window for every strategy |
 | 4 Nov 2026 | **Model setup:** CV folds score 2014–19 and 2020–22 is held out (A); 8 candidates (plan's 4 + XGBoost ranker, excess-return regressor, MLP, and an average); a percentile-feature switch; decile ranker label; clipped Huber regressor; in-fold preparation per model family | Fair, leak-free comparison. The new models attack the classifier's blind spots: within-month order and the size of the win |
+| 5 Nov 2026 | **Extras and the monthly run (#17):** Telegram, the dashboard and the cloud run as issues (Docker left out); both strategies' picks published; monthly refit with fixed settings; first weekday at 07:00 with catch-up; full re-download of active prices; loud checks (last trading day, prices, sectors, columns) | Live picks must come from exactly the tested method, and a scheduled run must stop rather than publish from stale or mis-shaped data |
 | 4 Nov 2026 | **Diagnosis of the picks (#16):** descriptive only, with ideas as untested hypotheses; headline model vs the 6-month rule; regime, sector and year breakdowns with month-level margins of error; a new notebook 06 | No untouched data is left to test new ideas honestly. Finding (preview): the model is a volatile rebound bet that loses in SPY's down months |
 | 4 Nov 2026 | **Trend filter and risk over time (#15):** SPY vs its 10-month average (not tuned); cash at Fed Funds; "off" sells everything; all strategies filtered, average effect reported; new notebook 05; shared-window charts plus rules from 2010 | Fixed before results. Result (preview): it lowers risk-adjusted returns everywhere by missing rebounds, so it's not adopted |
 | 4 Nov 2026 | **Model simulations (#14):** exact simulator, no $100 vector version; 1-month hold; dollars from $10,000; equal weight (main) + inverse vol; a 2N hold buffer as a variant; 2020–22 and test only; headline first, others for reference; **every window by decision date** (grid included) | All fixed before results. Choosing among versions or periods after the fact would turn the test into tuning |
