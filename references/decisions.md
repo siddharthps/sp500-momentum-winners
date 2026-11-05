@@ -369,6 +369,15 @@ a stock is the month's top gainer.
   - `--dry-run`, a `find-chats` setup helper, and the token added to the notebook runner's secret scan.
 - `append_record` tolerates a record written before a column existed (`price_ticker` was added for the live result).
 
+**Hugging Face datasets (5 Nov, #18), settled one question at a time, all as recommended**
+
+- **A private dataset with everything, plus a public dataset of derived tables.** Yahoo and Alpha Vantage prices are licensed for personal use, and their terms forbid redistribution.
+  - Private (`sp500-momentum-data`): raw, interim, processed and models. It's reached by token from `--from-file`, the dashboard and the cloud run.
+  - Public (`sp500-momentum-winners`): features and the member table without `close_adj`, `entry_px`, `dollar_vol` and `source`; model scores; live picks; report tables; and a card naming every source. Its licence is CC BY-SA 4.0, following Wikipedia's membership data.
+- **A preview snapshot now, the final one in #20,** tagged (e.g. `final-2026-11`) as the version the write-up quotes.
+- **Every upload scans the files for any secret from `.env` and refuses if one is found** (file names only are reported). The first scan: 704 files, none.
+- **`predict run --from-file`** starts from the private snapshot; with `--no-download` it uses no data source at all.
+
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 

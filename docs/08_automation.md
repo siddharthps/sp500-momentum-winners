@@ -1,7 +1,8 @@
 # Chapter 8: Automation
 
-> **Part 1** (sections 3.1–3.4): the monthly run. **Part 2** (section 3.5): notifications. The live
-> dashboard, the cloud run and the run-all notebook are added as they're built.
+> **Part 1** (sections 3.1–3.4): the monthly run. **Part 2** (section 3.5): notifications.
+> **Part 3** (section 3.6): the data snapshots. The live dashboard, the cloud run and the run-all
+> notebook are added as they're built.
 
 ## 1. Goal
 
@@ -101,6 +102,36 @@ didn't beat the plain 6-month rule, and neither clearly beat SPY per unit of ris
 A message that fails to send never fails the run, so the picks are saved either way. The bot only
 sends: it never listens, so it needs no server.
 
+### 3.6 Part 3: the data snapshots
+
+Rebuilding this project from nothing takes an Alpha Vantage key and about nine nights of downloads
+for the delisted companies. A snapshot removes that barrier, and gives the dashboard and the cloud
+run one place to read from. There are **two snapshots**, because the price data isn't ours to give
+away:
+
+| | Private | Public |
+| --- | --- | --- |
+| **Contents** | Everything: the downloads, every table, the trained models | What this project computed: features and the member table with the raw price and volume columns removed, every model's out-of-sample scores, the live picks, the result tables |
+| **Who can read it** | Anyone with access, by token: the cloud run, the dashboard, collaborators | Anyone, without an account |
+| **Why** | Yahoo Finance's and Alpha Vantage's terms allow personal use and forbid redistribution | Returns, ranks, indicators and results are this project's own calculations; index membership (from Wikipedia) and the economic series (US government data) can be shared with attribution |
+
+With access to the private snapshot, the whole pipeline after the downloads runs without any
+source or key. Everyone else can follow and check the analysis from the public tables, and rebuild
+the prices with their own access.
+
+**Every upload is checked first.** Before anything is sent, every file is scanned for the project's
+secrets (the API key and the tokens). If one is found, the upload is refused, and only the file's
+name is reported. A leaked token can't be removed from a dataset's history, only revoked. The first
+scan covered 700 files and found none.
+
+**What was verified:**
+- the private snapshot is private (an anonymous request is refused), and complete;
+- the public one opens without an account, and none of its tables has a raw price column;
+- a download of the private snapshot matched the local files byte for byte (700 of 700).
+
+Each upload is a commit in the dataset's history. The final snapshot after the last rebuild will be
+tagged, so the numbers in this book can always be traced to the exact data behind them.
+
 ---
 
 ## 4. Decisions and why
@@ -116,6 +147,9 @@ sends: it never listens, so it needs no server.
 | Picks to a public channel; failures and the nightly pull to a private chat | The public message is the project's face and an independent timestamp; operational alerts are for the operator |
 | Last month's live result in each message, scored from the next open to the month-end close | That's the honest live record; it's ready on the first weekday of the next month, before the backtest's next-open-to-next-open return could be |
 | A failed message never fails a run | Notifications report on the job; they must never become a reason it fails |
+| A private full snapshot and a public derived one | Reproducible for anyone given access, open for everyone else, and within the price vendors' terms |
+| Every upload scanned for secrets first | A leaked token can only be revoked, never removed from the history |
+| A preview snapshot now, the final one tagged after the last rebuild | The dashboard and cloud run can be built on real files now; the book's numbers stay traceable |
 
 ---
 
