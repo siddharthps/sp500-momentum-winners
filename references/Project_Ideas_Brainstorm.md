@@ -1075,6 +1075,53 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - The buffer cuts trading by about 3 turns a year. Inverse vol isn't consistent.
   - The window change made the chosen rule tie SPY's test Sharpe (1.21 vs 1.21; it used to be 1.21 vs 1.29).
 - **Docs:** chapter 7 (Part 1 numbers refreshed, Part 2 sections 3.4–3.7, decisions, a caveat), the index row, README (status, notebook 04 row, rerun row), CLAUDE.md (windows by decision date), and `decisions.md`.
+- **Shipped:** PR #35, squash-merged with CI green. #14 is Done.
+- **Afternoon:** overview of what's done and what's left; four CLAUDE.md trap updates (your call: fold them into #15's PR rather than a separate one).
+
+### Session 20 — Wednesday, 4 Nov 2026, evening (equity curves, risk over time, the trend filter, #15)
+
+- **20:00 check:** tonight's 21:00 AV run hadn't happened yet; last night's was clean (23 tried, 192 left).
+- **You asked what #15 is**, then:
+  - **why the notebook cap is 300 KB.** It's our own rule: committed outputs grow git history on every rerun, and size is a sign of dumping raw output. My decision: keep it, and put #15 in a new `05_risk`;
+  - **what's special about 10 months.** It's ≈ 200 trading days; Faber's monthly version of the 200-day rule. It's a convention, so nothing is tuned;
+  - **how 2010-on and 2020-on strategies are told apart.** Only shared months on comparison charts, and every title states its window. The chosen rule is in-sample on 2020–22, which chapter 7 now says.
+- **Decisions, one prompt each:**
+  1. the 10-month signal;
+  2. cash earns Fed Funds;
+  3. "off" sells everything;
+  4. **all 121 strategies filtered (your call; I recommended four)**, reporting the average effect and the pre-declared ones;
+  5. two panels plus a rules-only chart from 2010;
+  6. rolling 12-month and drawdown charts.
+
+  All but the fourth were as recommended.
+- **Built:**
+  - `simulate` with an on/off signal (sell all, earn cash, every slot buys back);
+  - `trend_signal`, `cash_returns`, `off_decisions` / `months_off`, `filter_effect`, `window`, `value_paths`, `drawdowns`, `rolling_excess`;
+  - a `_trend` suffix read by `parse_strategy`;
+  - `plots.paths_chart`; config `TREND_MONTHS`;
+  - notebook `05_risk`.
+- **Checks:**
+  - "always on" reproduces the plain simulation exactly (a test);
+  - **filtered SPY was rebuilt by hand** and matches to 1e-16;
+  - 93 tests pass.
+- **Traps found:**
+  - **The worst fall ignored a first-month loss** (an old bug in `performance`). Fixed; 92 of 246 drawdowns in the 2020–22 window deepened. No number quoted in the text changed.
+  - **Notebook 05 was 505 KB.** Measured the cause: smoothed lines make PNGs 3–4× larger. Fixed with 256-colour palette PNGs in `plots.save` (05 is now 195 KB, 04 152, 03 121). The check wasn't loosened.
+  - **The automatic date locator warned on short ranges**, which put stderr in the outputs and failed the runner. Replaced with explicit locators.
+  - **Legends covered lines.** They now sit below the panels.
+  - **Three drafted claims fixed before shipping:**
+    - "cost money in every period" (false: the headline gained slightly with the filter on 2020–22);
+    - "both rules level with SPY until 2025" (only the 6-month rule was);
+    - "nearly every downturn was V-shaped" (unchecked; softened).
+- **Results (preview):**
+  - The filter lowers the Sharpe ratio of SPY and of every pre-declared strategy in every period. Filtered SPY made 7.8% a year vs 14.3% over 2010–26.
+  - SPY averaged +3.5% in the 31 months the filter sat out, vs +0.8% otherwise (it missed April 2020's +15%, January 2019's +10%, July 2022's +9%).
+  - It shortened long falls (the headline: −55% → −28% on 2020–22). On the test it triggered 4 times, always late. **Not adopted.**
+- **Docs:**
+  - chapter 7 Part 3 (3.8–3.11), the "what each period is clean for" paragraph, four decisions, a caveat;
+  - the index row; README (status, notebook 05, rerun row);
+  - CLAUDE.md (palette PNGs and date locators);
+  - `decisions.md`.
 
 ---
 
@@ -1097,6 +1144,7 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 | 2 Nov 2026 | **Project plan (20 small decisions, Session 5):** month-end rows; split 2010–19 / 2020–22 / 2023–26; build now, rerun after the AV pull; class FRED set + VIX, lagged; US-focused markets; TA-Lib indicators (no candle patterns); ~20 own features; sectors filled in by hand; target `is_beat_spy_1m`; Tree + RF + LogReg + XGBoost; time-series CV, test once; score = precision of the top-N picks; top 1/5/10 (headline 10); SPY + equal-weight benchmarks; vector + exact simulation; SPY > 200-day filter; notebooks per class week + `00_run_all`; Hugging Face data; monthly scheduled run; extras after the core | Mirrors the class's flow (Weeks 1–4) and the rubric's points. Fixes the class's caveats: look-ahead in macro, tuning on test, no benchmark |
 | 3 Nov 2026 | **Baseline grid:** 60 rules reported; staggered slots; 10 bps per side on the traded weight; Sharpe net of Fed Funds; the best rule **chosen on 2010–22 and followed through the test years**; a price file beyond membership. The split is unchanged (~60/18/22; ~78/22 with CV) | Every try shown, so luck can be judged. Costs and staggering make it tradable. Choosing on the same years you check is circular. One test window for every strategy |
 | 4 Nov 2026 | **Model setup:** CV folds score 2014–19 and 2020–22 is held out (A); 8 candidates (plan's 4 + XGBoost ranker, excess-return regressor, MLP, and an average); a percentile-feature switch; decile ranker label; clipped Huber regressor; in-fold preparation per model family | Fair, leak-free comparison. The new models attack the classifier's blind spots: within-month order and the size of the win |
+| 4 Nov 2026 | **Trend filter and risk over time (#15):** SPY vs its 10-month average (not tuned); cash at Fed Funds; "off" sells everything; all strategies filtered, average effect reported; new notebook 05; shared-window charts plus rules from 2010 | Fixed before results. Result (preview): it lowers risk-adjusted returns everywhere by missing rebounds, so it's not adopted |
 | 4 Nov 2026 | **Model simulations (#14):** exact simulator, no $100 vector version; 1-month hold; dollars from $10,000; equal weight (main) + inverse vol; a 2N hold buffer as a variant; 2020–22 and test only; headline first, others for reference; **every window by decision date** (grid included) | All fixed before results. Choosing among versions or periods after the fact would turn the test into tuning |
 | 4 Nov 2026 | **Models trained (#13):** random search (seed 0, 30 tries; 20 for the MLP); selection = mean − 0.5 × std of yearly precision; one headline chosen on 2020–22 before the test; all candidates tested and simulated for reference; top-N, not thresholds; no class weights; test numbers shown only in notebook 03 | Choices fixed before the results. Result (preview): no model beat the base rate on 2020–22 or the 6-month rule on the test |
 | 3 Nov 2026 | **Feature review:** 8 new features, 3 exact copies dropped (#29, before #12); no split flag; sector labels as a caveat; flagged moves reviewed in #20; NaN-aware blanks in #12 | New information, not more columns. A field missing for one source leaks survival. Settled one at a time, all as recommended |

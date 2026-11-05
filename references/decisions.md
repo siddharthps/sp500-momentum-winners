@@ -297,6 +297,23 @@ a stock is the month's top gainer.
   - The buffer cut the models' trading by about 3 portfolio-turns a year, and lifted the 6-month top-10 rule in both periods. Inverse vol helped on 2020–22 and hurt on the test.
   - 12 of 121 strategies edge SPY's test Sharpe, mostly single-stock ones. Of those declared in advance, only the chosen rule does, and that's a tie.
 
+**Equity curves, risk over time and the SPY trend filter (4 Nov, #15), settled before any results**
+
+- **A new notebook, `05_risk`** (recommended; you asked why the 300 KB cap exists). The cap keeps git history small: notebooks are committed with their outputs, and each rerun stores new images. It also forces summaries over dumps. 04 is at 278 KB, and its question ("how much did each make?") differs from 05's ("what was the path like, and does a market switch help?"). 05 recomputes its own strategies through the package, so it doesn't depend on 04 having run.
+- **Trend signal: the 10-month average** (recommended): SPY's month-end adjusted close against the mean of its last 10 month-end closes, read at each decision. 10 months ≈ 200 trading days. It's Faber's (2007) monthly version of the classic 200-day rule. The length is a published convention, never tuned here (you asked what's special about 10: nothing, and that's the point).
+- **Cash earns the Fed Funds rate** (recommended), the same risk-free rate as in every Sharpe ratio.
+- **"Off" sells everything** (recommended): the whole portfolio goes to cash at the next open, every slot sold, costs charged. On re-entry every slot buys that month's picks.
+- **All 121 strategies get a filtered version, plus filtered SPY (your call; I had recommended four).** The notebook reports the filter's *average* effect across all of them, and the pre-declared main versions in full. No filtered strategy is picked from the 121.
+- **Curves:** two panels (2020–22 and the test years, each from $10,000, the shared months only), plus a separate "rules only, 2010 on" chart with and without the filter. You asked how 2010-on and 2020-on strategies are told apart: never on one chart, and every title states its window. The chosen rule is in-sample before 2023, which is noted wherever it appears before then.
+- **Risk over time:** rolling 12-month return minus SPY's, and drawdown from the previous peak, both in the same two panels.
+- **Bug fixed: the worst fall ignored a loss in the first month.** It was measured from the end of the first month, not from the starting amount. Grid and test-window numbers in the text were unchanged. The 2020–22 window starts with the February 2020 crash, so 92 drawdowns there deepened (the headline: −48% → −55%).
+- **Palette PNGs (just done, a refactor within `plots`):** every chart is saved and shown as a 256-colour PNG, which looks the same at about a third of the bytes. Notebook 05 went from 505 to 195 KB, and 04 from 278 to 152 KB. The 300 KB check is unchanged. Pillow is now a declared dependency.
+- **Result (preview):**
+  - The filter lowered the Sharpe ratio of SPY and of every pre-declared strategy, in every period. Over 2010–26, filtered SPY made 7.8% a year against 14.3% (Sharpe 0.58 vs 0.88).
+  - It was out at 31 of 201 decisions, and SPY averaged +3.5% in those months against +0.8% otherwise: it missed the rebounds.
+  - It shortened long falls (the headline's 2020–22 worst fall: −55% → −28%), but deepened the rules' worst falls since 2010.
+  - **The filter is not adopted.**
+
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 

@@ -24,6 +24,7 @@ dependencies = [
     "notebook",
     "numpy",
     "pandas",
+    "pillow>=13",
     "pip",
     "pyarrow>=26.0.0",
     "python-dotenv",

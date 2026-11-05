@@ -39,7 +39,10 @@ from sp500_momentum.config import (
     RULE_LOOKBACKS,
     RULE_TOP_NS,
     START_DOLLARS,
+    TREND_MONTHS,
 )
+
+TREND = "_trend"  # suffix of a strategy's trend-filtered version
 
 Picks = dict[pd.Period, list[str] | dict[str, float]]  # names (equal weight) or target weights
 
@@ -197,6 +200,8 @@ def simulate(
     values: pd.DataFrame,
     hold: int,
     cost: float = COST_PER_SIDE,
+    invested: pd.Series | None = None,
+    cash_return: pd.Series | None = None,
 ) -> pd.DataFrame:
     """Staggered-portfolio simulation of one rule (see the module docstring).
 
@@ -205,14 +210,39 @@ def simulate(
     picks keeps the due slot's holdings. Returns one row per month earned: `ret` (net of costs),
     `gross` and `cost` (the fraction of the portfolio paid in costs that month), indexed by the
     month the return is earned in.
+
+    Trend filter: `invested` (bool by decision month; missing = invested) switches the strategy
+    off. At an "off" decision every slot is sold at the next open (costs charged) and the money
+    earns `cash_return` (by month earned) until an "on" decision, when every slot buys that
+    month's picks.
     """
+    if invested is not None and cash_return is None:
+        raise ValueError("a trend filter needs the return earned on cash")
     slots: list[dict[str, float] | None] = [None] * hold
     months = values.index[(values.index >= min(picks)) & (values.index < values.index.max())]
     rows = {}
+    in_cash = False
     for i, m in enumerate(months):
         s = i % hold
         new = picks.get(m, [])
         paid = [0.0] * hold
+        on = True if invested is None else bool(invested.get(m, True))
+        if not on or (in_cash and not new):
+            # the portfolio is the slots held so far: selling out trades all of it
+            fee = cost if any(slots) else 0.0
+            slots = [None] * hold
+            in_cash = True
+            r = float(cash_return.get(m + 1, np.nan))
+            if np.isnan(r):
+                raise ValueError(f"No cash return for {m + 1}")
+            rows[m + 1] = {"ret": (1 - fee) * (1 + r) - 1, "gross": r, "cost": fee}
+            continue
+        if in_cash and new:  # back in: every slot buys this month's picks
+            target = dict(new) if isinstance(new, dict) else {t: 1 / len(new) for t in new}
+            slots = [dict(target) for _ in range(hold)]
+            paid = [cost] * hold
+            in_cash = False
+            new = []
         if new:
             target = dict(new) if isinstance(new, dict) else {t: 1 / len(new) for t in new}
             old = slots[s] or {}
@@ -241,6 +271,25 @@ def simulate(
     out = pd.DataFrame.from_dict(rows, orient="index")
     out.index.name = "month"
     return out
+
+
+def trend_signal(
+    prices: pd.DataFrame, ticker: str = "SPY", months: int = TREND_MONTHS
+) -> pd.Series:
+    """True by decision month when `ticker`'s month-end adjusted close is above the average of
+    its last `months` month-end closes (this one included): known at the decision's close.
+    Months without a full average are left out (callers treat a missing month as invested)."""
+    p = prices[prices["price_ticker"] == ticker].copy()
+    p["month"] = pd.PeriodIndex(p["month"], freq="M")
+    close = p.set_index("month")["close_adj"].sort_index()
+    average = close.rolling(months).mean()
+    return (close > average)[average.notna()].rename("invested")
+
+
+def cash_returns(rf: pd.Series, index: pd.PeriodIndex) -> pd.Series:
+    """The monthly return on cash (the risk-free rate) for every month in `index`; a month the
+    rate isn't published for yet takes the latest known rate."""
+    return rf.reindex(rf.index.union(index)).sort_index().ffill().reindex(index)
 
 
 def benchmark_returns(panel: pd.DataFrame, values: pd.DataFrame) -> pd.DataFrame:
@@ -298,30 +347,37 @@ def run_strategies(
     vol: pd.Series,
     top_ns: Iterable[int] = RULE_TOP_NS,
     cost: float = COST_PER_SIDE,
+    invested: pd.Series | None = None,
+    cash_return: pd.Series | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Simulate every (strategy, N, version) with a 1-month hold. `signals` maps a strategy name
     to the panel column it ranks by (a model score or a past return). Returns (net monthly
-    returns, monthly cost paid), one column per `<strategy>_top<N>_<version>`."""
+    returns, monthly cost paid), one column per `<strategy>_top<N>_<version>`. With a trend
+    filter (`invested`, `cash_return`), every column gets the `_trend` suffix."""
     rets, costs = {}, {}
+    suffix = TREND if invested is not None else ""
     for name, col in signals.items():
         ranks = ranked(panel, col)
         for n in top_ns:
             for version, picks in strategy_versions(ranks, n, vol).items():
-                sim = simulate(picks, values, hold=1, cost=cost)
-                key = f"{name}_top{n}_{version}"
+                sim = simulate(picks, values, 1, cost, invested, cash_return)
+                key = f"{name}_top{n}_{version}{suffix}"
                 rets[key], costs[key] = sim["ret"], sim["cost"]
     return pd.DataFrame(rets), pd.DataFrame(costs)
 
 
 def parse_strategy(name: str) -> dict:
-    """`xgb_reg_top10_inv_vol_buffer` -> strategy xgb_reg, top_n 10, version inv_vol_buffer.
-    Any other name (a benchmark, the chosen grid rule) gets blanks."""
-    if "_top" in name:
-        strategy, rest = name.rsplit("_top", 1)
+    """`xgb_reg_top10_inv_vol_buffer_trend` -> strategy xgb_reg, top_n 10, version
+    inv_vol_buffer, trend True. Any other name (a benchmark, the chosen grid rule) gets blank
+    N and version; a `_trend` suffix is read either way."""
+    trend = name.endswith(TREND)
+    base = name.removesuffix(TREND)
+    if "_top" in base:
+        strategy, rest = base.rsplit("_top", 1)
         n, _, version = rest.partition("_")
         if n.isdigit() and version in VERSIONS:
-            return {"strategy": strategy, "top_n": int(n), "version": version}
-    return {"strategy": name, "top_n": pd.NA, "version": pd.NA}
+            return {"strategy": strategy, "top_n": int(n), "version": version, "trend": trend}
+    return {"strategy": base, "top_n": pd.NA, "version": pd.NA, "trend": trend}
 
 
 def dollars(r: pd.Series, cost: pd.Series | None = None, start: float = START_DOLLARS) -> dict:
@@ -374,11 +430,72 @@ def version_effect(
     `strategies` at one basket size (a `strategy_table`). One row per non-plain version."""
     measures = list(measures)
     t = table[(table["top_n"] == top_n) & table["strategy"].isin(list(strategies))]
+    if "trend" in t:
+        t = t[~t["trend"].astype(bool)]  # versions compared without the trend filter
     wide = t.set_index(["version", "strategy"])[measures]
     base = wide.loc["equal"]
     return pd.DataFrame(
         {v: (wide.loc[v] - base).mean() for v in VERSIONS if v != "equal"}
     ).T.rename_axis("version")
+
+
+def filter_effect(
+    table: pd.DataFrame,
+    measures: Iterable[str] = ("cagr", "sharpe", "max_drawdown", "traded_per_year"),
+) -> pd.DataFrame:
+    """The trend-filtered version minus the same strategy unfiltered, for every pair in a
+    `strategy_table`: averaged by version (all basket sizes and strategies), plus the share of
+    pairs where the filter raised the Sharpe ratio."""
+    measures = list(measures)
+    trend = table[table["trend"].astype(bool)]
+    plain = table.loc[[n.removesuffix(TREND) for n in trend.index]]
+    diff = trend[measures].to_numpy() - plain[measures].to_numpy()
+    d = pd.DataFrame(diff, index=trend.index, columns=measures)
+    d["version"] = trend["version"].fillna("other").to_numpy()
+    out = d.groupby("version")[measures].mean()
+    out["sharpe_up_share"] = (d["sharpe"] > 0).groupby(d["version"]).mean()
+    out["pairs"] = d.groupby("version").size()
+    return out
+
+
+def off_decisions(invested: pd.Series, start: str, end: str | None = None) -> list[pd.Period]:
+    """The decisions in [start, end) at which the trend filter is out of the market."""
+    m = invested.index
+    keep = m >= pd.Period(start, freq="M")
+    if end:
+        keep &= m < pd.Period(end, freq="M")
+    s = invested[keep].astype(bool)
+    return list(s.index[~s])
+
+
+def months_off(invested: pd.Series, start: str, end: str | None = None) -> int:
+    """How many decisions in [start, end) the trend filter kept out of the market."""
+    return len(off_decisions(invested, start, end))
+
+
+def window(rets: pd.DataFrame, start: str | None, end: str | None = None) -> pd.DataFrame:
+    """The rows of `rets` earned from decisions in [start, end)."""
+    return rets.loc[earned_months(rets.index, start, end)]
+
+
+def value_paths(rets: pd.DataFrame, start_value: float = START_DOLLARS) -> pd.DataFrame:
+    """What `start_value` grows to by the end of each month, per column."""
+    return start_value * (1 + rets).cumprod()
+
+
+def drawdowns(rets: pd.DataFrame) -> pd.DataFrame:
+    """For each column, the fall from its previous peak at every month (0 at a new high)."""
+    growth = (1 + rets).cumprod()
+    peak = np.maximum(growth.cummax(), 1.0)  # the starting amount counts as the first peak
+    return growth / peak - 1
+
+
+def rolling_excess(rets: pd.DataFrame, spy: pd.Series, window: int = 12) -> pd.DataFrame:
+    """Each column's compounded return over the last `window` months minus SPY's (blank until a
+    full window exists)."""
+    roll = (1 + rets).rolling(window).apply(np.prod, raw=True) - 1
+    spy_roll = (1 + spy.reindex(rets.index)).rolling(window).apply(np.prod, raw=True) - 1
+    return roll.sub(spy_roll, axis=0)
 
 
 def risk_free(fedfunds: pd.DataFrame) -> pd.Series:
@@ -402,7 +519,8 @@ def performance(
         "spy_cagr": (1 + spy).prod() ** (1 / years) - 1,
         "volatility": r.std() * np.sqrt(12),
         "sharpe": (r - rf).mean() / r.std() * np.sqrt(12) if r.std() > TINY else np.nan,
-        "max_drawdown": (growth / growth.cummax() - 1).min(),
+        # the starting amount is the first peak, so a loss in the first month counts
+        "max_drawdown": min((growth / np.maximum(growth.cummax(), 1.0) - 1).min(), 0.0),
         "beats_spy_months": (excess > 0).mean(),
         # t-statistic of the mean monthly return over SPY: about 2 or more is unlikely to be luck
         # for one rule, but the grid tests 60, so a cell needs well above 2 to stand out.

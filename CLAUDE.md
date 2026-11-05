@@ -81,7 +81,9 @@ step's chapter are written; the issue's "Done when" boxes are ticked; the PR is 
   with `--n-iter 1` before a full search (a slow solver once cost ~8 min a try).
 - **Backtests:** a held stock can leave the index, so simulate from `MONTHLY_PRICES` (every price
   series), not from the member panel. Any new simulation must reproduce the table's `fwd_ret_1m` with a
-  1-month hold and no costs before its results are trusted.
+  1-month hold and no costs before its results are trusted. Strategy versions (weighting, the 2N
+  buffer, the trend filter) are declared before results and none are added after; the headline is
+  the main version only (its best 2020–22 version was its worst on the test).
 - **Rebuild order:** after new raw data (the AV pull, any download), rerun `monthly build` before
   anything downstream.
 - **Secrets:** never print, log or commit the Alpha Vantage key or `.env`.
@@ -97,10 +99,17 @@ step's chapter are written; the issue's "Done when" boxes are ticked; the PR is 
     the AV key in any output; a notebook over 300 KB. Fix the cause, never loosen the check.
 - **Charts:** follow the dataviz skill. Colours come from `plots.SLOTS` in fixed order (validated
   with the skill's validator; Node is at `C:\Program Files\nodejs\node.exe`), one y-axis, and every
-  chart gets looked at before it ships.
+  chart gets looked at before it ships. Bars start at a real baseline (zero, or the starting amount
+  for gains and losses), never at an axis edge. If a notebook nears the 300 KB limit, combine charts
+  into small multiples rather than loosening the check. Show every chart through `plots.save` (it
+  writes and displays 256-colour PNGs, about a third the bytes, and closes the figure); smoothed
+  multi-line charts are what make PNGs large. Date axes use explicit locators (the automatic one
+  warns on short ranges, which fails the runner).
 - **Editing on Windows:** change code with the Edit/Write tools. Shell heredocs with Python patches
-  break on `\n` inside strings (this happened 3 times). Never name a scratch script after a standard
-  module (`numbers.py` broke numpy's import).
+  break on `\n` inside strings (this happened 3 times). PowerShell also mangles quotes in inline
+  `python -c` scripts, and a multi-line `.Replace()` silently misses on CRLF files: write a scratch
+  script or use Edit. Never name a scratch script after a standard module (`numbers.py` broke numpy's
+  import).
 - Raw data in `data/raw/` is never edited by hand.
 
 ## Commands
@@ -114,7 +123,7 @@ uv run python -m sp500_momentum.monthly build
 uv run python -m sp500_momentum.features build     # after monthly build
 uv run python -m sp500_momentum.modeling.train run # after features build; ~1¾ h (--n-iter 1: smoke run)
 uv run python -m sp500_momentum.run_notebooks run  # after features build (and train); refreshes figures
-uv run python -m sp500_momentum.run_notebooks run 04  # just one notebook (04: the rule grid, ~1 min)
+uv run python -m sp500_momentum.run_notebooks run 04  # just one notebook (04: rule grid + model strategies, ~2 min)
 ```
 
 ## Conventions

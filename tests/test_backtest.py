@@ -204,8 +204,85 @@ def test_parse_strategy_round_trips_versions():
         "strategy": "xgb_reg",
         "top_n": 10,
         "version": "inv_vol_buffer",
+        "trend": False,
     }
-    assert bt.parse_strategy("spy")["version"] is pd.NA
+    assert bt.parse_strategy("mom_6m_top5_equal_trend")["trend"] is True
+    assert bt.parse_strategy("spy_trend") == {
+        "strategy": "spy",
+        "top_n": pd.NA,
+        "version": pd.NA,
+        "trend": True,
+    }
+
+
+def test_trend_signal_compares_the_close_with_its_own_average():
+    prices = pd.DataFrame(
+        {
+            "month": [str(M + i) for i in range(4)],
+            "price_ticker": "SPY",
+            "close_adj": [10.0, 12.0, 11.0, 14.0],
+        }
+    )
+    sig = bt.trend_signal(prices, months=2)
+    # averages: (10+12)/2=11 -> 12 above; (12+11)/2=11.5 -> 11 below; 12.5 -> 14 above
+    assert sig.to_dict() == {M + 1: True, M + 2: False, M + 3: True}
+
+
+def test_filter_always_on_reproduces_the_plain_simulation():
+    values = _values({"A": [10, 11, 9, 12], "B": [10, 10, 12, 12]})
+    picks = {M: ["A"], M + 1: ["A", "B"], M + 2: ["B"]}
+    on = pd.Series(True, index=pd.period_range(M, periods=4, freq="M"))
+    cash = pd.Series(0.01, index=on.index)
+    for hold in (1, 2):
+        plain = bt.simulate(picks, values, hold=hold)
+        pd.testing.assert_frame_equal(plain, bt.simulate(picks, values, hold, 0.001, on, cash))
+
+
+def test_filter_off_sells_everything_earns_cash_then_buys_back():
+    values = _values({"A": [10, 20, 20, 20, 30]})
+    picks = {M + i: ["A"] for i in range(4)}
+    on = pd.Series([True, False, False, True], index=pd.period_range(M, periods=4, freq="M"))
+    cash = pd.Series(0.01, index=pd.period_range(M, periods=5, freq="M"))
+    sim = bt.simulate(picks, values, hold=2, cost=0.001, invested=on, cash_return=cash)
+    # bought (all of the money), sold out, cash, back in with every slot (all of it again)
+    assert sim["cost"].tolist() == pytest.approx([0.001, 0.001, 0.0, 0.001])
+    assert sim["gross"].tolist() == pytest.approx([1.0, 0.01, 0.01, 0.5])
+    with pytest.raises(ValueError, match="cash"):
+        bt.simulate(picks, values, hold=1, invested=on)
+
+
+def test_drawdowns_and_rolling_excess():
+    idx = pd.period_range(M, periods=3, freq="M")
+    rets = pd.DataFrame({"x": [-0.1, 0.2, -0.5]}, index=idx)
+    dd = bt.drawdowns(rets)["x"]
+    assert dd.tolist() == pytest.approx([-0.1, 0.0, -0.5])  # a first-month loss counts
+    spy = pd.Series([0.0, 0.1, 0.0], index=idx)
+    ex = bt.rolling_excess(rets, spy, window=2)["x"]
+    assert np.isnan(ex.iloc[0])
+    assert ex.iloc[1] == pytest.approx(0.9 * 1.2 - 1 - 0.1)
+    assert bt.performance(rets["x"], spy, pd.Series(0.0, index=idx))["max_drawdown"] == (
+        pytest.approx(-0.5)
+    )
+
+
+def test_filter_effect_and_months_off():
+    t = pd.DataFrame(
+        {
+            "strategy": ["m", "m", "spy", "spy"],
+            "top_n": [10, 10, pd.NA, pd.NA],
+            "version": ["equal", "equal", pd.NA, pd.NA],
+            "trend": [False, True, False, True],
+            "sharpe": [0.5, 0.7, 1.0, 0.8],
+            "cagr": [0.1, 0.1, 0.2, 0.1],
+        },
+        index=["m_top10_equal", "m_top10_equal_trend", "spy", "spy_trend"],
+    )
+    eff = bt.filter_effect(t, measures=["sharpe", "cagr"])
+    assert eff.loc["equal", "sharpe"] == pytest.approx(0.2)
+    assert eff.loc["other", "sharpe_up_share"] == 0
+    on = pd.Series([True, False, False, True], index=pd.period_range(M, periods=4, freq="M"))
+    assert bt.months_off(on, start=str(M + 1)) == 2
+    assert bt.months_off(on, start=str(M), end=str(M + 2)) == 1
 
 
 def test_strategy_table_and_version_effect_on_a_tiny_market():
