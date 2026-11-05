@@ -56,6 +56,11 @@ step's chapter are written; the issue's "Done when" boxes are ticked; the PR is 
   once the queue is empty (~12–14 Nov). Each ticker is recorded in the manifest as soon as it's
   fetched. If a run is killed (log stops after the header, task result `0xC000013A`), the next run,
   or `av-pull --max-calls 0` now, records the saved files without any calls.
+- **The monthly run** (task `sp500-momentum-monthly-run`, daily at 07:00, a no-op unless last
+  month's picks are missing on a weekday; log `logs/monthly_run.log`) refits the headline with its
+  tuned settings, never re-tunes. It stops on purpose when a newly removed member has no sector:
+  add it to `references/removed_sectors.csv` (KVUE, the first time). Its refit must keep matching
+  the backtest (run as of Jan 2023 it reproduces the test fit's scores exactly).
 - **Tickers get reused.** An old symbol can return a different company (FB, STI, CPWR). Always check a
   series against the removal date and trading volume. Membership repairs live in `config.py`.
 - **Features come from monthly bars for every stock.** Never add a daily-only feature: it would be
@@ -124,6 +129,7 @@ uv run python -m sp500_momentum.dataset membership | coverage | yahoo-daily | fr
 uv run python -m sp500_momentum.monthly build
 uv run python -m sp500_momentum.features build     # after monthly build
 uv run python -m sp500_momentum.modeling.train run # after features build; ~1¾ h (--n-iter 1: smoke run)
+uv run python -m sp500_momentum.modeling.predict run  # the monthly run (~2 min; --no-download, --force)
 uv run python -m sp500_momentum.run_notebooks run  # after features build (and train); refreshes figures
 uv run python -m sp500_momentum.run_notebooks run 04  # just one notebook (04: rule grid + model strategies, ~2 min)
 ```

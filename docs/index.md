@@ -23,7 +23,7 @@ Each chapter has the same shape:
 | 5 | [Exploratory analysis](05_eda.md) | Draft |
 | 6 | [Modelling](06_modelling.md) | Draft (setup and results; preview numbers) |
 | 7 | [Trading simulation and results](07_simulation.md) | Draft (Parts 1–4: the baseline rule, the models traded, paths and the trend filter, why the model loses) |
-| 8 | Automation | To do |
+| 8 | [Automation](08_automation.md) | Draft (Part 1: the monthly run) |
 | 9 | Limitations, lessons and next steps | To do |
 
 ## Appendices

@@ -101,12 +101,21 @@ def coverage(start: str = START_DATE):
 def yahoo_daily(
     start: str = PRICE_START,
     refresh: bool = typer.Option(False, help="Download every ticker again, not just new ones"),
+    active_only: bool = typer.Option(
+        False,
+        help="Download today's members and the benchmarks again (full history); keep removed",
+    ),
 ):
     """Daily prices from yfinance: current members, removed members it covers, benchmarks.
 
     Saves one parquet file per ticker in data/raw/yahoo/daily/ and a manifest. Data ends at
     yesterday's close (today's bar may be half-finished). Without --refresh, tickers that
     already have a file are skipped, so a failed run can simply be rerun.
+
+    `--active-only` is the monthly update. Each active ticker's whole history is downloaded
+    again, never appended: the adjusted close is recomputed backwards after every dividend or
+    split, so new days appended to an old file would mix two adjustment bases. Removed members'
+    files never change, so they're left as they are.
     """
     current = pd.read_csv(WIKIPEDIA_DIR / "sp500_current.csv")
     cov = pd.read_csv(REMOVED_COVERAGE, parse_dates=["removed_date"])
@@ -114,7 +123,9 @@ def yahoo_daily(
     YAHOO_DAILY_DIR.mkdir(parents=True, exist_ok=True)
 
     todo = universe
-    if not refresh:
+    if active_only:
+        todo = universe[universe["group"] != "removed"]
+    elif not refresh:
         have = {p.name for p in YAHOO_DAILY_DIR.glob("*.parquet")}
         todo = universe[~universe["ticker"].map(yahoo.file_name).isin(have)]
     end = pd.Timestamp.now().strftime("%Y-%m-%d")
