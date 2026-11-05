@@ -1188,6 +1188,29 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - The first picks file was made after its trade date: kept, with `made_at`, and the docs say so.
 - **Task registered:** `sp500-momentum-monthly-run`, Ready, daily 07:00. The first real run is Tue 1 Dec 2026. The AV task is untouched.
 - **Docs:** chapter 8 Part 1 (new; index, mkdocs nav), README (status, pipeline step 8, the monthly-run section, the tree), CLAUDE.md (a monthly-run trap, the command), and `decisions.md`.
+- **Shipped:** PR #41 (CI watched in its own step this time). #17 is Done.
+
+### Session 23 — Thursday, 5 Nov 2026 (Telegram notifications, #38)
+
+- **Decisions, one prompt each, all as recommended:**
+  1. **Events:** the monthly run (picks and failures) plus the nightly AV pull summary until the queue is empty.
+  2. **Recipients:** you asked what there'd be to show if everything came only to you. That changed my recommendation to a split: the picks to a public channel (already public in `reports/picks/`; viewable at `t.me/s/...` without an account, independently timestamped), and alerts plus the AV summaries to a private chat.
+  3. **Last month's live result** in each message from Jan 2027, tradeable picks only.
+- **Built:**
+  - `sp500_momentum/notify.py`: `Settings` from env, `send` (never raises, never logs the token), `public` / `private`, `tradeable`, `live_result`, `picks_message`, `alert_message`, `av_message`, `index_changes`, `chats_from_updates`, and the `find-chats` and `test` commands;
+  - hooked into `predict run` (failed checks → private; any crash → private, then re-raise; success → the channel, with `--dry-run-notify`) and `dataset av-pull` (a nightly summary; silent for `--max-calls 0`);
+  - the token added to the notebook runner's secret scan;
+  - 12 tests (119 pass).
+- **Traps found:**
+  - **The picks record had no `price_ticker`, which the live result needs.** Added; `append_record` now reindexes, so the record written before the column existed doesn't crash the next run.
+  - **A request error's text contains the URL, and the URL contains the token,** so errors are logged by type only. A test asserts the token never reaches the log.
+  - The multi-line PowerShell `.Replace()` on a CRLF file missed again (the `WIKIPEDIA_DIR` import), as CLAUDE.md warns; redone with Edit.
+- **Setup (with you):**
+  - you created the bot and the public channel `sp500_momentum_picks`;
+  - `find-chats` first saw nothing (no message after Start), then both chats;
+  - I appended the two chat IDs to `.env` with your approval, without reading or printing the file.
+- **Real test:** both test messages were accepted. The October picks message was sent to the private chat only, as a format preview (those picks were made after their trade date, so they're not posted publicly). You confirmed all three arrived and look right.
+- **Docs:** chapter 8 Part 2 (section 3.5, three decisions, a caveat on next-open-to-close), README (the setup steps, the channel link), and `decisions.md`.
 
 ---
 
@@ -1210,6 +1233,7 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 | 2 Nov 2026 | **Project plan (20 small decisions, Session 5):** month-end rows; split 2010–19 / 2020–22 / 2023–26; build now, rerun after the AV pull; class FRED set + VIX, lagged; US-focused markets; TA-Lib indicators (no candle patterns); ~20 own features; sectors filled in by hand; target `is_beat_spy_1m`; Tree + RF + LogReg + XGBoost; time-series CV, test once; score = precision of the top-N picks; top 1/5/10 (headline 10); SPY + equal-weight benchmarks; vector + exact simulation; SPY > 200-day filter; notebooks per class week + `00_run_all`; Hugging Face data; monthly scheduled run; extras after the core | Mirrors the class's flow (Weeks 1–4) and the rubric's points. Fixes the class's caveats: look-ahead in macro, tuning on test, no benchmark |
 | 3 Nov 2026 | **Baseline grid:** 60 rules reported; staggered slots; 10 bps per side on the traded weight; Sharpe net of Fed Funds; the best rule **chosen on 2010–22 and followed through the test years**; a price file beyond membership. The split is unchanged (~60/18/22; ~78/22 with CV) | Every try shown, so luck can be judged. Costs and staggering make it tradable. Choosing on the same years you check is circular. One test window for every strategy |
 | 4 Nov 2026 | **Model setup:** CV folds score 2014–19 and 2020–22 is held out (A); 8 candidates (plan's 4 + XGBoost ranker, excess-return regressor, MLP, and an average); a percentile-feature switch; decile ranker label; clipped Huber regressor; in-fold preparation per model family | Fair, leak-free comparison. The new models attack the classifier's blind spots: within-month order and the size of the win |
+| 5 Nov 2026 | **Telegram (#38):** picks to the public channel `sp500_momentum_picks`; failures and nightly AV summaries to a private chat; last month's live result from Jan 2027; send-only, never fails a run, never logs the token | Public face and an independent timestamp for the live record; operational alerts for the operator only |
 | 5 Nov 2026 | **Extras and the monthly run (#17):** Telegram, the dashboard and the cloud run as issues (Docker left out); both strategies' picks published; monthly refit with fixed settings; first weekday at 07:00 with catch-up; full re-download of active prices; loud checks (last trading day, prices, sectors, columns) | Live picks must come from exactly the tested method, and a scheduled run must stop rather than publish from stale or mis-shaped data |
 | 4 Nov 2026 | **Diagnosis of the picks (#16):** descriptive only, with ideas as untested hypotheses; headline model vs the 6-month rule; regime, sector and year breakdowns with month-level margins of error; a new notebook 06 | No untouched data is left to test new ideas honestly. Finding (preview): the model is a volatile rebound bet that loses in SPY's down months |
 | 4 Nov 2026 | **Trend filter and risk over time (#15):** SPY vs its 10-month average (not tuned); cash at Fed Funds; "off" sells everything; all strategies filtered, average effect reported; new notebook 05; shared-window charts plus rules from 2010 | Fixed before results. Result (preview): it lowers risk-adjusted returns everywhere by missing rebounds, so it's not adopted |

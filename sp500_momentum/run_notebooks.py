@@ -95,7 +95,9 @@ def run(prefix: str = typer.Argument("", help="Only notebooks whose name starts 
     paths = sorted(p for p in NOTEBOOKS_DIR.glob("*.ipynb") if p.name.startswith(prefix))
     if not paths:
         raise typer.BadParameter(f"no notebook in notebooks/ starts with {prefix!r}")
-    secrets = tuple(v for v in [os.getenv("ALPHAVANTAGE_API_KEY")] if v)
+    secrets = tuple(
+        v for v in [os.getenv("ALPHAVANTAGE_API_KEY"), os.getenv("TELEGRAM_BOT_TOKEN")] if v
+    )
     failed = False
     for path in paths:
         nb = nbformat.read(path, as_version=4)

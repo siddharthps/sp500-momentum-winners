@@ -79,6 +79,31 @@ anything** when:
 
 The picks are a research output, not advice.
 
+### Telegram notifications (optional)
+
+The monthly picks go to a public channel,
+[t.me/s/sp500_momentum_picks](https://t.me/s/sp500_momentum_picks) (readable in a browser, no
+account needed; the first real post is on 1 Dec 2026). Failure alerts and the nightly Alpha Vantage summary go
+to a private chat. Without these settings, every message is only logged, and nothing fails.
+
+1. In Telegram, message **@BotFather**, send `/newbot`, and copy the **token** it gives you.
+2. Send your new bot any message (this opens your private chat with it).
+3. Create a **public channel**, add the bot as an **administrator** (so it can post), and post
+   anything in it once.
+4. Put the token in `.env`, run `uv run python -m sp500_momentum.notify find-chats` to list the chat
+   IDs, and add them:
+
+```
+TELEGRAM_BOT_TOKEN=123456:ABC...
+TELEGRAM_CHANNEL_ID=@your_channel_name
+TELEGRAM_CHAT_ID=your_private_chat_id
+```
+
+5. Check with `uv run python -m sp500_momentum.notify test`; `--dry-run` prints instead of sending.
+
+A failed message never fails the run that sends it, and the token is never logged. The monthly run's
+`--dry-run-notify` prints its messages instead of sending them.
+
 Step 3 takes about a minute. It saves one parquet file per ticker (unadjusted OHLC, adjusted close,
 volume, dividends, splits), ending at the previous close. Reruns skip tickers already saved, and
 `--refresh` downloads everything again. To test the setup without using API calls, run

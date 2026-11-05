@@ -14,6 +14,7 @@ from loguru import logger
 import pandas as pd
 import typer
 
+from sp500_momentum import notify
 from sp500_momentum.config import (
     AV_DAILY_BUDGET,
     AV_MANIFEST,
@@ -209,6 +210,8 @@ def av_pull(max_calls: int = AV_DAILY_BUDGET):
         queue = av.build_queue(cov, manifest)
     if queue.empty:
         logger.success("Queue is empty: every missing ticker has been tried.")
+        if max_calls > 0:  # the scheduled run, not a manual check
+            notify.private(notify.av_message({}, 0, len(recovered), False))
         return
     logger.info(f"{len(queue)} tickers left in the queue; pulling up to {max_calls} now")
     if max_calls <= 0:
@@ -216,6 +219,8 @@ def av_pull(max_calls: int = AV_DAILY_BUDGET):
         return
     key = av.api_key()
     AV_MONTHLY_DIR.mkdir(parents=True, exist_ok=True)
+    tonight: dict[str, int] = {}
+    quota_hit = False
     try:
         for _, r in queue.head(max_calls).iterrows():
             df = av.fetch_monthly_adjusted(r["ticker"], key)
@@ -224,13 +229,17 @@ def av_pull(max_calls: int = AV_DAILY_BUDGET):
             row = av.manifest_row(r, df, pd.Timestamp.now())
             # Recorded straight away, so a killed run loses at most the call in flight.
             manifest = _append_manifest(manifest, [row])
+            tonight[row["status"]] = tonight.get(row["status"], 0) + 1
             logger.info(f"{r['ticker']:6s} {r['reason_cat']:15s} -> {row['status']}")
             time.sleep(AV_SLEEP_SECONDS)
     except av.QuotaExhausted as e:
         # Alpha Vantage's quota message quotes the API key; don't write it to the log.
         msg = str(e).replace(key, "***")
         logger.warning(f"Alpha Vantage quota reached, stopping for today: {msg}")
+        quota_hit = True
     av_status()
+    left = len(av.build_queue(cov, manifest))
+    notify.private(notify.av_message(tonight, left, len(recovered), quota_hit))
 
 
 def _append_manifest(manifest: pd.DataFrame, rows: list[dict]) -> pd.DataFrame:
