@@ -258,9 +258,17 @@ def run(
     download: bool = typer.Option(True, help="Update the raw data first (off: rebuild only)"),
     force: bool = typer.Option(False, help="Redo a decision month that's already been done"),
     dry_run_notify: bool = typer.Option(False, help="Print the Telegram messages, don't send"),
+    from_file: bool = typer.Option(
+        False,
+        help="Start from the private Hugging Face snapshot (with --no-download: no sources at all)",
+    ),
 ):
     """The monthly update: data, rebuild, checks, both strategies' picks, the messages."""
     try:
+        if from_file:
+            from sp500_momentum import hub
+
+            hub.pull_snapshot()
         _run(download, force, dry_run_notify)
     except typer.Exit:
         raise  # a failed check: already reported

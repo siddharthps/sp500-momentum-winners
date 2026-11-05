@@ -1211,6 +1211,29 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - I appended the two chat IDs to `.env` with your approval, without reading or printing the file.
 - **Real test:** both test messages were accepted. The October picks message was sent to the private chat only, as a format preview (those picks were made after their trade date, so they're not posted publicly). You confirmed all three arrived and look right.
 - **Docs:** chapter 8 Part 2 (section 3.5, three decisions, a caveat on next-open-to-close), README (the setup steps, the channel link), and `decisions.md`.
+- **Shipped:** PR #42. #38 is Done.
+
+### Session 24 — Thursday, 5 Nov 2026 (Hugging Face datasets and from-file mode, #18)
+
+- **Talked through first.** I raised that Yahoo and Alpha Vantage prices are licensed and their terms forbid redistribution.
+- **Decisions, all as recommended:**
+  1. a private full snapshot plus a public derived one;
+  2. a preview snapshot now, the final one tagged in #20.
+- **Built:**
+  - `sp500_momentum/hub.py`: `push` (private / public / both, an optional tag), `pull`, `pull_snapshot`, `stage_public` (tables without `close_adj`, `entry_px`, `dollar_vol`, `source`, plus a dataset card with sources and licences), and `files_with_secrets` (every upload refuses if a secret is in any file);
+  - `predict run --from-file`;
+  - `huggingface_hub` 2.4 added;
+  - 4 tests (123 pass).
+- **Setup (with you):**
+  - you added `HF_USER` and `HF_TOKEN` and asked me to verify them first;
+  - verified without printing the token: it belongs to `siddharthps` (matches `HF_USER`), its role is write, no stray spaces.
+- **Published and verified:**
+  - the secret scan (3 secrets, 704 files): none found;
+  - private `siddharthps/sp500-momentum-data` in 47 s: private, an anonymous request refused, all 700 files present;
+  - public `siddharthps/sp500-momentum-winners` in 65 s: 11 files, readable anonymously, no vendor price column in any table;
+  - a pull into a temp folder: 700 of 700 files byte-identical to local.
+- **Docs:** chapter 8 Part 3 (section 3.6, three decisions), README (the snapshots section, dataset links), CLAUDE.md (token handling, the HF rules), and `decisions.md`.
+- **To consider before #39:** a fine-grained token limited to these two datasets (least privilege) instead of a general write token.
 
 ---
 
@@ -1233,6 +1256,7 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 | 2 Nov 2026 | **Project plan (20 small decisions, Session 5):** month-end rows; split 2010–19 / 2020–22 / 2023–26; build now, rerun after the AV pull; class FRED set + VIX, lagged; US-focused markets; TA-Lib indicators (no candle patterns); ~20 own features; sectors filled in by hand; target `is_beat_spy_1m`; Tree + RF + LogReg + XGBoost; time-series CV, test once; score = precision of the top-N picks; top 1/5/10 (headline 10); SPY + equal-weight benchmarks; vector + exact simulation; SPY > 200-day filter; notebooks per class week + `00_run_all`; Hugging Face data; monthly scheduled run; extras after the core | Mirrors the class's flow (Weeks 1–4) and the rubric's points. Fixes the class's caveats: look-ahead in macro, tuning on test, no benchmark |
 | 3 Nov 2026 | **Baseline grid:** 60 rules reported; staggered slots; 10 bps per side on the traded weight; Sharpe net of Fed Funds; the best rule **chosen on 2010–22 and followed through the test years**; a price file beyond membership. The split is unchanged (~60/18/22; ~78/22 with CV) | Every try shown, so luck can be judged. Costs and staggering make it tradable. Choosing on the same years you check is circular. One test window for every strategy |
 | 4 Nov 2026 | **Model setup:** CV folds score 2014–19 and 2020–22 is held out (A); 8 candidates (plan's 4 + XGBoost ranker, excess-return regressor, MLP, and an average); a percentile-feature switch; decile ranker label; clipped Huber regressor; in-fold preparation per model family | Fair, leak-free comparison. The new models attack the classifier's blind spots: within-month order and the size of the win |
+| 5 Nov 2026 | **Hugging Face (#18):** a private full snapshot (`sp500-momentum-data`) plus a public derived one (`sp500-momentum-winners`, no vendor price columns); every upload scanned for secrets; a preview now, final tagged in #20; `--from-file` | Reproducible for those given access, open for everyone, within the vendors' terms |
 | 5 Nov 2026 | **Telegram (#38):** picks to the public channel `sp500_momentum_picks`; failures and nightly AV summaries to a private chat; last month's live result from Jan 2027; send-only, never fails a run, never logs the token | Public face and an independent timestamp for the live record; operational alerts for the operator only |
 | 5 Nov 2026 | **Extras and the monthly run (#17):** Telegram, the dashboard and the cloud run as issues (Docker left out); both strategies' picks published; monthly refit with fixed settings; first weekday at 07:00 with catch-up; full re-download of active prices; loud checks (last trading day, prices, sectors, columns) | Live picks must come from exactly the tested method, and a scheduled run must stop rather than publish from stale or mis-shaped data |
 | 4 Nov 2026 | **Diagnosis of the picks (#16):** descriptive only, with ideas as untested hypotheses; headline model vs the 6-month rule; regime, sector and year breakdowns with month-level margins of error; a new notebook 06 | No untouched data is left to test new ideas honestly. Finding (preview): the model is a volatile rebound bet that loses in SPY's down months |

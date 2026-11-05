@@ -79,6 +79,27 @@ anything** when:
 
 The picks are a research output, not advice.
 
+### Data snapshots on Hugging Face
+
+Two datasets, because Yahoo Finance and Alpha Vantage prices are licensed and their terms forbid
+redistribution:
+
+| Dataset | Access | Contents |
+|---|---|---|
+| [`sp500-momentum-data`](https://huggingface.co/datasets/siddharthps/sp500-momentum-data) | **private** (by token) | Everything: raw downloads, interim and processed tables, trained models. Used by `--from-file`, the dashboard and the cloud run |
+| [`sp500-momentum-winners`](https://huggingface.co/datasets/siddharthps/sp500-momentum-winners) | **public** | What this project computed: features and the member table **without raw price columns**, model scores, the live picks, result tables, with a card naming every source |
+
+```bash
+uv run python -m sp500_momentum.hub push --target both           # upload (refuses if a secret from .env is in any file)
+uv run python -m sp500_momentum.hub pull                         # the private snapshot -> data/, models/
+uv run python -m sp500_momentum.modeling.predict run --from-file --no-download   # monthly run, no sources at all
+```
+
+Settings in `.env`: `HF_USER` (the account) and `HF_TOKEN` (a write token). With access to the
+private snapshot, `hub pull` replaces steps 1–4, so `monthly build` onwards runs without any
+download or API key. Without it, the public tables are enough to follow the analysis. Prices can be
+rebuilt with your own access through steps 1–4.
+
 ### Telegram notifications (optional)
 
 The monthly picks go to a public channel,

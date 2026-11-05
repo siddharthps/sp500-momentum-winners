@@ -91,7 +91,12 @@ step's chapter are written; the issue's "Done when" boxes are ticked; the PR is 
   the main version only (its best 2020–22 version was its worst on the test).
 - **Rebuild order:** after new raw data (the AV pull, any download), rerun `monthly build` before
   anything downstream.
-- **Secrets:** never print, log or commit the Alpha Vantage key or `.env`.
+- **Secrets:** never print, log or commit the Alpha Vantage key, the Telegram or Hugging Face
+  tokens, or `.env`. Verify a token by asking its service who it belongs to, never by printing it.
+  Request errors can carry the token in their URL: report them by type only.
+- **Hugging Face:** raw vendor prices (`close_adj`, `entry_px`, `dollar_vol`) go only to the
+  **private** dataset; the public one gets derived tables (`hub.without_prices`). `hub push` scans
+  for secrets and refuses; keep it that way.
 - **Notebooks are committed with outputs**, so:
   - Run them only with `run_notebooks run` (a fresh kernel). Never edit outputs by hand.
   - Start every notebook with `nb.setup()`. It caps tables at 20 rows, keeps logs to warnings only,
