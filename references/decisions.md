@@ -446,6 +446,19 @@ a stock is the month's top gainer.
 - The `scripts/` folder is added to ruff's include list (the trap from 3 and 5 Nov).
 - Material for MkDocs announces its end of life in May 2027 (successor: Zensical). No effect on this project.
 
+**Preparing the final rebuild (6 Nov, #20 prep)**
+
+- **Flagged price moves (>+100% or <−75% in a month): all 6 reviewed and all real, so no fixes.**
+  - APA, Mar 2020 (−84%): one day was −54% (the oil collapse of 9 Mar 2020). APA, Apr 2020 (+226%): a steady rebound.
+  - SanDisk Jan 2026, Intel Apr 2026, Dell May 2026: steady climbs over 13–14 up days, no split, heavy volume.
+  - Moderna Aug 2026 (+156%): one day was +177%, on 199 M shares against a usual 6 M (33×), with follow-through over the next days.
+  - **Second source (your approval, one Alpha Vantage call from that day's two spare):** AV agrees with Yahoo exactly (close $140.34, +156%; volume within 1.6%). The call was saved to a scratch folder only, not the pipeline.
+- **DISCA → WBD rename (a config entry; applied when #20 rebuilds):** Discovery's class A had 145 member-months (2010–Mar 2022) with no price.
+  - Alpha Vantage's WBD series runs from 2005 without a break and tracks DISCK at a 0.98 monthly correlation before 2022.
+  - Discovery acquired WarnerMedia and renamed itself (the same entity; DISCA → WBD 1:1), so this is a true rename, not a different company. A test covers the membership walk.
+- **`ta_natr` is dropped inside #20, not before:** any rebuild before the retrain would otherwise trip the monthly run's column check (by design).
+- **`pipeline rebuild-all`:** monthly table → features → models → notebooks → snapshots (tagged), timed, stopping at the first failure. `--dry-run` prints the checks to do by hand before (AV done and unregistered, `ta_natr`, the vector section, `DATA_STATUS`) and after (numbers, the book, the dashboard).
+
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 

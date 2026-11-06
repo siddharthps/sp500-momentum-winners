@@ -1331,6 +1331,27 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 - **Verified locally:** the strict build is clean; 19 charts in the site; chapter 7's 8 images point at `figures/`; no `reports/` paths are left; the appendix links go to GitHub.
 - **Pages** was enabled through the API (build type "workflow"); the site deploys after the merge.
 - **Docs:** README (the book link), CLAUDE.md (the site rule, the command), and `decisions.md`.
+- **Shipped:** PR #51. The first Pages deployment succeeded; the home page, chapter 7 and a chart all return 200. #26 is Done.
+
+### Session 29 — Friday, 6 Nov 2026 (preparing the final rebuild, #20 prep)
+
+- **Facts first:** the Wikipedia rows for Discovery/WBD, the Yahoo/AV files, the panel's pricing, and `price_flags.csv` (6 rows).
+- **Flagged moves:** read the daily data for each.
+  - Five were gradual or well-known (APA's oil collapse; steady climbs).
+  - Moderna's +177% day had 33× volume and follow-through. You approved one AV call ("use today's 2 spare calls now"): AV and Yahoo agree to the cent.
+  - **All six are real; no fixes.**
+- **DISCA → WBD:** 145 unpriced member-months.
+  - AV's WBD series runs from 2005, with a 0.98 correlation with DISCK before 2022.
+  - It's a true rename (Discovery acquired WarnerMedia and renamed itself). One `RENAMES` entry; a membership test.
+- **`ta_natr`:** kept inside #20, since dropping it earlier would trip the monthly run's column check.
+- **Built:**
+  - `pipeline rebuild-all` (`rebuild_steps`, `run_steps` stopping at the first failure, `--dry-run` with before/after checks), plus a typer callback so it's a named subcommand;
+  - 3 tests (142 pass).
+- **My own slips, fixed:**
+  - the main guard sat mid-file (it would have run before `retrain` was defined);
+  - ruff's ISC004 caught implicit string joins in a list (intended here, now explicit);
+  - the checklist said to change `DATA_STATUS` "before publishing", but publishing is the last step of the same command. Split into before/after lists.
+- **Docs:** README (the rebuild row), CLAUDE.md (the command), and `decisions.md`.
 
 ---
 

@@ -16,7 +16,11 @@ The full model search (~1 3/4 h) is not part of it: `retrain=True` runs it, othe
 settings are reused, as the live system does.
 """
 
+import time
+
+from loguru import logger
 import pandas as pd
+import typer
 
 from sp500_momentum import backtest as bt
 from sp500_momentum.config import (
@@ -33,6 +37,33 @@ from sp500_momentum.config import (
 )
 
 REGIMES = ("local", "hub", "download")
+
+app = typer.Typer(help="The whole pipeline: the final rebuild (#20).")
+
+
+@app.callback()
+def _main():
+    """The whole pipeline (keeps `rebuild-all` a named subcommand)."""
+
+
+# What can't be automated (the #20 checklist's manual parts), before and after the rebuild.
+BEFORE_REBUILD = [
+    (
+        "The AV queue is empty (av-status) and the task is unregistered: "
+        "Unregister-ScheduledTask -TaskName sp500-momentum-av-pull -Confirm:$false"
+    ),
+    "ta_natr dropped from features.py (100 x ta_atr), with its test",
+    "The vector-simulation section (#47) added to notebook 04",
+    "config.DATA_STATUS changed from 'preview' to final (the last step publishes it)",
+]
+AFTER_REBUILD = [
+    (
+        "Every chapter's and the README's numbers refreshed from the rerun notebooks; 'preview' "
+        "labels removed"
+    ),
+    "The book builds: uv run mkdocs build --strict",
+    "The dashboard shows the final status (it rereads the public dataset within 6 hours)",
+]
 
 
 def get_data(regime: str = "local") -> str:
@@ -69,6 +100,79 @@ def transform() -> dict:
         "priced": float(panel["has_price"].astype(bool).mean()),
         "feature sets": {k: len(v) for k, v in sets.items()},
     }
+
+
+def rebuild_steps(
+    tag: str = "", retrain_models: bool = True, notebooks: bool = True, publish: bool = True
+) -> list[tuple[str, object]]:
+    """The final rebuild, in order: (name, function) pairs. Each step reads only what the steps
+    before it wrote, so the order is the README's "Rerunning after a change" chain."""
+    from sp500_momentum import features, hub, monthly, run_notebooks
+    from sp500_momentum.config import DATA_STATUS, START_DATE
+
+    steps = [
+        ("monthly table", lambda: monthly.build(start=START_DATE)),
+        ("features", features.build),
+    ]
+    if retrain_models:
+        steps.append(("models: search, comparison, single test (~1 3/4 h)", retrain))
+    if notebooks:
+        steps.append(("all notebooks", lambda: run_notebooks.run(prefix="")))
+    if publish:
+        steps.append(
+            (
+                f"Hugging Face snapshots{f' (tag {tag})' if tag else ''}",
+                lambda: hub.push(target="both", tag=tag, status=DATA_STATUS),
+            )
+        )
+    return steps
+
+
+def run_steps(steps: list[tuple[str, object]]) -> list[tuple[str, float]]:
+    """Run the steps in order, timing each; stop at the first failure (a broken step must not
+    feed the ones after it). Returns (name, minutes) for the steps that ran."""
+    done = []
+    for i, (name, fn) in enumerate(steps, 1):
+        t0 = time.time()
+        logger.info(f"[{i}/{len(steps)}] {name} ...")
+        try:
+            fn()
+        except (Exception, typer.Exit) as e:  # noqa: BLE001  (stop, report, fail loudly)
+            logger.error(f"[{i}/{len(steps)}] {name} FAILED ({type(e).__name__}); stopped here")
+            raise typer.Exit(code=1) from None
+        minutes = (time.time() - t0) / 60
+        done.append((name, minutes))
+        logger.success(f"[{i}/{len(steps)}] {name} done in {minutes:.1f} min")
+    return done
+
+
+@app.command("rebuild-all")
+def rebuild_all(
+    tag: str = typer.Option("", help="Tag the published snapshots (e.g. final-2026-11)"),
+    retrain_models: bool = typer.Option(True, "--retrain/--no-retrain", help="Rerun the search"),
+    notebooks: bool = typer.Option(True, help="Rerun every notebook (with their output checks)"),
+    publish: bool = typer.Option(True, help="Push both Hugging Face datasets at the end"),
+    dry_run: bool = typer.Option(False, help="List the steps and the manual checks only"),
+):
+    """The final rebuild after the Alpha Vantage pull (#20): monthly table -> features -> models
+    -> notebooks -> snapshots, timed, stopping at the first failure; then the manual checks."""
+    steps = rebuild_steps(tag, retrain_models, notebooks, publish)
+    if dry_run:
+        print("Before running it:")
+        for item in BEFORE_REBUILD:
+            print(f"- {item}")
+        print("\nThe steps:")
+        for i, (name, _) in enumerate(steps, 1):
+            print(f"{i}. {name}")
+    else:
+        done = run_steps(steps)
+        logger.success(
+            f"Rebuild finished in {sum(m for _, m in done):.0f} min: "
+            + "; ".join(f"{n} {m:.1f}" for n, m in done)
+        )
+    print("\nAfter it, by hand:")
+    for item in AFTER_REBUILD:
+        print(f"- {item}")
 
 
 def retrain(n_iter: int = 0) -> None:
@@ -158,3 +262,7 @@ def backtest_summary() -> pd.DataFrame:
                 }
             )
     return pd.DataFrame(rows).set_index(["period", "strategy"])
+
+
+if __name__ == "__main__":
+    app()
