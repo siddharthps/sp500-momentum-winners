@@ -36,3 +36,8 @@ jobs:
 
       - name: Tests
         run: uv run pytest -q
+
+      - name: The book builds (a broken chart or link fails)
+        run: uv run mkdocs build --strict
+        env:
+          NO_MKDOCS_2_WARNING: "1"

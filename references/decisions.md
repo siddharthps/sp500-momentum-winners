@@ -437,6 +437,15 @@ a stock is the month's top gainer.
   - **The same ranking.** The levels differ as the method predicts: no compounding and fees on every pick (lower for the rules); volatility drag in the exact one (the headline's simple sum is higher).
 - **A bug in my first draft:** the window counted the Oct 2026 decisions, whose month isn't over (46 months instead of 45). Now the span runs from the first decision to the end of the last completed hold; a test covers it.
 
+**The book as a website (6 Nov, #26), both as recommended**
+
+- **A build hook (`scripts/mkdocs_hooks.py`):** the charts in `reports/figures/` are added to the site as `figures/`, chart paths are rewritten, and links outside `docs/` go to the file on GitHub. The chapters' Markdown is unchanged, so GitHub rendering is untouched.
+  - Not chosen: saving charts into `docs/` (it breaks the template layout and every path) or a third-party plugin (a dependency for a small job).
+- **Published on GitHub Pages** (https://siddharthps.github.io/sp500-momentum-winners/) by `.github/workflows/pages.yml` on merges to `main` that touch the book. Pages was enabled with build type "workflow" through the API.
+- **`mkdocs build --strict` runs in CI:** a broken chart or link fails the PR.
+- The `scripts/` folder is added to ruff's include list (the trap from 3 and 5 Nov).
+- Material for MkDocs announces its end of life in May 2027 (successor: Zensical). No effect on this project.
+
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 

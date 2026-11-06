@@ -1,8 +1,15 @@
-# Optional website for the project book in docs/.
-# GitHub shows the Markdown files as they are; this is only needed to build a site:
-#   uv run --with mkdocs-material mkdocs serve
+# The project book as a website, published on GitHub Pages by .github/workflows/pages.yml on every
+# merge to main. GitHub also shows the Markdown files as they are. Locally:
+#   uv run mkdocs serve            # preview at http://127.0.0.1:8000
+#   uv run mkdocs build --strict   # what CI runs: any broken chart or link fails
 site_name: S&P 500 momentum winners
+site_url: https://siddharthps.github.io/sp500-momentum-winners/
+repo_url: https://github.com/siddharthps/sp500-momentum-winners
 docs_dir: docs
+# Charts live in reports/figures/ and a few links point outside docs/: the hooks adapt them at
+# build time, so the chapters keep the paths that work on GitHub (#26).
+hooks:
+  - scripts/mkdocs_hooks.py
 theme:
   name: material
 nav:
