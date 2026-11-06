@@ -1269,6 +1269,31 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - You deployed it at **https://sp500-momentum-winners.streamlit.app/** (Python 3.12, from `main`, `dashboard/app.py`, no secrets).
   - Checked: the page returns 200, and the app's own health endpoint (`/~/+/_stcore/health`) answers `ok`.
   - The link was added to the README, `dashboard/README.md` and chapter 8, closing #40.
+- **Afternoon:** the status update; CLAUDE.md (wait for CI separately, GitHub API retries, data newer than the notebooks until #20, new commands) as PR #46.
+
+### Session 26 — Thursday 5 Nov (evening) and Friday 6 Nov 2026 (the criteria check; the run-all notebook, #19)
+
+- **5 Nov, 21:00 AV run:** your first Telegram summary arrived ("23 tried (ok 18, reused_ticker 5). 147 left."), and it matched the log.
+  - The five reused tickers (APC, NFX, CA, MON, CSRA) were all acquired outright (by Occidental, Encana, Broadcom, Bayer and General Dynamics), so no successor ticker carries their history and there's no rename to repair. 8 of 69 tried are reused so far.
+  - A caveat for the write-up: takeover targets are often recent winners, so these gaps slightly understate the takeover premiums in momentum picks.
+- **The criteria check** (you asked what can be done before #20). I read the course's `Final Project/README.md`, the 2026 criteria, and went through every item; see `decisions.md`.
+  - Two mandatory gaps: the run-all notebook and the vector simulation.
+  - **Decisions (both as recommended):** the vector sim as a cross-check (#47) and Docker re-added (#48). #22 was extended.
+  - GitHub's API flaked again: #48's board add needed a retry, verified.
+- **6 Nov:**
+  - Your internet was down the previous night (DNS couldn't resolve GitHub or HF), so we started today.
+  - The monthly task ran its catch-up at 12:03 (PC off at 07:00) as a silent no-op: October's picks exist, and the log is untouched. Catch-up confirmed.
+- **#19 decisions:** the committed notebook runs on local files (as recommended).
+- **Built:**
+  - `sp500_momentum/pipeline.py`: `get_data(regime)`, `transform`, `retrain` (off), `latest_picks` (the monthly run's checks and refit; nothing saved or sent), `backtest_summary`;
+  - `notebooks/00_run_all.ipynb` (about 2 min, 18 KB);
+  - 3 tests.
+- **Fixed in my own draft:** I'd passed 0.0 as the priced threshold, which silently disabled one check; it now uses `LIVE_MIN_PRICED`.
+- **Outputs (preview):**
+  - 101,431 member-months, 202 month-ends, 23 dummies (Kenvue's "Unknown" column is gone);
+  - checks all passed; refitted to Aug 2026.
+  - The numbers differ slightly from the book (the headline's test years: $11,437 vs $11,640), because the local rebuild included the 18 new AV names. The chosen rule and SPY are identical. This is expected until #20.
+- **Docs:** chapter 8 Part 5 (section 3.8, two decisions), the index row, README (status, notebook 00 row, the module tree now listing monitoring/pipeline/notify/hub), and `decisions.md` (the criteria check, #19).
 
 ---
 
@@ -1291,6 +1316,8 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 | 2 Nov 2026 | **Project plan (20 small decisions, Session 5):** month-end rows; split 2010–19 / 2020–22 / 2023–26; build now, rerun after the AV pull; class FRED set + VIX, lagged; US-focused markets; TA-Lib indicators (no candle patterns); ~20 own features; sectors filled in by hand; target `is_beat_spy_1m`; Tree + RF + LogReg + XGBoost; time-series CV, test once; score = precision of the top-N picks; top 1/5/10 (headline 10); SPY + equal-weight benchmarks; vector + exact simulation; SPY > 200-day filter; notebooks per class week + `00_run_all`; Hugging Face data; monthly scheduled run; extras after the core | Mirrors the class's flow (Weeks 1–4) and the rubric's points. Fixes the class's caveats: look-ahead in macro, tuning on test, no benchmark |
 | 3 Nov 2026 | **Baseline grid:** 60 rules reported; staggered slots; 10 bps per side on the traded weight; Sharpe net of Fed Funds; the best rule **chosen on 2010–22 and followed through the test years**; a price file beyond membership. The split is unchanged (~60/18/22; ~78/22 with CV) | Every try shown, so luck can be judged. Costs and staggering make it tradable. Choosing on the same years you check is circular. One test window for every strategy |
 | 4 Nov 2026 | **Model setup:** CV folds score 2014–19 and 2020–22 is held out (A); 8 candidates (plan's 4 + XGBoost ranker, excess-return regressor, MLP, and an average); a percentile-feature switch; decile ranker label; clipped Huber regressor; in-fold preparation per model family | Fair, leak-free comparison. The new models attack the classifier's blind spots: within-month order and the size of the win |
+| 6 Nov 2026 | **Run-all notebook (#19):** `00_run_all` with one call per step into `pipeline.py` (the monthly run's own functions); local-files regime; no side effects; no retuning by default | The mandatory end-to-end notebook that can't drift from the scheduled job or change the public record |
+| 5 Nov 2026 | **Criteria check:** the vector sim re-added as a cross-check (#47), Docker re-added (#48), README items into #22 | Two mandatory items were open; scored bonuses are worth their few hours |
 | 5 Nov 2026 | **Live dashboard (#40):** Streamlit on Community Cloud (HF Spaces now need PRO for it); reads the public dataset only; five tabs incl. input drift (PSI, stock-level inputs); the monthly run pushes both datasets | No secret on a public page; free hosting that needs no code change; drift works before any result exists |
 | 5 Nov 2026 | **Hugging Face (#18):** a private full snapshot (`sp500-momentum-data`) plus a public derived one (`sp500-momentum-winners`, no vendor price columns); every upload scanned for secrets; a preview now, final tagged in #20; `--from-file` | Reproducible for those given access, open for everyone, within the vendors' terms |
 | 5 Nov 2026 | **Telegram (#38):** picks to the public channel `sp500_momentum_picks`; failures and nightly AV summaries to a private chat; last month's live result from Jan 2027; send-only, never fails a run, never logs the token | Public face and an independent timestamp for the live record; operational alerts for the operator only |

@@ -399,6 +399,23 @@ a stock is the month's top gainer.
   The "why the model loses" page was left out; the exposure analysis stays in notebook 06 and chapter 7.
 - **Small precomputed public tables** (strategy returns, the live record, monitoring), so the page never downloads the 77 MB feature table. The page logic is plain pandas, tested in CI, with a Streamlit smoke test.
 
+**Checked against the course's project criteria (5 Nov, evening; the criteria page read, not recalled)**
+
+- About 29–30 of 36 points as things stood, and 33–35 with the gaps closed. Two **mandatory** items were open:
+  - the run-all notebook (#19);
+  - "vector simulations", dropped in #14.
+- **The vector simulation is added back as a labelled cross-check (#47; recommended, your call):** `sim1_` / `sim2_` per prediction, $100 per pick, compared with the exact simulator. This reverses part of the #14 decision for deliverable completeness; no result changes.
+- **Docker is re-added (#48; recommended),** after the core items and before #39: containerization is a scored bonus.
+- #22 now lists the README items the criteria name: a data-sources section with the 20+ new features, the dataset size (3.67 M daily rows), and the decision rule in plain terms.
+- **Order until #20:** #19 → #47 → #26 → #20 prep → #22 (the parts without numbers) → #48 → #39.
+
+**The run-all notebook (6 Nov, #19)**
+
+- **`notebooks/00_run_all.ipynb`:** data → transform → predict → simulate → the latest trades, one call per step into `sp500_momentum/pipeline.py`, which reuses the monthly run's own functions.
+- **The committed copy runs on local files** (your choice, as recommended): offline and deterministic. `hub` and `download` are one setting away.
+- **No side effects:** no Telegram, no Hugging Face push, no live record. The full search sits behind `RETRAIN` (off).
+- The monthly run's checks are applied as is (including the 95% priced threshold).
+
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 

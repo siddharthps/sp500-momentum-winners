@@ -1,8 +1,8 @@
 # Chapter 8: Automation
 
 > **Part 1** (sections 3.1–3.4): the monthly run. **Part 2** (section 3.5): notifications.
-> **Part 3** (section 3.6): the data snapshots. **Part 4** (section 3.7): the live dashboard. The
-> cloud run and the run-all notebook are added as they're built.
+> **Part 3** (section 3.6): the data snapshots. **Part 4** (section 3.7): the live dashboard.
+> **Part 5** (section 3.8): the whole workflow in one place. The cloud run is added when it's built.
 
 ## 1. Goal
 
@@ -174,6 +174,38 @@ earlier for three other indicators, and it's removed before the final rebuild. T
 that two chart labels had wrongly called such inputs "in dollars". Every price-like indicator here
 is divided by the price, so none is in dollars.
 
+### 3.8 Part 5: the whole workflow in one place
+
+Each earlier step has its own notebook. One more walks through the whole workflow end to end, so a
+reader can see how the parts connect:
+
+| Step | What happens |
+| --- | --- |
+| 1. Data | Where the raw data comes from, chosen by one setting (below) |
+| 2. Transform | The monthly table and the features rebuilt; their size and feature sets shown |
+| 3. Predict | The model refitted with its tuned settings, the latest month-end scored, all the monthly run's checks |
+| 4. Simulate | Both strategies, the rule chosen in Chapter 7, and SPY, on 2020–2022 and the test years |
+| 5. The latest trades | Both strategies' picks, to buy at the next open |
+
+**Three data regimes, one setting:**
+- **Local files:** the data already on disk, offline and deterministic. The published copy runs this
+  way.
+- **The private snapshot:** everything downloaded from the private dataset first, so no source is
+  touched.
+- **Download:** fresh membership, prices and economic series from the sources.
+
+The delisted companies' prices, downloaded once over many nights, are never downloaded again by any
+regime. They don't change.
+
+**It calls exactly the functions the monthly scheduled run uses,** so it can't drift from what runs
+unattended. And it has **no side effects:** running it sends no message, publishes nothing, and
+never writes the live record of picks. A notebook gets rerun casually; the public timeline of picks
+must not change because someone pressed "run all".
+
+**The full model search stays separate.** Retuning takes close to two hours, so it's one switch away,
+off by default. The notebook refits with the tuned settings, which is also exactly what the live
+system does each month. The whole notebook runs in about two minutes.
+
 ---
 
 ## 4. Decisions and why
@@ -195,6 +227,8 @@ is divided by the price, so none is in dollars.
 | A dashboard that reads only the public dataset | No secret on a public page; it can't show licensed prices by mistake |
 | Drift measured on stock-level inputs only | A market-wide input has one value a month: nothing to compare |
 | Hosted on Streamlit Community Cloud | Free and made for this; Hugging Face now charges for Streamlit hosting |
+| One notebook for the whole workflow, calling the scheduled run's own functions | A reader sees how the steps connect; it can't drift from what runs unattended |
+| The run-all notebook has no side effects and doesn't retune | Rerunning it must never change the public record; two hours of retuning would stop anyone from rerunning it |
 
 ---
 
