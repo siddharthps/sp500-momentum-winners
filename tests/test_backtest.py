@@ -303,6 +303,40 @@ def test_strategy_table_and_version_effect_on_a_tiny_market():
     assert eff.loc["inv_vol_buffer", "cagr"] == pytest.approx(1.04**12 - 1.01**12)
 
 
+def test_vector_sim_course_style_per_row_fields():
+    panel = pd.DataFrame(
+        {
+            "date": pd.to_datetime(["2023-01-31", "2023-01-31", "2023-02-28", "2023-02-28"]),
+            "pred_x": [1, 0, 1, 1],
+            "fwd_ret_1m": [0.10, 0.50, -0.05, np.nan],  # the last pick's month isn't over
+        }
+    )
+    out = bt.add_vector_sim(panel, "pred_x", "sim1", hold=1, cost=0.001)
+    assert out["sim1_gross"].tolist()[:3] == pytest.approx([10.0, 0.0, -5.0])
+    assert out["sim1_fees"].tolist()[:3] == pytest.approx([0.2, 0.0, 0.2])  # buy + sell
+    assert out["sim1_net"].tolist()[:3] == pytest.approx([9.8, 0.0, -5.2])
+    assert np.isnan(out["sim1_net"].iloc[3])
+
+
+def test_vector_summary_capital_growth_and_cagr():
+    dates = pd.to_datetime(["2023-01-31"] * 2 + ["2023-02-28"] * 2 + ["2023-03-31"] * 2)
+    panel = pd.DataFrame({"date": dates, "pred_x": [1, 1, 1, 0, 1, 1], "fwd_ret_1m": [0.1] * 6})
+    panel = bt.add_vector_sim(panel, "pred_x", "sim1", hold=1, cost=0.0)
+    s = bt.vector_summary(panel, "pred_x", "sim1", hold=1, start="2023-01-01")
+    # picks per month 2, 1, 2 -> 75th percentile 2 -> capital $100 x 1 x 2 = $200
+    assert s["trades"] == 5 and s["capital needed"] == pytest.approx(200)
+    assert s["net profit"] == pytest.approx(50)
+    assert s["growth"] == pytest.approx(1.25)
+    assert s["CAGR"] == pytest.approx(1.25**4 - 1)  # 3 months -> 12/3 = 4
+    hold6 = bt.vector_summary(panel, "pred_x", "sim1", hold=6, start="2023-01-01")
+    assert hold6["capital needed"] == pytest.approx(1200)  # six overlapping months of positions
+    assert hold6["months"] == 2 + 6  # Jan to Mar decisions, the last held six months
+    # a decision whose month isn't over adds no months
+    late = pd.concat([panel, pd.DataFrame({"date": [pd.Timestamp("2023-04-28")], "pred_x": [1]})])
+    late = bt.add_vector_sim(late.assign(fwd_ret_1m=late["fwd_ret_1m"]), "pred_x", "sim1", 1, 0.0)
+    assert bt.vector_summary(late, "pred_x", "sim1", hold=1, start="2023-01-01")["months"] == 3
+
+
 def test_prefer_alphavantage_drops_the_yahoo_copy_of_a_ticker():
     prices = pd.DataFrame(
         {

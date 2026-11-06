@@ -1294,6 +1294,24 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - checks all passed; refitted to Aug 2026.
   - The numbers differ slightly from the book (the headline's test years: $11,437 vs $11,640), because the local rebuild included the 18 new AV names. The chosen rule and SPY are identical. This is expected until #20.
 - **Docs:** chapter 8 Part 5 (section 3.8, two decisions), the index row, README (status, notebook 00 row, the module tree now listing monitoring/pipeline/notify/hub), and `decisions.md` (the criteria check, #19).
+- **Shipped:** PR #49. #19 is Done.
+
+### Session 27 — Friday, 6 Nov 2026 (the vector simulation cross-check, #47)
+
+- **Talked through first,** mapping the course's Week 4 method (read from its notes) onto our monthly setup: $100 per pick, fees on every round trip, capital = $100 × hold × the busy-month picks, CAGR on fixed capital.
+- **Decisions, both as recommended:**
+  1. `sim3_` for the chosen rule (6-month overlapping holds);
+  2. the code now, with the notebook-04 section and chapter-7 paragraph added to #20's checklist (rerunning 04 now would break its match with chapter 7).
+- **Built:**
+  - `backtest.add_vector_sim` (per-row gross, fees and net; blank when the hold hasn't ended) and `backtest.vector_summary` (trades, net profit, capital, growth, CAGR, profit per trade, months);
+  - 2 tests.
+- **Trap found in my own draft:** `months` counted Oct 2026, whose month isn't over (46 instead of 45). Fixed to the capital's real span; tested.
+- **Cross-check (preview, test years):**
+  - the same ranking under both methods (headline < 6-month rule < chosen rule);
+  - vector vs exact CAGR: 5.6/3.6, 24.5/33.0 and 42.1/60.7%;
+  - the gaps are explained by compounding, fees on every pick, and volatility drag for the headline;
+  - the exact figures match the book.
+- **#20 gained** the item to add the vector section and paragraph.
 
 ---
 
@@ -1316,6 +1334,7 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 | 2 Nov 2026 | **Project plan (20 small decisions, Session 5):** month-end rows; split 2010–19 / 2020–22 / 2023–26; build now, rerun after the AV pull; class FRED set + VIX, lagged; US-focused markets; TA-Lib indicators (no candle patterns); ~20 own features; sectors filled in by hand; target `is_beat_spy_1m`; Tree + RF + LogReg + XGBoost; time-series CV, test once; score = precision of the top-N picks; top 1/5/10 (headline 10); SPY + equal-weight benchmarks; vector + exact simulation; SPY > 200-day filter; notebooks per class week + `00_run_all`; Hugging Face data; monthly scheduled run; extras after the core | Mirrors the class's flow (Weeks 1–4) and the rubric's points. Fixes the class's caveats: look-ahead in macro, tuning on test, no benchmark |
 | 3 Nov 2026 | **Baseline grid:** 60 rules reported; staggered slots; 10 bps per side on the traded weight; Sharpe net of Fed Funds; the best rule **chosen on 2010–22 and followed through the test years**; a price file beyond membership. The split is unchanged (~60/18/22; ~78/22 with CV) | Every try shown, so luck can be judged. Costs and staggering make it tradable. Choosing on the same years you check is circular. One test window for every strategy |
 | 4 Nov 2026 | **Model setup:** CV folds score 2014–19 and 2020–22 is held out (A); 8 candidates (plan's 4 + XGBoost ranker, excess-return regressor, MLP, and an average); a percentile-feature switch; decile ranker label; clipped Huber regressor; in-fold preparation per model family | Fair, leak-free comparison. The new models attack the classifier's blind spots: within-month order and the size of the win |
+| 6 Nov 2026 | **Vector cross-check (#47):** the course's $100-per-pick method (`sim1_`/`sim2_`/`sim3_`), capital at the 75th percentile, CAGR on fixed capital; shown in notebook 04 and chapter 7 during #20 | The mandatory item, and an independent check: the same ranking as the exact simulator, with explained gaps |
 | 6 Nov 2026 | **Run-all notebook (#19):** `00_run_all` with one call per step into `pipeline.py` (the monthly run's own functions); local-files regime; no side effects; no retuning by default | The mandatory end-to-end notebook that can't drift from the scheduled job or change the public record |
 | 5 Nov 2026 | **Criteria check:** the vector sim re-added as a cross-check (#47), Docker re-added (#48), README items into #22 | Two mandatory items were open; scored bonuses are worth their few hours |
 | 5 Nov 2026 | **Live dashboard (#40):** Streamlit on Community Cloud (HF Spaces now need PRO for it); reads the public dataset only; five tabs incl. input drift (PSI, stock-level inputs); the monthly run pushes both datasets | No secret on a public page; free hosting that needs no code change; drift works before any result exists |

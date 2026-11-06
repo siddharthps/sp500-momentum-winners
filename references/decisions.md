@@ -416,6 +416,27 @@ a stock is the month's top gainer.
 - **No side effects:** no Telegram, no Hugging Face push, no live record. The full search sits behind `RETRAIN` (off).
 - The monthly run's checks are applied as is (including the 95% priced threshold).
 
+**The vector simulation cross-check (6 Nov, #47), all as recommended**
+
+- **The course's method, mapped monthly** (from its Week 4 notes, read, not recalled):
+  - $100 per pick at the next open;
+  - 0.1% on the buy and 0.1% on the sell for every pick, kept stocks included;
+  - per-row `simN_gross` / `simN_fees` / `simN_net`;
+  - capital = $100 × hold × picks per decision month (75th percentile);
+  - CAGR = the growth of that fixed capital, annualised over the months it was in use.
+- **Three strategies:** `sim1_` the headline (top 10, 1 month), `sim2_` the 6-month rule (top 10, 1 month), and `sim3_` the chosen rule (top 5, 6 months: overlapping positions, capital $3,000).
+- **The results go into notebook 04 and chapter 7 in #20** (your choice): rerunning 04 now would shift its numbers away from chapter 7. The code and tests ship now.
+- **Cross-check (preview, test years, 45 months):**
+
+  | Strategy | Vector CAGR | Exact CAGR |
+  |---|---|---|
+  | Headline | 5.6% | 3.6% |
+  | 6-month rule | 24.5% | 33.0% |
+  | Chosen rule | 42.1% | 60.7% |
+
+  - **The same ranking.** The levels differ as the method predicts: no compounding and fees on every pick (lower for the rules); volatility drag in the exact one (the headline's simple sum is higher).
+- **A bug in my first draft:** the window counted the Oct 2026 decisions, whose month isn't over (46 months instead of 45). Now the span runs from the first decision to the end of the last completed hold; a test covers it.
+
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 
