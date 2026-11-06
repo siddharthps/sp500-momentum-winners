@@ -498,6 +498,75 @@ def rolling_excess(rets: pd.DataFrame, spy: pd.Series, window: int = 12) -> pd.D
     return roll.sub(spy_roll, axis=0)
 
 
+# ---------------------------------------------------------------------------------------------
+# The course-style vector simulation (#47): a cross-check of the exact simulator above
+# ---------------------------------------------------------------------------------------------
+
+VECTOR_STAKE = 100.0  # dollars per pick
+
+
+def add_vector_sim(
+    panel: pd.DataFrame,
+    pred: str,
+    prefix: str,
+    hold: int,
+    cost: float = COST_PER_SIDE,
+    stake: float = VECTOR_STAKE,
+) -> pd.DataFrame:
+    """Add `<prefix>_gross`, `<prefix>_fees` and `<prefix>_net` per prediction row: every pick
+    (`pred` == 1) invests `stake` at the next open for `hold` months, and pays `cost` on the buy
+    and on the sell (a full round trip, even when the same stock is picked again). Rows that
+    aren't picks, or whose holding period hasn't ended yet, get 0 / blank.
+
+    Unlike `simulate`, nothing compounds and kept stocks aren't netted: it's the course's simple
+    method, kept as an independent cross-check."""
+    out = panel.copy()
+    picked = out[pred] == 1
+    ret = out[f"fwd_ret_{hold}m"]
+    out[f"{prefix}_gross"] = np.where(picked, stake * ret, 0.0)
+    out[f"{prefix}_fees"] = np.where(picked, stake * 2 * cost, 0.0)
+    out[f"{prefix}_net"] = out[f"{prefix}_gross"] - out[f"{prefix}_fees"]
+    unfinished = picked & ret.isna()  # the holding period runs past the data
+    out.loc[unfinished, [f"{prefix}_gross", f"{prefix}_fees", f"{prefix}_net"]] = np.nan
+    return out
+
+
+def vector_summary(
+    panel: pd.DataFrame,
+    pred: str,
+    prefix: str,
+    hold: int,
+    start: str,
+    end: str | None = None,
+    stake: float = VECTOR_STAKE,
+) -> dict:
+    """The course's summary for decisions in [start, end): trades, net profit, the capital needed
+    (stake x hold x picks per decision month at the 75th percentile, since `hold` months of
+    positions overlap), growth of that capital, CAGR over the window, and profit per trade."""
+    m = pd.PeriodIndex(pd.to_datetime(panel["date"]), freq="M")
+    keep = m >= pd.Period(start, freq="M")
+    if end:
+        keep &= m < pd.Period(end, freq="M")
+    rows = panel[keep & (panel[pred] == 1) & panel[f"{prefix}_net"].notna()]
+    # the span the capital was in use: first decision to the end of the last completed hold
+    # (decisions whose holding period hasn't ended carry no result and no months)
+    done = pd.PeriodIndex(pd.to_datetime(rows["date"]), freq="M")
+    months = (done.max() - done.min()).n + hold if len(done) else 0
+    per_month = rows.groupby("date").size()
+    capital = stake * hold * float(per_month.quantile(0.75)) if len(per_month) else np.nan
+    net = float(rows[f"{prefix}_net"].sum())
+    growth = (capital + net) / capital if capital else np.nan
+    return {
+        "trades": len(rows),
+        "net profit": net,
+        "capital needed": capital,
+        "growth": growth,
+        "CAGR": growth ** (12 / months) - 1 if months and growth > 0 else np.nan,
+        "profit per trade": net / len(rows) if len(rows) else np.nan,
+        "months": months,
+    }
+
+
 def risk_free(fedfunds: pd.DataFrame) -> pd.Series:
     """Monthly risk-free return by month: the Fed Funds monthly average (%) / 1200. Used only to
     score results after the fact, so no publication lag applies."""
