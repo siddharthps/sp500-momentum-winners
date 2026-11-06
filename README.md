@@ -57,6 +57,7 @@ ALPHAVANTAGE_API_KEY=your_key_here
 | 6. Features | `uv run python -m sp500_momentum.features build` | Step 5 + monthly bars, FRED, `references/removed_sectors.csv` | `data/processed/features.parquet` (152 features in named sets) |
 | 7. Models | `uv run python -m sp500_momentum.modeling.train run` | Step 6 | `reports/model_cv_results.csv`, `reports/model_comparison.csv`, `data/processed/model_scores.parquet`, `models/` (~1¾ h; `--n-iter 1` for a quick smoke run) |
 | 8. Monthly run | `uv run python -m sp500_momentum.modeling.predict run` | Steps 1–3 (current members only), 5–6, the step 7 settings | `reports/picks/picks_<YYYY-MM>.csv` (the headline model's and the 6-month rule's top 10), `data/processed/live_picks.csv` (every pick so far), `models/live_headline.joblib` (~2 min; `--no-download` rebuilds from the files on disk; `--force` redoes a month) |
+| Everything (5–7, notebooks, snapshots) | `uv run python -m sp500_momentum.pipeline rebuild-all --tag <name>` | The data on disk | The final rebuild, timed and stopping at the first failure; `--dry-run` lists the steps and the checks to do by hand before and after (~2 h with retraining; `--no-retrain`, `--no-notebooks`, `--no-publish`) |
 | Progress | `uv run python -m sp500_momentum.dataset av-status` | | |
 
 Step 4 is rerun once a day (and step 5 after it) until the queue is empty (started 2 Nov 2026,

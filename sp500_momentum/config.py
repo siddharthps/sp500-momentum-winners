@@ -185,6 +185,11 @@ RENAMES = [
     ("WLTW", "WTW", "2016-01-01", "2022-01-31"),  # Willis Towers Watson, 2022
     ("Q", "IQV", "2017-08-01", "2017-11-30"),  # QuintilesIMS -> IQVIA, 2017
     ("KFT", "MDLZ", "2012-10-01", "2012-10-31"),  # Kraft Foods -> Mondelez, 2012
+    # Discovery -> Warner Bros. Discovery, 11 Apr 2022: Discovery, Inc. acquired WarnerMedia and
+    # renamed itself; the same entity continued and DISCA shares became WBD 1:1. Alpha Vantage's
+    # WBD series runs from 2005 without a break and tracks Discovery's class C (DISCK) at a 0.98
+    # monthly correlation before 2022, while "DISCA" now returns another security (6 Nov).
+    ("DISCA", "WBD", "2022-04-11", "2022-04-11"),
 ]
 
 # Current members that joined after the study start but have no "added" row in Wikipedia.

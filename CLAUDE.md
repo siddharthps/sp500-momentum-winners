@@ -158,6 +158,7 @@ uv run python -m sp500_momentum.hub push --target private|public|both [--tag X] 
 uv run python -m sp500_momentum.notify test [--dry-run] | find-chats                    # Telegram
 uv run streamlit run dashboard/app.py               # the dashboard locally (live: sp500-momentum-winners.streamlit.app)
 uv run mkdocs build --strict                        # the book (CI runs it; published to GitHub Pages from main)
+uv run python -m sp500_momentum.pipeline rebuild-all --tag final-2026-11 [--dry-run]   # #20's rebuild
 uv run python -m sp500_momentum.run_notebooks run  # after features build (and train); refreshes figures
 uv run python -m sp500_momentum.run_notebooks run 04  # just one notebook (04: rule grid + model strategies, ~2 min)
 ```

@@ -202,6 +202,30 @@ def test_repair_changes_renames_in_window_and_adds_missing():
     assert out.loc[out["added_ticker"] == "SW", "date"].iloc[0] == pd.Timestamp("2024-07-08")
 
 
+def test_discovery_becomes_one_continuous_member_as_wbd():
+    """The 2022 row "WBD added, DISCA removed" is a rename: after the repair, the backward walk
+    keeps one member (WBD) through 2022, and DISCK's own removal is untouched."""
+    from sp500_momentum.config import RENAMES
+    from sp500_momentum.membership import point_in_time, repair_changes
+
+    changes = pd.DataFrame(
+        {
+            "date": pd.to_datetime(["2022-04-11", "2022-04-11", "2026-10-06"]),
+            "added_ticker": ["WBD", None, "TWLO"],
+            "removed_ticker": ["DISCA", "DISCK", "WBD"],
+            "reason": ["", "", ""],
+        }
+    )
+    fixed = repair_changes(changes, RENAMES, {})
+    current = pd.DataFrame({"ticker": ["TWLO", "KO"]})
+    dates = pd.Series(pd.to_datetime(["2020-01-31", "2023-01-31", "2026-11-30"]))
+    members = point_in_time(current, fixed, dates)
+    by = members.groupby("date")["ticker"].apply(set)
+    assert by[pd.Timestamp("2020-01-31")] == {"WBD", "DISCK", "KO"}  # Discovery priced as WBD
+    assert by[pd.Timestamp("2023-01-31")] == {"WBD", "KO"}
+    assert by[pd.Timestamp("2026-11-30")] == {"TWLO", "KO"}
+
+
 def test_clean_ticker():
     from sp500_momentum.membership import clean_ticker
 
