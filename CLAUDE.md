@@ -104,6 +104,10 @@ step's chapter are written; the issue's "Done when" boxes are ticked; the PR is 
   Request errors can carry the token in their URL: report them by type only.
 - **Ruff only checks the folders in `pyproject.toml`'s `include`.** `tests/` (3 Nov) and
   `dashboard/` (5 Nov) were both silently skipped at first. Add every new code folder.
+- **The book site** (GitHub Pages, `.github/workflows/pages.yml`) builds `docs/` with
+  `scripts/mkdocs_hooks.py`: chapters keep GitHub-style paths (`../reports/figures/x.png`,
+  `../references/...`) and the hook adapts them. Keep writing chapters that way; `--strict` in CI
+  fails on any broken chart or link.
 - **The dashboard** (`dashboard/`, Streamlit Community Cloud from `main`) can't import the package:
   its calculations live in `dashboard/logic.py`, tested against the package where they overlap.
   It reads only the public HF dataset. HF Spaces now need PRO for Streamlit/Docker (only static
@@ -153,6 +157,7 @@ uv run python -m sp500_momentum.modeling.predict run  # the monthly run (~2 min;
 uv run python -m sp500_momentum.hub push --target private|public|both [--tag X] | pull   # HF datasets
 uv run python -m sp500_momentum.notify test [--dry-run] | find-chats                    # Telegram
 uv run streamlit run dashboard/app.py               # the dashboard locally (live: sp500-momentum-winners.streamlit.app)
+uv run mkdocs build --strict                        # the book (CI runs it; published to GitHub Pages from main)
 uv run python -m sp500_momentum.run_notebooks run  # after features build (and train); refreshes figures
 uv run python -m sp500_momentum.run_notebooks run 04  # just one notebook (04: rule grid + model strategies, ~2 min)
 ```

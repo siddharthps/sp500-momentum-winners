@@ -1,0 +1,58 @@
+# Publishes the project book (docs/ + the charts in reports/figures/) to GitHub Pages:
+# https://siddharthps.github.io/sp500-momentum-winners/
+# Runs on every push to main that touches the book, and by hand. The build is strict: a broken
+# chart or link fails it, so a bad page is never published.
+name: Book
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - "reports/figures/**"
+      - "mkdocs.yml"
+      - "scripts/mkdocs_hooks.py"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false # let a deployment in progress finish
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install (exact versions from uv.lock)
+        run: uv sync --locked
+
+      - name: Build the book (strict)
+        run: uv run mkdocs build --strict
+        env:
+          NO_MKDOCS_2_WARNING: "1"
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

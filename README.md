@@ -24,8 +24,10 @@ aren't flattered by survivorship bias.
 > [milestone](https://github.com/siddharthps/sp500-momentum-winners/milestones), and on the
 > [project board](https://github.com/users/siddharthps/projects/1).
 
-**The project book:** [docs/](docs/index.md) explains each step as a chapter (problem, data
-collection, the monthly table, features, modelling, results, automation). Decisions are in
+**The project book:** **[siddharthps.github.io/sp500-momentum-winners](https://siddharthps.github.io/sp500-momentum-winners/)**
+(also readable as Markdown in [docs/](docs/index.md)) explains each step as a chapter (problem, data
+collection, the monthly table, features, modelling, results, automation). It's rebuilt on every
+merge to `main`; `uv run mkdocs serve` previews it locally. Decisions are in
 [references/decisions.md](references/decisions.md).
 
 ## Setup

@@ -1312,6 +1312,25 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - the gaps are explained by compounding, fees on every pick, and volatility drag for the headline;
   - the exact figures match the book.
 - **#20 gained** the item to add the vector section and paragraph.
+- **Shipped:** PR #50. #47 is Done.
+
+### Session 28 — Friday, 6 Nov 2026 (the book as a website, #26)
+
+- **The problem:** 13 chart embeds (`../reports/figures/`) and 3 links outside `docs/` work on GitHub but break in an MkDocs site.
+- **Decisions, both as recommended:**
+  1. a build hook rather than moving the charts or adding a plugin;
+  2. publish on GitHub Pages.
+- **Built:**
+  - `scripts/mkdocs_hooks.py` (`on_files` adds every chart as a site file, so `--strict` can check the images; `on_page_markdown` rewrites the paths and links);
+  - the strict build as a CI step;
+  - `.github/workflows/pages.yml`;
+  - `mkdocs.yml` gained `site_url`, `repo_url` and `hooks`;
+  - mkdocs-material as a dev tool;
+  - `scripts/` added to ruff's include list;
+  - 3 tests (139 pass).
+- **Verified locally:** the strict build is clean; 19 charts in the site; chapter 7's 8 images point at `figures/`; no `reports/` paths are left; the appendix links go to GitHub.
+- **Pages** was enabled through the API (build type "workflow"); the site deploys after the merge.
+- **Docs:** README (the book link), CLAUDE.md (the site rule, the command), and `decisions.md`.
 
 ---
 
