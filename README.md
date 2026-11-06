@@ -16,9 +16,10 @@ aren't flattered by survivorship bias.
 > Status: data, the monthly table, the features, the exploratory analysis, the baseline rule grid
 > and the models (setup, tuning, comparison, one test) and their trading simulations are done;
 > equity curves, risk over time, the SPY trend filter and the diagnosis of the picks are done too.
-> The monthly run (next month's picks) is scheduled; notifications, a live dashboard and a cloud run
-> are next. The
-> Alpha Vantage download of delisted companies runs until ~12–14 Nov 2026. Progress is tracked in
+> The monthly run is scheduled, with Telegram notifications, data snapshots on Hugging Face, a
+> [live dashboard](https://sp500-momentum-winners.streamlit.app/) and a run-all notebook; a vector
+> cross-check, Docker and a cloud run are next. The
+> Alpha Vantage download of delisted companies runs until ~12 Nov 2026. Progress is tracked in
 > [issues](https://github.com/siddharthps/sp500-momentum-winners/issues), by
 > [milestone](https://github.com/siddharthps/sp500-momentum-winners/milestones), and on the
 > [project board](https://github.com/users/siddharthps/projects/1).
@@ -176,6 +177,7 @@ the data:
 
 | Notebook | What it shows |
 |---|---|
+| [`00_run_all`](notebooks/00_run_all.ipynb) | **The whole workflow end to end**, one call per step: data (regime `local`, `hub` or `download`), transform, predict (refit with the tuned settings and the monthly run's checks), simulate (both strategies, the chosen rule and SPY on 2020–2022 and the test years), the latest trades. The same functions as the monthly run, with no side effects (no message, no publishing, no live record). About two minutes |
 | [`01_data`](notebooks/01_data.ipynb) | Membership, the survivorship gap, the Alpha Vantage progress, prices, FRED, the monthly table and the feature sets |
 | [`02_features_eda`](notebooks/02_features_eda.ipynb) | The target, each feature's signal (2010–2022 only), its stability, duplicates, market regimes, and a preview of the plain rule |
 | [`03_models`](notebooks/03_models.ipynb) | The folds, each model's tuned setting (2014–19), the comparison on 2020–22 where the headline is chosen, the single test (2023 on), the model rule columns and what the headline looks at. Reads the training step's outputs |
@@ -225,7 +227,7 @@ or deleting `main` are blocked.
 │   ├── processed      <- Final modelling tables
 │   └── raw            <- Downloads, one folder per source (never edited by hand)
 ├── models             <- Trained models and predictions
-├── notebooks          <- 01_data, 02_features_eda, 03_models, 04_simulation, 05_risk, 06_diagnostics (executed, with outputs); later 00_run_all
+├── notebooks          <- 00_run_all (the whole workflow), 01_data … 06_diagnostics (executed, with outputs)
 ├── references         <- Decision log, brainstorm and dated working journal
 ├── reports/figures    <- Generated charts (reports/picks: the monthly picks)
 ├── scripts            <- Task Scheduler setup: the daily Alpha Vantage run and the monthly run
@@ -245,6 +247,10 @@ or deleting `main` are blocked.
     ├── backtest.py    <- `pred*` rule columns, staggered-portfolio simulation with costs, the rule grid,
     │                     strategy versions (weighting, buffer, trend filter), dollar paths
     ├── diagnostics.py <- What the picks look like and where they win or lose (month-level margins)
+    ├── monitoring.py  <- Input drift (PSI), the live record, strategy returns for the dashboard
+    ├── pipeline.py    <- The whole workflow as five calls (the run-all notebook)
+    ├── notify.py      <- Telegram: picks to the public channel, alerts to a private chat
+    ├── hub.py         <- Hugging Face: the private snapshot, the public derived dataset
     ├── plots.py       <- Chart style (validated palette) and the charts
     ├── run_notebooks.py <- Executes the notebooks in a fresh kernel and checks their outputs
     ├── nb.py          <- Notebook setup (output caps, quiet logs, chart style) and the output rules
