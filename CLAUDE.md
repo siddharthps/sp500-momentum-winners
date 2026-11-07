@@ -104,6 +104,10 @@ step's chapter are written; the issue's "Done when" boxes are ticked; the PR is 
   Request errors can carry the token in their URL: report them by type only.
 - **Ruff only checks the folders in `pyproject.toml`'s `include`.** `tests/` (3 Nov) and
   `dashboard/` (5 Nov) were both silently skipped at first. Add every new code folder.
+- **Docker:** `.dockerignore` keeps data, models, logs, `.env`, `CLAUDE.local.md` and `.claude/`
+  out of the image, which is published publicly (GHCR): keep it that way. Secrets are passed at
+  run time (`--env-file`), never as build arguments. Running third-party scanner images locally
+  with Docker-engine access is blocked by the safety check; the Trivy scan runs in CI instead.
 - **The book site** (GitHub Pages, `.github/workflows/pages.yml`) builds `docs/` with
   `scripts/mkdocs_hooks.py`: chapters keep GitHub-style paths (`../reports/figures/x.png`,
   `../references/...`) and the hook adapts them. Keep writing chapters that way; `--strict` in CI
@@ -159,6 +163,7 @@ uv run python -m sp500_momentum.notify test [--dry-run] | find-chats            
 uv run streamlit run dashboard/app.py               # the dashboard locally (live: sp500-momentum-winners.streamlit.app)
 uv run mkdocs build --strict                        # the book (CI runs it; published to GitHub Pages from main)
 uv run python -m sp500_momentum.pipeline rebuild-all --tag final-2026-11 [--dry-run]   # #20's rebuild
+docker build --target test -t sp500-momentum:test . && docker run --rm sp500-momentum:test   # tests in the image
 uv run python -m sp500_momentum.run_notebooks run  # after features build (and train); refreshes figures
 uv run python -m sp500_momentum.run_notebooks run 04  # just one notebook (04: rule grid + model strategies, ~2 min)
 ```

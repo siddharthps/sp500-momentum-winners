@@ -104,6 +104,25 @@ private snapshot, `hub pull` replaces steps 1–4, so `monthly build` onwards ru
 download or API key. Without it, the public tables are enough to follow the analysis. Prices can be
 rebuilt with your own access through steps 1–4.
 
+### Docker
+
+The [`Dockerfile`](Dockerfile) builds the pipeline from uv's lock file (Python 3.12, TA-Lib from its
+prebuilt wheel). It holds no data, models or secrets: mount them, or pull the private snapshot with
+a token at run time. CI builds it on every pull request and runs the tests inside it. Each merge to
+`main` publishes it to GitHub Container Registry.
+
+```bash
+docker pull ghcr.io/siddharthps/sp500-momentum-winners:latest      # or: docker build -t sp500-momentum .
+docker run --rm ghcr.io/siddharthps/sp500-momentum-winners           # the final rebuild's steps (dry run)
+docker run --rm --env-file .env -v "$PWD/data:/app/data" -v "$PWD/models:/app/models" -v "$PWD/reports:/app/reports" \
+  ghcr.io/siddharthps/sp500-momentum-winners sp500_momentum.modeling.predict run --no-publish
+```
+
+Any project module runs as `docker run <image> <module> [args]`. The image is about 2.9 GB, mostly
+the scientific stack. A vulnerability scan (Trivy) reports high and critical findings in the build
+log. The base image's Debian packages are updated at build time, so what remains has no fix
+published yet.
+
 ### Live dashboard
 
 **[sp500-momentum-winners.streamlit.app](https://sp500-momentum-winners.streamlit.app/)**: a
