@@ -15,9 +15,9 @@ FROM python:3.12-slim AS base
 RUN apt-get update \
     && apt-get upgrade -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
-# The base image's own setuptools (not the project's environment) had a fixed high CVE
-# (CVE-2025-47273, fixed in 78.1.1); found by the CI scan, 6 Nov
-RUN pip install --no-cache-dir --upgrade "setuptools>=78.1.1"
+# The base image's pip is never used (uv manages everything) and vendors pkg_resources from
+# setuptools 70.3.0 (CVE-2025-47273, flagged by the CI scan, 6 Nov): remove it.
+RUN python -m pip uninstall -y pip
 
 # uv, pinned to the version the lock file was made with
 COPY --from=ghcr.io/astral-sh/uv:0.7.20 /uv /uvx /bin/

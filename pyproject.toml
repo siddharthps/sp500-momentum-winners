@@ -26,7 +26,6 @@ dependencies = [
     "numpy",
     "pandas",
     "pillow>=13",
-    "pip",
     "pyarrow>=26.0.0",
     "python-dateutil>=4.0.0",
     "python-dotenv",
