@@ -1433,6 +1433,20 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 
   These are the 5 Nov data, newer than the book's 4 Nov snapshot.
 - **The headline's test-years worst fall (−31%)** came from the saved strategy table; the book never quoted it.
+- **You started a chapter-by-chapter review**, to understand each chapter and suggest changes. Everything is committed locally, nothing pushed.
+- **Chapter 1, all four suggestions applied** (822e845):
+  - why momentum might work, and its crash risk;
+  - survivorship bias moved up to section 3;
+  - a preview caveat;
+  - the old "what makes this different" section folded into section 2, which also removed the stale 2.86M figure.
+
+  Fixed along the way: a doubled divider, and the model-target row now says "and by how much".
+- **Chapter 2, reviewed but not changed.**
+  - **One real error:** prices start in 2000, not 2007, and Chapter 4 already says 2000.
+  - **Stale:** the Alpha Vantage status.
+  - **Two count mismatches to check in the data:** 102 vs 108 departed companies, and 320 vs 316.
+- **You paused there** to read the new Chapter 1. The new rule is to wait for your go-ahead before each chapter. It's noted in CLAUDE.md as temporary, with the Chapter 2 findings, so the next session can resume.
+- **CLAUDE.md also gained:** research is looked up before it's cited, and counts shared between chapters must agree.
 
 ---
 
