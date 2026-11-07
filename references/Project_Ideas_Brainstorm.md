@@ -1352,6 +1352,27 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - ruff's ISC004 caught implicit string joins in a list (intended here, now explicit);
   - the checklist said to change `DATA_STATUS` "before publishing", but publishing is the last step of the same command. Split into before/after lists.
 - **Docs:** README (the rebuild row), CLAUDE.md (the command), and `decisions.md`.
+- **Shipped:** PR #52 (refs #20).
+
+### Session 30 — Friday, 6 Nov 2026, afternoon–evening (containerization, #48)
+
+- **Your order:** Docker before the #22 write-up (I'd suggested #22 first; no dependency either way).
+- **Facts first:** TA-Lib 0.8.3 has manylinux wheels (no compiling). Docker 29.9 was installed; you started Docker Desktop.
+- **Decisions, as recommended:**
+  1. publish to GHCR on `main`;
+  2. a vulnerability scan in CI, report-only.
+- **Built:**
+  - `Dockerfile` (slim 3.12, Debian updates, uv 0.7.20, `uv sync --locked`, non-root, `python -m` entrypoint, a test stage);
+  - `.dockerignore` (data, models, logs, `.env`, **`CLAUDE.local.md`, `.claude/`**);
+  - `.github/workflows/docker.yml` (tests inside, the runtime must start, Trivy, publish on `main`).
+- **Locally:** 142 tests pass inside the container.
+- **Traps found:**
+  - **The editor flagged "2 high vulnerabilities".** Docker Scout needs a login. A local Trivy container (with Docker-engine access) was **blocked by the safety check**, so I didn't pursue it locally and moved scanning to CI (your choice).
+  - **My Trivy pin `0.28.0` was from memory and doesn't exist** (the job failed in 3 s). The real tags carry a `v`, and v0.31–v0.35 were all re-created on 20 Mar 2026. Pinned to the v0.36.0 **commit** instead.
+  - **The scan:** 49 Debian findings with no fix (statuses affected / fix_deferred), 1 Python finding with a fix (CVE-2025-47273, setuptools 70.3.0), and the project's packages and JupyterLab's JS clean.
+  - **The setuptools hunt:** upgrading setuptools didn't help; there was no installed setuptools or wheel, and it wasn't in `uv.lock`. It was **pip's vendored `pkg_resources`** (`pip/_vendor/vendor.txt: setuptools==70.3.0`), in the base image's pip 25.0.1 *and* pip 26.3, which the project listed as a leftover template dependency. Fix: `uv remove pip` and uninstall the system pip. Tests and a notebook still pass; the rescan shows 0 Python findings.
+- **Image:** 2.9 GB runtime (the scientific stack); slimming deferred.
+- **Docs:** README (the Docker section), chapter 8 Part 6 (section 3.9), CLAUDE.md (Docker rules, the command), and `decisions.md`.
 
 ---
 
@@ -1374,6 +1395,7 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 | 2 Nov 2026 | **Project plan (20 small decisions, Session 5):** month-end rows; split 2010–19 / 2020–22 / 2023–26; build now, rerun after the AV pull; class FRED set + VIX, lagged; US-focused markets; TA-Lib indicators (no candle patterns); ~20 own features; sectors filled in by hand; target `is_beat_spy_1m`; Tree + RF + LogReg + XGBoost; time-series CV, test once; score = precision of the top-N picks; top 1/5/10 (headline 10); SPY + equal-weight benchmarks; vector + exact simulation; SPY > 200-day filter; notebooks per class week + `00_run_all`; Hugging Face data; monthly scheduled run; extras after the core | Mirrors the class's flow (Weeks 1–4) and the rubric's points. Fixes the class's caveats: look-ahead in macro, tuning on test, no benchmark |
 | 3 Nov 2026 | **Baseline grid:** 60 rules reported; staggered slots; 10 bps per side on the traded weight; Sharpe net of Fed Funds; the best rule **chosen on 2010–22 and followed through the test years**; a price file beyond membership. The split is unchanged (~60/18/22; ~78/22 with CV) | Every try shown, so luck can be judged. Costs and staggering make it tradable. Choosing on the same years you check is circular. One test window for every strategy |
 | 4 Nov 2026 | **Model setup:** CV folds score 2014–19 and 2020–22 is held out (A); 8 candidates (plan's 4 + XGBoost ranker, excess-return regressor, MLP, and an average); a percentile-feature switch; decile ranker label; clipped Huber regressor; in-fold preparation per model family | Fair, leak-free comparison. The new models attack the classifier's blind spots: within-month order and the size of the win |
+| 6 Nov 2026 | **Docker (#48):** the pipeline image from the lock file, no data or secrets inside, tests run inside it in CI, a pinned Trivy scan (report-only), published to GHCR on `main`; pip removed (it vendored the one fixable CVE) | Reproducible for anyone, safe to publish, and every fixable finding fixed |
 | 6 Nov 2026 | **Vector cross-check (#47):** the course's $100-per-pick method (`sim1_`/`sim2_`/`sim3_`), capital at the 75th percentile, CAGR on fixed capital; shown in notebook 04 and chapter 7 during #20 | The mandatory item, and an independent check: the same ranking as the exact simulator, with explained gaps |
 | 6 Nov 2026 | **Run-all notebook (#19):** `00_run_all` with one call per step into `pipeline.py` (the monthly run's own functions); local-files regime; no side effects; no retuning by default | The mandatory end-to-end notebook that can't drift from the scheduled job or change the public record |
 | 5 Nov 2026 | **Criteria check:** the vector sim re-added as a cross-check (#47), Docker re-added (#48), README items into #22 | Two mandatory items were open; scored bonuses are worth their few hours |

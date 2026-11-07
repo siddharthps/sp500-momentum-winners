@@ -473,6 +473,14 @@ a stock is the month's top gainer.
 - **CI (`.github/workflows/docker.yml`):** build the test image and run the tests in it; the runtime image must start. On `main`, publish to GHCR (`ghcr.io/siddharthps/sp500-momentum-winners`, `latest` and the commit SHA) (recommended).
 - **Vulnerabilities:** the editor flagged 2 high findings in the base image. Docker Scout needs a login. A local Trivy scan (a scanner container with Docker-engine access) was blocked by the safety check, so it wasn't pursued locally. Debian's packages were already current (0 upgraded), so the findings have no fix yet. **A pinned Trivy scan in CI, report-only (your choice, as recommended);** its first report is read before the merge.
 - **Verified locally:** both images build (~5 min cold); 142 tests pass inside; the runtime image prints the rebuild plan. Image size: 2.9 GB runtime, 3.3 GB test.
+- **What the CI scan found, and what was done:**
+  - **Debian base libraries, 49 high/critical:** the util-linux family, libacl, ncurses, sqlite, and systemd's client libraries. Status "affected" or "fix_deferred": no fix published, so they remain. The build applies Debian's updates, so fixes arrive automatically. The pipeline doesn't call these tools.
+  - **Python, 1 high, fixed:** CVE-2025-47273 (setuptools 70.3.0). It wasn't an installed setuptools at all: **pip vendors `pkg_resources` from setuptools 70.3.0**, in both the base image's pip 25.0.1 and pip 26.3, which the project listed as a leftover template dependency.
+    - My first fix (upgrading setuptools) missed it, because pip's vendored copy is untouched by that.
+    - Found by checking `pip/_vendor/vendor.txt`.
+    - **Fix:** `uv remove pip` (nothing uses it; tests and a notebook run without it) and uninstall the system pip in the image.
+    - Rescan: 0 Python findings.
+- **The Trivy action is pinned to a commit** (v0.36.0, `ed142fd…`), not a tag. The pin I first wrote from memory (`0.28.0`) doesn't exist, and the action's tags were re-created in March 2026, so a tag can't be trusted to stay put.
 
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
