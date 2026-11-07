@@ -49,7 +49,9 @@ jobs:
           docker run --rm sp500-momentum:runtime
 
       - name: Vulnerability scan of the runtime image (report only)
-        uses: aquasecurity/trivy-action@0.28.0
+        # pinned to a commit, not a tag: this action's tags were re-created in March 2026, and a
+        # tag can be moved while a commit can't
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: sp500-momentum:runtime
           severity: HIGH,CRITICAL
