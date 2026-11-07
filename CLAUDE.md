@@ -114,7 +114,8 @@ is merged with CI green (both the CI and Docker workflows).
   **pip is removed on purpose** (from the project's dependencies and the image): it vendors
   setuptools 70.3.0 (CVE-2025-47273), and uv manages everything. Don't add it back. Upgrading a
   package doesn't fix a *vendored* copy; check `*/_vendor/vendor.txt`. Local builds need Docker
-  Desktop running.
+  Desktop running. The Docker workflow is path-filtered (not a required check): when a new file
+  or folder starts feeding the pipeline, add it to both `paths:` lists in `docker.yml`.
 - **Pin new third-party GitHub Actions to commit SHAs** (version in a comment), and look every
   version up (`gh api repos/<owner>/<repo>/releases`), never recall it: a pin written from memory
   (`trivy-action@0.28.0`) didn't exist, and that action's tags had been re-created. (Trivy is pinned

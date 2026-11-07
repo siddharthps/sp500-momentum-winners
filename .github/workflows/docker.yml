@@ -4,10 +4,40 @@
 # No secrets are used at build time; the image holds no data or secrets (see .dockerignore).
 name: Docker
 
+# Runs only when something that changes what the image does changes: the build, the environment,
+# the code and tests, the notebooks, and the files the pipeline reads (reports/*.csv holds the tuned
+# settings; references/*.csv the removed members' sectors). Docs-only changes skip it. That's safe
+# because only the CI workflow's `checks` job is required by main's protection rule.
 on:
   pull_request:
+    paths: # keep the two lists identical
+      - "Dockerfile"
+      - ".dockerignore"
+      - ".github/workflows/docker.yml"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "sp500_momentum/**"
+      - "scripts/**"
+      - "dashboard/**"
+      - "tests/**"
+      - "notebooks/**"
+      - "reports/**"
+      - "references/*.csv"
   push:
     branches: [main]
+    paths:
+      - "Dockerfile"
+      - ".dockerignore"
+      - ".github/workflows/docker.yml"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "sp500_momentum/**"
+      - "scripts/**"
+      - "dashboard/**"
+      - "tests/**"
+      - "notebooks/**"
+      - "reports/**"
+      - "references/*.csv"
   workflow_dispatch:
 
 permissions:

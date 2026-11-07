@@ -108,8 +108,9 @@ rebuilt with your own access through steps 1–4.
 
 The [`Dockerfile`](Dockerfile) builds the pipeline from uv's lock file (Python 3.12, TA-Lib from its
 prebuilt wheel). It holds no data, models or secrets: mount them, or pull the private snapshot with
-a token at run time. CI builds it on every pull request and runs the tests inside it. Each merge to
-`main` publishes it to GitHub Container Registry.
+a token at run time. CI builds it and runs the tests inside it on every pull request that can change it (the
+build, the dependencies, the code, tests, notebooks, or the files the pipeline reads; docs-only
+changes skip it). Each such merge to `main` publishes it to GitHub Container Registry.
 
 ```bash
 docker pull ghcr.io/siddharthps/sp500-momentum-winners:latest      # or: docker build -t sp500-momentum .

@@ -1373,6 +1373,12 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - **The setuptools hunt:** upgrading setuptools didn't help; there was no installed setuptools or wheel, and it wasn't in `uv.lock`. It was **pip's vendored `pkg_resources`** (`pip/_vendor/vendor.txt: setuptools==70.3.0`), in the base image's pip 25.0.1 *and* pip 26.3, which the project listed as a leftover template dependency. Fix: `uv remove pip` and uninstall the system pip. Tests and a notebook still pass; the rescan shows 0 Python findings.
 - **Image:** 2.9 GB runtime (the scientific stack); slimming deferred.
 - **Docs:** README (the Docker section), chapter 8 Part 6 (section 3.9), CLAUDE.md (Docker rules, the command), and `decisions.md`.
+- **Shipped:** PR #53. The image is public on GHCR (an anonymous `docker manifest inspect` works). #48 is Done.
+- **Evening:** CLAUDE.md lessons (PR #54). The remaining tag-pinned actions went on #39's checklist.
+- **The Docker workflow's path filter** (you noticed the docs-only CLAUDE.md PR waited ~7 min for a Docker build it couldn't affect):
+  - `paths:` added for PRs and the publish on `main`: the build, dependencies, code, tests, notebooks, `reports/**` and `references/*.csv` (both read by the pipeline);
+  - verified first that only `checks` is required by "Protect main", so a skipped Docker run can't block a merge;
+  - I avoided a YAML anchor for the shared list: support for it was recall, not verified, so the list is written twice.
 
 ---
 
