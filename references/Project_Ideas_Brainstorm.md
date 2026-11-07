@@ -1391,6 +1391,37 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 - **Totals:** 92 tried, 124 left (~6 nights, queue empty ~Thu 12 Nov). Across all nights: 14 reused tickers and 4 with no data.
 - **For Chapter 9's limitations:** the unrecoverable names cluster among takeovers, going private and bankruptcies, exactly the fates survivorship bias hides. Report it as a direction of bias, not just a count.
 
+### Session 32 — Saturday, 7 Nov 2026 (the book in plain words, #22 started)
+
+- **Why:** reading the published book, you couldn't follow the setup from Chapter 1 alone, and asked five questions:
+  - how a 6-month hold works month by month;
+  - how the money is split, and whether fractional shares matter;
+  - why the years are split if the rules could just be compared;
+  - where the ML comes in;
+  - why the models lost, and whether a quant fund with more data would do better.
+
+  Each of those questions marks a gap in the book, so the answers went into it.
+- **A real error found in Chapter 1:** it said the plain rule ranks "by last month's return". The grid tests 1/3/6/12-month and 12-1 lookbacks, and the chosen rule uses 6 months. Fixed.
+- **Chapter 1 gained three sections:**
+  - a worked example of the staggered slots (top 5, held 6 months, $6,000), including the two misreadings it avoids;
+  - how the two sides are compared (the four measures, why Sharpe leads, fractional shares);
+  - choosing on the past and judging on untouched years, with where the ML fits.
+
+  The later sections were renumbered, and the two links into them (Chapters 2 and 4) were updated.
+- **The contents page gained "The short version":** the question, the method and the preview results in five bullets.
+- **Chapter 9 drafted:**
+  - why the models lost (six reasons);
+  - would a quant fund do better (yes on data and breadth, no "holy grail");
+  - limitations, lessons, next steps (the live record first), caveats.
+
+  Its numbers are refreshed after #20.
+- **Claims checked before writing:**
+  - every number against Chapters 6–7, and the slot mechanics against the simulator's own description;
+  - three wordings toned down: "50,000 training rows" (it's 48k–65k depending on the fit); "more than once" a best version was worst on the test (it's one documented case); and a Chapter 3 link for the reused-ticker rejections (Chapter 3 doesn't cover them).
+- **Research cited by name, looked up before shipping** (I'd recalled both from memory):
+  - Gu, Kelly and Xiu (2020, *Review of Financial Studies*) report a monthly stock-level R² of about 0.3–0.4% for trees and nets, so "well under 1%" holds. Network performance peaks at three hidden layers and declines with more, so the chapter says that rather than "shallow beats deep".
+  - Avramov, Cheng and Metzker (2023, *Management Science* 69(5)): the deep-learning payoff falls 62% when microcaps are excluded, and falls further when distressed firms are dropped. The chapter says "about 60%".
+
 ---
 
 ## 9. Decisions and Parking Lot
