@@ -30,9 +30,44 @@ Two ways of picking the stocks are compared:
 The model only earns its place if it beats the **plain rule**, not just SPY. "Buy what went up
 recently" is a well-known and surprisingly hard benchmark, so beating it is the real test.
 
+**Why recent winners might keep winning.** The pattern is called **momentum**: stocks that rose most
+over the past several months have tended to keep beating the market for a while. It has been found
+in decades of data and across many countries since the early 1990s. The usual explanations are about
+how people react to news. Investors adjust to good news gradually rather than all at once, so prices
+take months to catch up. Then others buy because the price has been rising, which stretches the
+trend. Momentum also has a known weakness: it can **crash** suddenly, mostly in sharp market rebounds
+after a fall, when the beaten-down stocks it avoided jump the most.
+
+**The question is "does it beat the index?", not "does it go up?".** In a market that rose for most
+of 2010–2026, most stocks went up, so "will it go up?" is easy to get right and says little about
+stock picking. Comparing with SPY takes out the market's general direction. And every stock is
+ranked against the ~500 others that were members **on the same date**, including the ones that
+later left.
+
 ---
 
-## 3. How a hold works: a worked example
+## 3. Why it's harder than it looks: survivorship bias
+
+The obvious way to test the idea is to download today's 503 S&P 500 members and look back. That
+gives a badly wrong answer. Today's list only contains the companies that **survived**. It leaves out
+everything that was acquired, went bust or got dropped from the index along the way.
+
+For a "buy the winners" strategy, two of those gaps matter most:
+
+- **Takeovers.** A takeover bid is one of the most common reasons a stock is the month's top gainer.
+  After the jump, the price sits near the deal price until the deal closes, so it barely moves while
+  the market keeps going. Without acquired companies, the rule never picks a takeover target, and it
+  looks better than it would really have been.
+- **Crashes during the hold.** A stock bought as a winner can collapse and then get dropped from the
+  index. Silicon Valley Bank fell **−99.7%** in March 2023. If it's missing from the data, the test
+  never sees that loss.
+
+So the project rebuilds **who was in the index on each date** (point-in-time membership), and finds
+prices for the companies that later left. [Chapter 2](02_data_collection.md) covers how.
+
+---
+
+## 4. How a hold works: a worked example
 
 Take one rule: **buy the top 5, hold each for 6 months**, starting with $6,000.
 
@@ -69,7 +104,7 @@ A few details fill the picture in:
 
 ---
 
-## 4. How the two are compared
+## 5. How the two are compared
 
 Both sides are turned into **monthly returns** over the same months, and compared on four
 measures:
@@ -86,7 +121,7 @@ A strategy that earns more than SPY only by taking more risk hasn't really beate
 
 ---
 
-## 5. Keeping the test honest: choose on the past, judge on untouched years
+## 6. Keeping the test honest: choose on the past, judge on untouched years
 
 Every combination of the plain rule could simply be run over all the years and compared, and the
 project does exactly that, as a description. The trouble starts when **the best one is picked and its
@@ -118,61 +153,22 @@ February 2024. [Chapter 6](06_modelling.md) has the details.
 
 ---
 
----
-
-## 6. Why it's harder than it looks: survivorship bias
-
-The obvious way to test the idea is to download today's 503 S&P 500 members and look back. That
-gives a badly wrong answer. Today's list only contains the companies that **survived**. It leaves out
-everything that was acquired, went bust or got dropped from the index along the way.
-
-For a "buy the winners" strategy, two of those gaps matter most:
-
-- **Takeovers.** A takeover bid is one of the most common reasons a stock is the month's top gainer.
-  After the jump, the price sits near the deal price until the deal closes, so it barely moves while
-  the market keeps going. Without acquired companies, the rule never picks a takeover target, and it
-  looks better than it would really have been.
-- **Crashes during the hold.** A stock bought as a winner can collapse and then get dropped from the
-  index. Silicon Valley Bank fell **−99.7%** in March 2023. If it's missing from the data, the test
-  never sees that loss.
-
-So the project rebuilds **who was in the index on each date** (point-in-time membership), and finds
-prices for the companies that later left. [Chapter 2](02_data_collection.md) covers how.
-
----
-
 ## 7. The rules of the test
 
 | Rule | Choice | Why |
 | --- | --- | --- |
-| **Universe** | S&P 500 members as of each date | Avoids survivorship bias (Section 6) |
+| **Universe** | S&P 500 members as of each date | Avoids survivorship bias (Section 3) |
 | **Period** | Jan 2010 → Oct 2026 (202 month-ends) | The public record of index changes is thin before ~2008 |
 | **Decision time** | The last trading day of each month | One decision a month, matching the idea |
 | **The golden rule** | Everything the strategy uses is known **at the month-end close**; it trades **at the next open** | No peeking at the future |
-| **Model target** | Does the stock beat SPY over the next month? | Directly answers "does it beat the index?". About 49% of stocks do in a typical month, so it's a fair coin to start with |
+| **Model target** | Does the stock beat SPY over the next month, and by how much? | Directly answers "does it beat the index?". About 49% of stocks do in a typical month, so it's a fair coin to start with |
 | **Hold periods (plain rule)** | 1, 3, 6 and 12 months | Research on momentum finds the effect over roughly 3–12 months. 1 month tests the idea as first stated |
 | **Benchmarks** | SPY, plus an equal-weight basket of all members | The second shows whether an edge is real stock picking or just a tilt towards smaller members |
 | **Costs** | ~0.1% per buy and per sell | A monthly rule replaces most of its holdings every month |
 
 ---
 
-## 8. What makes this question different
-
-Most stock-prediction examples ask *"will this stock go up?"* for a handful of well-known companies,
-one day at a time. This project asks a different question:
-
-| | Typical setup | This project |
-| --- | --- | --- |
-| Stocks | A fixed list of today's giants | ~500 S&P 500 members **as of each date**, including ones that later left |
-| Question | Will the stock go up? | Will it **beat the index**, ranked against ~500 others? |
-| Decision | Every day | Once a month (built from 2.86M daily prices) |
-
-"Will it go up?" is easy to get right in a rising market: most stocks rise. "Will it beat the index?"
-removes the market's general direction and leaves only the stock picking.
-
----
-
-## 9. Decisions and why
+## 8. Decisions and why
 
 - **One row per stock per month-end, not per day.** The decision is monthly. Daily rows would
   overlap heavily, and "last month's winner" would turn into a daily rule.
@@ -185,8 +181,10 @@ removes the market's general direction and leaves only the stock picking.
 
 ---
 
-## 10. Caveats
+## 9. Caveats
 
+- **The counts here are previews,** like every number in the book until the download of delisted
+  companies is complete. They're refreshed in the final run.
 - **Free data only.** Prices for some delisted companies can't be found anywhere free. That gap is
   measured and reported ([Chapter 3](03_monthly_table.md)), not hidden.
 - **2010–2026 was mostly a rising market.** Any strategy that holds stocks looks good in it. That's why
