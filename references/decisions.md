@@ -459,6 +459,21 @@ a stock is the month's top gainer.
 - **`ta_natr` is dropped inside #20, not before:** any rebuild before the retrain would otherwise trip the monthly run's column check (by design).
 - **`pipeline rebuild-all`:** monthly table → features → models → notebooks → snapshots (tagged), timed, stopping at the first failure. `--dry-run` prints the checks to do by hand before (AV done and unregistered, `ta_natr`, the vector section, `DATA_STATUS`) and after (numbers, the book, the dashboard).
 
+**Containerization (6 Nov, #48)**
+
+- Done before the #22 write-up parts (your call; I'd suggested #22 first, and there's no dependency between them).
+- **The `Dockerfile`:**
+  - `python:3.12-slim`, with Debian's security updates applied at build time;
+  - uv 0.7.20 pinned; `uv sync --locked` (dependencies first, for layer caching);
+  - TA-Lib 0.8.3 from its manylinux wheel;
+  - a non-root user;
+  - `ENTRYPOINT python -m`, defaulting to the `rebuild-all --dry-run` plan;
+  - a `test` stage that adds the dev tools.
+- **`.dockerignore`:** data, models, logs, the site, `.env`, **`CLAUDE.local.md` and `.claude/`** (personal), editor folders, git, caches. Secrets come only at run time.
+- **CI (`.github/workflows/docker.yml`):** build the test image and run the tests in it; the runtime image must start. On `main`, publish to GHCR (`ghcr.io/siddharthps/sp500-momentum-winners`, `latest` and the commit SHA) (recommended).
+- **Vulnerabilities:** the editor flagged 2 high findings in the base image. Docker Scout needs a login. A local Trivy scan (a scanner container with Docker-engine access) was blocked by the safety check, so it wasn't pursued locally. Debian's packages were already current (0 upgraded), so the findings have no fix yet. **A pinned Trivy scan in CI, report-only (your choice, as recommended);** its first report is read before the merge.
+- **Verified locally:** both images build (~5 min cold); 142 tests pass inside; the runtime image prints the rebuild plan. Image size: 2.9 GB runtime, 3.3 GB test.
+
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 

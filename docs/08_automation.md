@@ -2,7 +2,8 @@
 
 > **Part 1** (sections 3.1–3.4): the monthly run. **Part 2** (section 3.5): notifications.
 > **Part 3** (section 3.6): the data snapshots. **Part 4** (section 3.7): the live dashboard.
-> **Part 5** (section 3.8): the whole workflow in one place. The cloud run is added when it's built.
+> **Part 5** (section 3.8): the whole workflow in one place. **Part 6** (section 3.9): the container.
+> The cloud run is added when it's built.
 
 ## 1. Goal
 
@@ -206,6 +207,26 @@ must not change because someone pressed "run all".
 off by default. The notebook refits with the tuned settings, which is also exactly what the live
 system does each month. The whole notebook runs in about two minutes.
 
+### 3.9 Part 6: the container
+
+The whole pipeline also comes as a container image: one command gives anyone the exact environment
+the tests run in, on any machine with Docker.
+
+- **Built from the lock file,** so the image holds the exact package versions CI tested, down to their
+  checksums. The technical-analysis library installs from a prebuilt package, so nothing is compiled.
+- **No data, models or secrets inside.** They're mounted when the container runs, or pulled from the
+  private snapshot with a token given at run time. Personal and editor files are excluded too. The
+  image is published publicly, so this matters.
+- **Tested as it's built:** on every proposed change, the test suite runs *inside* the container, and
+  the published image is checked to start.
+- **Published on every accepted change** to a public container registry, ready to pull.
+- **Scanned for known vulnerabilities on every build.** The base system's packages are brought up to
+  date when the image is built. What the scan still reports has no published fix yet. It's listed in
+  the build log and judged rather than ignored.
+
+The image is large, about 2.9 GB, mostly the scientific libraries. Slimming it is possible, but it
+wasn't worth the time here.
+
 ---
 
 ## 4. Decisions and why
@@ -228,6 +249,7 @@ system does each month. The whole notebook runs in about two minutes.
 | Drift measured on stock-level inputs only | A market-wide input has one value a month: nothing to compare |
 | Hosted on Streamlit Community Cloud | Free and made for this; Hugging Face now charges for Streamlit hosting |
 | One notebook for the whole workflow, calling the scheduled run's own functions | A reader sees how the steps connect; it can't drift from what runs unattended |
+| A container image built from the lock file, with no data or secrets inside, tested and scanned in CI | The exact tested environment for anyone, safe to publish |
 | The run-all notebook has no side effects and doesn't retune | Rerunning it must never change the public record; two hours of retuning would stop anyone from rerunning it |
 
 ---

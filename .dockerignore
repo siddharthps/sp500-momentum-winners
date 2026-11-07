@@ -1,0 +1,24 @@
+# What never goes into the image (#48). The image is published publicly, so: no data, models,
+# logs or secrets (they're mounted or pulled at run time), no personal or editor files, no caches.
+
+# data, trained models, run logs, built site: mounted or downloaded at run time
+data/
+models/
+logs/
+site/
+
+# secrets and personal files
+.env
+.env.*
+CLAUDE.local.md
+.claude/
+.vscode/
+.idea/
+
+# git and local environments / caches
+.git/
+.venv/
+**/__pycache__/
+**/*.pyc
+.pytest_cache/
+.ruff_cache/
