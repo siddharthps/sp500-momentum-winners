@@ -4,7 +4,7 @@
 
 Give each row of the monthly table (one stock, one month-end) the information a model can use to
 guess whether the stock will beat SPY next month. Every value must be **known at that month-end's
-close**, the golden rule from [Chapter 1](01_problem.md#4-the-rules-of-the-test).
+close**, the golden rule from [Chapter 1](01_problem.md#7-the-rules-of-the-test).
 
 ---
 

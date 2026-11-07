@@ -51,7 +51,7 @@ usable history for only about a third of them:
 
 Companies dropped for market cap mostly still trade on smaller indexes, so Yahoo has them.
 **Acquired companies are almost all missing.** That's the gap that matters most for this question
-([Chapter 1](01_problem.md#3-why-its-harder-than-it-looks-survivorship-bias)).
+([Chapter 1](01_problem.md#6-why-its-harder-than-it-looks-survivorship-bias)).
 
 "Usable" means more than one row of data, starting before the removal date. Two cases count as missing:
 - a 1-row "stub" (Yahoo keeps only the last price of some recent delistings);
