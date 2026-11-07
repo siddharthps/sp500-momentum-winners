@@ -1379,6 +1379,17 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - `paths:` added for PRs and the publish on `main`: the build, dependencies, code, tests, notebooks, `reports/**` and `references/*.csv` (both read by the pipeline);
   - verified first that only `checks` is required by "Protect main", so a skipped Docker run can't block a merge;
   - I avoided a YAML anchor for the shared list: support for it was recall, not verified, so the list is written twice.
+- **CLAUDE.md length** (you asked whether it's too verbose): 191 lines, ~2,300 words. I recommended compressing it (~25–30% shorter, every rule kept). You chose to leave it; #20's checklist now has "remove the temporary items, consider compressing".
+
+### Session 31 — Friday, 6 Nov 2026, 21:00 (the nightly AV run)
+
+- **The Telegram summary:** "23 tried (no_data 3, ok 14, reused_ticker 6). 124 left." It matches the log; task result 0, finished in under a minute.
+- **The nine not-ok tickers, all companies that ceased to exist in their own name:**
+  - reused tickers: SPLS (Staples, taken private 2017), DNB (Dun & Bradstreet, taken private 2019, re-listed 2020 as a new security), SE (Spectra Energy, bought by Enbridge), DO (Diamond Offshore, bankrupt 2020, re-listed as new shares), EMC (bought by Dell), TE (TECO Energy, bought by Emera);
+  - no data: ENDP (Endo, bankrupt), CCE (Coca-Cola Enterprises, merged into the new Coca-Cola European Partners), TYC (Tyco).
+- **No rename repairs this time.** Tyco was technically the legal survivor of the 2016 merger and renamed itself Johnson Controls International, but the JCI ticker continued the *old Johnson Controls'* trading history. A rename would splice two companies' prices, which the reused-ticker rule forbids. JCI stays priced as a member.
+- **Totals:** 92 tried, 124 left (~6 nights, queue empty ~Thu 12 Nov). Across all nights: 14 reused tickers and 4 with no data.
+- **For Chapter 9's limitations:** the unrecoverable names cluster among takeovers, going private and bankruptcies, exactly the fates survivorship bias hides. Report it as a direction of bias, not just a count.
 
 ---
 
