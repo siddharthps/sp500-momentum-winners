@@ -7,28 +7,131 @@
     <img src="https://github.com/siddharthps/sp500-momentum-winners/actions/workflows/ci.yml/badge.svg" alt="CI" />
 </a>
 
-**Idea:** at the end of each month, buy the S&P 500 stocks that rose the most, hold them for X months,
-and find the best X. The plain rule is the baseline. An ML model ranks all members each month, and the
-results are backtested against SPY. The test uses **point-in-time membership** (who was in the index
-*on each date*), including companies that were later acquired, failed or dropped, so the results
-aren't flattered by survivorship bias.
+**At the end of each month, if you buy the S&P 500 stocks that rose the most and hold them for a
+while, do you beat the S&P 500 itself? And can a machine-learning model pick better than "buy what
+went up"?**
 
-> Status: data, the monthly table, the features, the exploratory analysis, the baseline rule grid
-> and the models (setup, tuning, comparison, one test) and their trading simulations are done;
-> equity curves, risk over time, the SPY trend filter and the diagnosis of the picks are done too.
-> The monthly run is scheduled, with Telegram notifications, data snapshots on Hugging Face, a
-> [live dashboard](https://sp500-momentum-winners.streamlit.app/) and a run-all notebook; a vector
-> cross-check, Docker and a cloud run are next. The
-> Alpha Vantage download of delisted companies runs until ~12 Nov 2026. Progress is tracked in
-> [issues](https://github.com/siddharthps/sp500-momentum-winners/issues), by
-> [milestone](https://github.com/siddharthps/sp500-momentum-winners/milestones), and on the
-> [project board](https://github.com/users/siddharthps/projects/1).
+"Momentum" (recent winners keep winning for a while) is one of the best-documented patterns in stock
+returns, and it's easy to test badly. Using today's index members to look back leaves out every
+company that was acquired, went bust or was dropped, which flatters any "buy the winners" rule. So
+this project rebuilds **who was in the index on each date** since 2010, finds prices for the
+companies that later left, and tests two pickers against SPY, after trading costs, on the same
+untouched years:
 
-**The project book:** **[siddharthps.github.io/sp500-momentum-winners](https://siddharthps.github.io/sp500-momentum-winners/)**
-(also readable as Markdown in [docs/](docs/index.md)) explains each step as a chapter (problem, data
-collection, the monthly table, features, modelling, results, automation). It's rebuilt on every
-merge to `main`; `uv run mkdocs serve` previews it locally. Decisions are in
-[references/decisions.md](references/decisions.md).
+- **The plain rule:** rank members by their return over the past 1, 3, 6 or 12 months; buy the top 1,
+  5 or 10; hold 1, 3, 6 or 12 months (60 versions, all reported).
+- **Machine-learning models:** seven models rank members on 152 features (past returns, risk, technical
+  indicators, comparisons with other members, the market and the economy), predicting next month.
+
+Every choice is made on decisions in 2010–2022, and every strategy is then judged once on the
+decisions from January 2023.
+
+## The result so far (preview)
+
+> **Preview numbers:** the download of delisted companies is still running (until ~12 Nov 2026), and
+> everything is rerun once it's complete.
+
+What $10,000 became over the test years (decisions Jan 2023 – Sept 2026, 45 months, after costs):
+
+| Strategy | Value | Sharpe ratio | Worst fall |
+| --- | --- | --- | --- |
+| SPY | $19,650 | 1.21 | −8% |
+| **The rule chosen on 2010–2022:** top 5 by 6-month return, each held 6 months | **$59,209** | 1.21 | −27% |
+| **The headline model:** top 10 by predicted return above SPY, held 1 month | $11,640 | 0.12 | −31% |
+
+**The models add nothing that a plain 6-month momentum rule doesn't do better, and no strategy chosen
+in advance clearly beats SPY per unit of risk.** The rule tripled SPY's return, but through far more
+risk and a handful of AI and chip stocks; per unit of risk it tied. The book's
+[short version](https://siddharthps.github.io/sp500-momentum-winners/) and
+[Chapter 9](docs/09_lessons.md) explain why.
+
+## The decision rule, in plain terms
+
+At each month-end close, using only what was known then:
+
+1. Take every company in the S&P 500 on that date that has a month-end price.
+2. **The model:** score each one with the headline model, a gradient-boosting model that predicts
+   its return above SPY over the next month, and take the **10 highest scores**. **The plain rule,
+   published next to it:** the 10 highest 6-month returns.
+3. Buy them in equal amounts at the next trading day's open, and hold for one month. Then repeat.
+
+**Nothing is bought** when the month's data can't be trusted. The monthly run then stops and
+publishes no picks: when the latest month-end isn't the month's last trading day, when SPY or more
+than 5% of members lack a price, when a member has no sector, or when the features differ from what
+the model was trained on. The picks are a research output, not advice.
+
+## Links
+
+| | |
+| --- | --- |
+| **The project book** | [siddharthps.github.io/sp500-momentum-winners](https://siddharthps.github.io/sp500-momentum-winners/): each step as a chapter, in plain words (also as Markdown in [docs/](docs/index.md)) |
+| **Live dashboard** | [sp500-momentum-winners.streamlit.app](https://sp500-momentum-winners.streamlit.app/): this month's picks, the live record, the backtest, model monitoring |
+| **Monthly picks on Telegram** | [t.me/s/sp500_momentum_picks](https://t.me/s/sp500_momentum_picks) (readable in a browser) |
+| **Public dataset** | [huggingface.co/datasets/siddharthps/sp500-momentum-winners](https://huggingface.co/datasets/siddharthps/sp500-momentum-winners): the features and results, without the vendors' raw prices |
+| **Docker image** | `ghcr.io/siddharthps/sp500-momentum-winners` ([below](#docker)) |
+| **Progress** | [issues](https://github.com/siddharthps/sp500-momentum-winners/issues), [milestones](https://github.com/siddharthps/sp500-momentum-winners/milestones), the [project board](https://github.com/users/siddharthps/projects/1); decisions in [references/decisions.md](references/decisions.md) |
+
+## Quickstart
+
+```bash
+uv sync                                                  # Python 3.12 and every dependency, from the lock file
+uv run pytest                                            # the tests (offline, no data needed)
+uv run python -m sp500_momentum.pipeline rebuild-all --dry-run   # the whole workflow's steps, in order
+```
+
+- **To read the results without running anything:** the book, or the notebooks, which are committed
+  with their outputs ([Notebooks](#notebooks)).
+- **To rebuild everything from the sources:** add an Alpha Vantage key ([Setup](#setup)) and follow
+  the [data pipeline](#data-pipeline) from step 1. With access to the private snapshot, `hub pull`
+  replaces the downloads ([Data snapshots](#data-snapshots-on-hugging-face)).
+- **Or in Docker:** `docker run --rm ghcr.io/siddharthps/sp500-momentum-winners` ([Docker](#docker)).
+
+## Data sources
+
+| Source | What it gives | Size |
+| --- | --- | --- |
+| **Wikipedia:** the current S&P 500 list and its record of index changes | Who was in the index on each date, rebuilt month by month (with repairs for renames and missing entries) | 819 companies over 202 month-ends |
+| **Yahoo Finance** (yfinance) | Daily prices from 2000 for current members, the departed companies it still covers, SPY, the sector funds, the Dow, VIX, gold and oil | 3.67 M daily rows, 628 series |
+| **Alpha Vantage** (free tier) | Monthly prices for departed companies Yahoo no longer has, or whose symbol now belongs to another company | 74 companies so far (the download is still running) |
+| **FRED** (St. Louis Fed) | Core inflation, the Fed Funds rate, 1/5/10-year Treasury yields, potential GDP, each used only after its publication date | 6 series from 2005 |
+
+The result is **one row per member per month-end: 101,431 rows** from January 2010, 91% with a
+price, each with 152 features and the targets.
+
+### Features built here
+
+Besides past returns and 52 standard technical indicators (computed on monthly bars, and made
+comparable between cheap and expensive stocks), the project builds these features. Every one is
+known at the month-end close. [Appendix A](docs/appendix_a_data_dictionary.md) defines every column.
+
+| Feature | What it measures |
+| --- | --- |
+| `ret_12_1m` | The 12-month return skipping the latest month, the standard momentum measure |
+| `vol_3m`, `vol_12m`, `downside_vol_12m` | Volatility over 3 and 12 months, and of the losing months only |
+| `beta_36m` | How much the stock moves with SPY (36 months) |
+| `ivol_36m` | How much it moves on its own, after removing the market's part |
+| `resid_mom_12_1m` | Momentum after removing the market's part, per unit of its own volatility |
+| `mom_12_1m_per_vol` | Momentum per unit of risk |
+| `drawdown_12m`, `drawdown_ath` | Distance below the 12-month and all-time high |
+| `dist_high_12m`, `dist_low_12m` | Distance from the 12-month high and low |
+| `ma3_ratio`, `ma10_ratio`, `above_ma10` | Price against its 3- and 10-month average, and whether it's above the 10-month one |
+| `up_months_12m` | Share of the past 12 months that rose |
+| `ret_1m_z` | Last month's move in units of the stock's usual volatility |
+| `max_ret_12m` | The best single month of the year: one big jump (often takeover news) vs a steady climb |
+| `range_1m` | The month's high-to-low range relative to the price |
+| `log_dollar_vol`, `dollar_vol_ratio` | Trading value (size and liquidity), and a volume spike against the past year |
+| `div_yield_12m` | Dividends over the past year ÷ price |
+| `seasonality_5y` | The stock's average return in next month's calendar month over 5 years |
+| `rank_ret_*`, `sector_rank_ret_*` | Each past return's percentile among that month's members, and within the sector |
+| `rs_spy_*`, `rs_sector_*` | Return minus SPY's, and minus the sector fund's |
+| `breadth_above_ma10` | Share of members above their 10-month average: how broad the market's rise is |
+| `dispersion_1m` | Gap between the month's best and worst members (90th vs 10th percentile) |
+| `winners_excess_1m`, `winners_excess_12m` | How last month's top 10 did against SPY: whether momentum is working right now |
+| `months_in_index`, `new_member_12m` | Time since joining the index, and whether it joined within the year |
+| `sector_etf_ret_*`, `mkt_*` | The sector fund's, SPY's, the Dow's, gold's and oil's returns; changes in the 10-year yield |
+| `vix`, `vix_pct_60m` | Expected market volatility, and where it sits in its 5-year range |
+| `cpi_yoy`, `cpi_mom`, `fedfunds`, `dgs1`/`dgs5`/`dgs10`, `yield_slope_10_1`, `gdppot_*` | Inflation, rates, the yield-curve slope and potential growth, as published at the time |
+| `month_of_year_*`, `sector_is_*` | Calendar-month and sector flags |
 
 ## Setup
 
@@ -231,6 +334,8 @@ uv run pre-commit install      # once: ruff + safety checks on every commit
 uv run pytest                  # tests (offline)
 uv run ruff check              # lint
 uv run ruff format             # format
+uv run mkdocs serve            # preview the book at http://127.0.0.1:8000
+uv run mkdocs build --strict   # the book build CI runs (fails on any broken chart or link)
 ```
 
 **Workflow.** Work is tracked as GitHub issues, grouped into milestones (one per phase) and shown on

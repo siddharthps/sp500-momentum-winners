@@ -1421,6 +1421,18 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 - **Research cited by name, looked up before shipping** (I'd recalled both from memory):
   - Gu, Kelly and Xiu (2020, *Review of Financial Studies*) report a monthly stock-level R² of about 0.3–0.4% for trees and nets, so "well under 1%" holds. Network performance peaks at three hidden layers and declines with more, so the chapter says that rather than "shallow beats deep".
   - Avramov, Cheng and Metzker (2023, *Management Science* 69(5)): the deep-learning payoff falls 62% when microcaps are excluded, and falls further when distressed firms are dropped. The chapter says "about 60%".
+- **Shipped as PR #57.** Then, on a new branch, the rest of #22's number-free parts:
+  - **Appendix A, the data dictionary:** all 186 columns in 10 groups (10 identifiers, 24 targets, 152 features), each defined from the code that builds it, not from its name. A script checked it against the table's schema: none missing, no stray names. My first draft said 28 targets; it's 6 kinds × 4 holds = 24, caught by checking that the counts add up to Chapter 4's 152.
+  - **README front page:** the question and its context, the result so far (preview, three rows), the decision rule in plain terms, links, a quickstart, data sources with sizes, and the 30-odd features built here. The old status block (it still called the vector check and Docker "next") is gone.
+- **Two corrections found by checking:**
+  - **The issue said "highest-probability picks", but the headline is the by-how-much model:** it ranks on predicted return above SPY. The README says so, and Chapter 1's table now says the model scores how likely, or by how much.
+  - **Chapter 1 says "2.86M daily prices"; the files hold 3,673,295 rows** (628 series, benchmarks included). Refresh in #20 along with the other counts.
+- **Sizes, counted from file metadata (no data printed):**
+  - 3.67 M Yahoo daily rows, plus 15,777 Alpha Vantage monthly rows for 74 companies;
+  - 101,431 member-months, 202 month-ends, 819 companies, 91.2% priced.
+
+  These are the 5 Nov data, newer than the book's 4 Nov snapshot.
+- **The headline's test-years worst fall (−31%)** came from the saved strategy table; the book never quoted it.
 
 ---
 

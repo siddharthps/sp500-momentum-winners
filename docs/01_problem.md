@@ -25,7 +25,7 @@ Two ways of picking the stocks are compared:
 | Picker | How it ranks the stocks | Holds for |
 | --- | --- | --- |
 | **The plain rule** (the baseline) | By its return over the past 1, 3, 6 or 12 months (each one tested). Buy the top 1, 5 or 10 | 1, 3, 6 or 12 months |
-| **A machine-learning model** | By the model's estimate of how likely the stock is to beat SPY next month, using many inputs, past returns among them. Buy the top 1, 5 or 10 | 1 month, because it predicts one month ahead |
+| **A machine-learning model** | By the model's score for next month, from many inputs, past returns among them: how likely the stock is to beat SPY, or by how much (the chosen model predicts how much). Buy the top 1, 5 or 10 | 1 month, because it predicts one month ahead |
 
 The model only earns its place if it beats the **plain rule**, not just SPY. "Buy what went up
 recently" is a well-known and surprisingly hard benchmark, so beating it is the real test.

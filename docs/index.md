@@ -57,7 +57,7 @@ Each chapter has the same shape:
 
 | | Appendix | Status |
 | --- | --- | --- |
-| A | Data dictionary: every column of the final table | To do |
+| A | [Data dictionary](appendix_a_data_dictionary.md): every column of the final table | Draft (column list refreshed after the final run) |
 | B | [The full working record](appendix_b_working_record.md): for readers who want the whole process | Live |
 
 > **Numbers in the draft chapters are as of 3 Nov 2026.** The download of delisted companies is still
