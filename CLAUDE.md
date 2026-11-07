@@ -2,7 +2,8 @@
 
 Course final project (Stock Markets Analytics Zoomcamp 2026). **Deadline: Fri 20 Nov 2026, 23:59 Dublin.**
 **Do things the professional, industry-standard way, not the quickest way.** ~30 h is a soft guide,
-not a cap. Extras (bot, Docker, dashboard) still come after the core is done.
+not a cap. The extras (Telegram bot, Docker, dashboard, book site) are built; the last one (the
+cloud run, #39) must never cost the final rebuild (#20) or the write-up (#22).
 
 ## The project
 
@@ -15,9 +16,11 @@ The agreed plan (split, features, models, simulation, deliverables) is in `refer
 Follow it. **Ask first** before changing the plan, spending API calls, or touching the scheduled task.
 **Just do it** for bug fixes, tests, and refactors within a module, and say so afterwards.
 
-**Done means:** `uv run pytest`, `uv run ruff check` and `uv run ruff format --check` pass; the monthly
-table and features rebuild; `run_notebooks run` passes its output checks; the journal entry and the
-step's chapter are written; the issue's "Done when" boxes are ticked; the PR is merged with CI green.
+**Done means:** `uv run pytest`, `uv run ruff check`, `uv run ruff format --check` and
+`uv run mkdocs build --strict` pass (and the Docker build, if the Dockerfile or dependencies
+changed); the monthly table and features rebuild; `run_notebooks run` passes its output checks; the
+journal entry and the step's chapter are written; the issue's "Done when" boxes are ticked; the PR
+is merged with CI green (both the CI and Docker workflows).
 
 ## Working rules
 
@@ -108,6 +111,14 @@ step's chapter are written; the issue's "Done when" boxes are ticked; the PR is 
   out of the image, which is published publicly (GHCR): keep it that way. Secrets are passed at
   run time (`--env-file`), never as build arguments. Running third-party scanner images locally
   with Docker-engine access is blocked by the safety check; the Trivy scan runs in CI instead.
+  **pip is removed on purpose** (from the project's dependencies and the image): it vendors
+  setuptools 70.3.0 (CVE-2025-47273), and uv manages everything. Don't add it back. Upgrading a
+  package doesn't fix a *vendored* copy; check `*/_vendor/vendor.txt`. Local builds need Docker
+  Desktop running.
+- **Pin new third-party GitHub Actions to commit SHAs** (version in a comment), and look every
+  version up (`gh api repos/<owner>/<repo>/releases`), never recall it: a pin written from memory
+  (`trivy-action@0.28.0`) didn't exist, and that action's tags had been re-created. (Trivy is pinned
+  to a SHA; `astral-sh/setup-uv` and the `docker/*` actions are still on tags.)
 - **The book site** (GitHub Pages, `.github/workflows/pages.yml`) builds `docs/` with
   `scripts/mkdocs_hooks.py`: chapters keep GitHub-style paths (`../reports/figures/x.png`,
   `../references/...`) and the hook adapts them. Keep writing chapters that way; `--strict` in CI
