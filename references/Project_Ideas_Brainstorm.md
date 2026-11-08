@@ -1447,6 +1447,13 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - **Two count mismatches to check in the data:** 102 vs 108 departed companies, and 320 vs 316.
 - **You paused there** to read the new Chapter 1. The new rule is to wait for your go-ahead before each chapter. It's noted in CLAUDE.md as temporary, with the Chapter 2 findings, so the next session can resume.
 - **CLAUDE.md also gained:** research is looked up before it's cited, and counts shared between chapters must agree.
+- **The 21:00 AV run (task result 0):** 23 tried.
+  - ok 14;
+  - reused tickers 6: ADT, CAM, POM, ALTR, PLL, DTV;
+  - no data 3: ESV, PCL, ACE.
+
+  Totals: 115 tried, 101 left (~5 nights, still ~12 Nov). All nine are acquisitions.
+- **To check in #20, not assumed:** ACE was arguably the *surviving* company of its 2016 deal (it bought Chubb and took the Chubb name and the CB ticker). So it may be a rename repair like DISCA → WBD rather than a gap. Check CB's history against ACE's dates and volume before deciding.
 
 ---
 
