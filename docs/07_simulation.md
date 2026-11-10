@@ -1,9 +1,7 @@
 # Chapter 7: Trading simulation and results
 
-> **Part 1** (sections 3.1–3.3): the baseline rule. **Part 2** (sections 3.4–3.7): the models from
-> Chapter 6, traded. **Part 3** (sections 3.8–3.11): the paths over time, and a market-trend filter.
-> **Part 4** (sections 3.12–3.15): why the model loses, what each strategy buys, and ideas for future
-> work.
+> **Part 1** (3.1–3.3): the plain rule. **Part 2** (3.4–3.7): the Chapter 6 models, traded. **Part 3**
+> (3.8–3.11): the paths, and a market-trend filter. **Part 4** (3.12–3.15): why the model loses.
 
 ## 1. Goal
 
@@ -17,10 +15,11 @@ members that rose the most, hold them, and compare with SPY. Three questions:
 3. If the best version is chosen from many, is it real, or just the luckiest of the lot?
 
 The answer is the **bar the models have to clear**. A model that can't beat the plain rule adds
-nothing.
+nothing. The models are then traded the same way, a market-trend filter is tested on everything, and
+the last part asks why the model loses.
 
 > **All numbers here are previews.** The download of delisted companies is still running, so the early
-> years still miss most acquired companies. Everything gets rerun once it's complete.
+> years still miss many acquired companies. Everything gets rerun once it's complete.
 
 ---
 
@@ -144,10 +143,9 @@ slips from 9th to 12th hasn't really changed, so selling it pays fees for noise.
 left out, because the models' scores for those years come from the folds their settings were chosen
 on. Each period starts with **$10,000**.
 
-**What each period is clean for.** "Untouched" depends on what was chosen on which months. The plain
-1-month rules chose nothing, so both periods are clean for them. The headline model was chosen on
-2020–2022, and the Part 1 rule on 2010–2022, so for those two only the test years are a fair
-judgement. The 2020–2022 column shows where they were chosen, not how well the choice held up.
+**What each period is clean for.** The plain 1-month rules chose nothing, so both periods are fair
+for them. The headline model and the Part 1 rule were chosen on years that include 2020–2022, so for
+them only the test years are a fair judgement.
 
 ### 3.5 The headline model loses to SPY and to the plain rules
 
@@ -165,9 +163,8 @@ judgement. The 2020–2022 column shows where they were chosen, not how well the
 ![What $10,000 became](../reports/figures/strategies_value.png)
 
 **The headline model did worse than SPY and than every plain rule in both periods.** Its best-looking
-version on 2020–2022 (inverse volatility with the buffer, which beat SPY's Sharpe there) was its worst
-on the test. That is why only the main version was fixed in advance. The best of four versions on
-three years is partly luck.
+version on 2020–2022 (inverse volatility with the buffer) was its worst on the test: the best of four
+versions on three years is partly luck, which is why only the main version was fixed in advance.
 
 ### 3.6 What the buffer and the weighting did
 
@@ -183,11 +180,11 @@ three years is partly luck.
 
 ### 3.7 Chance winners, and the bottom line
 
-Of 121 simulated strategies, **12 edge SPY's Sharpe in the test years**. Among so many related
-tries, a few are expected to by chance. Most hold a single stock: the top 1 of the decision tree, the neural network or the
-6-month rule. Of the strategies declared in advance, only the rule chosen in Part 1 does, and that's
-a tie (1.21 against 1.21). The neural network was the best model on the test ($23,087 at top 10), after
-a weak 2020–2022 ($10,748). Picking it now would be choosing on the test.
+Of 121 simulated strategies, **12 edge SPY's Sharpe in the test years**, about what chance gives among
+so many related tries. Most hold a single stock (the top 1 of the decision tree, the neural network or
+the 6-month rule). Of those declared in advance, only the Part 1 rule does, and that's a tie (1.21
+against 1.21). The neural network was the best model on the test ($23,087 at top 10) after a weak
+2020–2022 ($10,748); picking it now would be choosing on the test.
 
 **On this data, the models add nothing that a plain 6-month momentum rule doesn't already do better,
 and no strategy chosen in advance clearly beats SPY per unit of risk.**
@@ -197,17 +194,13 @@ and no strategy chosen in advance clearly beats SPY per unit of risk.**
 The end values above hide the path. This part follows each strategy month by month, and tests one
 classic defence against the worst stretches.
 
-**The trend filter.** At each month-end, compare SPY's close with the average of its last ten
-month-end closes (about its 200-day average). Above it, invest as usual. Below it, sell everything at
-the next open and hold cash, earning the Fed Funds rate, until SPY is back above. The ten months are a
-published convention, not a setting tuned here. The idea behind it: momentum's worst losses tend to
-come during and just after bear markets, and a trend filter is out of the market for most of a long
-decline. Its known weakness is a fast fall and recovery, where it sells near the bottom and buys back
-higher.
+**The trend filter.** When SPY closes a month below the average of its last ten month-end closes
+(about its 200-day average), sell everything at the next open and hold cash at the Fed Funds rate
+until it's back above. Ten months is a published convention, not tuned here. It aims at momentum's
+worst losses, which come in long declines; its known weakness is a fast fall and recovery.
 
-Every strategy from Part 2 was run with and without the filter, and SPY too. The filter's average
-effect over all of them is reported, along with the pre-declared strategies in full. No filtered
-version was picked from the list.
+Every Part 2 strategy, and SPY, was run with and without it. Only the average effect and the
+pre-declared strategies are reported; no filtered version was picked from the list.
 
 ### 3.9 The filter lowered risk-adjusted returns everywhere
 
@@ -241,8 +234,7 @@ version was picked from the list.
 
 - **The rules' test-year lead arrived in one burst.** The 6-month rule ran roughly level with SPY until
   mid-2025. The chosen rule was ahead from 2024, but most of both leads came in late 2025 and 2026,
-  during the AI and memory-chip rally behind the stocks listed in section 3.3. A lead that comes in
-  one burst is a bet that paid off, not a steady edge.
+  during the AI and memory-chip rally (section 3.3): a bet that paid off, not a steady edge.
 - **The headline model has the most violent path:** on 2020–2022 it fell as far as −55% from its
   previous peak, against SPY's −23%.
 
@@ -250,18 +242,16 @@ version was picked from the list.
 
 ### 3.11 The bottom line of the simulations
 
-The filter is **not adopted**. It was declared in advance and tested honestly, and on this data it
-lowers risk-adjusted returns. So the conclusion of Part 2 stands. The ML models add nothing over a
-plain 6-month momentum rule. That rule earned far more than SPY in the test years, but through more
-risk and one market theme. **No strategy chosen in advance clearly beats SPY per unit of risk.**
+The filter is **not adopted**: declared in advance and tested honestly, it lowered risk-adjusted
+returns. Part 2's conclusion stands: **no strategy chosen in advance clearly beats SPY per unit of
+risk.**
 
 ### 3.12 Part 4: why the model loses
 
-Part 4 compares the headline model with the 6-month rule, both buying the top 10 and holding one
-month, to see where each wins and loses. **It is descriptive only.** Cutting results many ways always
-finds some slice that looks good by chance, so nothing here is turned into a strategy or tested on
-these years. Every slice is averaged within each month first and then over months, because ten
-picks made in the same month move together. The margins of error come from that month-level spread.
+Part 4 compares the headline model with the 6-month rule (both top 10, held one month). **It is
+descriptive only:** cutting results many ways always finds a slice that looks good by chance, so
+nothing here becomes a strategy. Margins of error come from the spread across months, because ten
+picks made in the same month move together.
 
 **What each strategy actually buys** (average percentile among that month's members; 50 = average):
 
@@ -322,46 +312,28 @@ so each would need new months or a separate earlier period.
 
 | Decision | Why |
 | --- | --- |
-| Every one of the 60 rules reported | Showing only the winners would hide how many were tried, and so how likely the best is to be luck |
-| Staggered portfolios for holds longer than a month | One portfolio started in one month would make the result depend on that month |
-| Costs on every buy and sell, netted for stocks kept | Monthly rules trade a lot. Without costs, the 1-month rules look about 1.4 points a year better than they are |
-| Trade at the next open | Every rule only uses prices it could have had |
 | Sharpe ratio net of the Fed Funds rate | Risky strategies should be compared on what they earn above cash |
-| Best rule chosen on 2010–2022, then followed through 2023–2026 | A best-of-60 judged on the same years it was chosen on is flattered by the choice. These are the models' test years too, so every strategy is judged on the same untouched months |
 | Top 10 kept as the headline for the models | Top 1 is far too volatile. Top 10 is close to SPY on a risk-adjusted basis, a fair bar for a model to beat |
-| Every period set by decision date | A December 2022 decision belongs to the years things were chosen on. Counting its January return as "test" would score a strategy on a month it was chosen on. Fixed before the results; it happened to move SPY's test Sharpe from 1.29 to 1.21 |
-| Models held one month | They were trained to predict next month. A longer hold would judge them on something they never learned |
-| Four versions fixed in advance, one of them the main version | Each extra version is another chance to look good by luck. The others show whether the result depends on a detail |
-| A buffer of twice the basket size | A stock that slips a few places hasn't changed. Selling it pays fees for noise |
-| Inverse volatility as the only other weighting | It needs a risk forecast, not a return forecast, and volatility is fairly predictable. Weighting by the model's confidence would amplify a signal close to noise |
+| Every period set by decision date (§2) | Fixed before any result was seen; it happened to lower SPY's test Sharpe from 1.29 to 1.21 |
+| Inverse volatility as the only other weighting | Volatility is fairly predictable; weighting by the model's confidence would amplify a signal close to noise |
 | Results shown in dollars from $10,000 | Easier to read than a yearly rate, and fees can be shown as an amount |
-| 2014–2019 left out of the model results | The models' settings were chosen on those years, which flatters them |
-| The trend filter at ten months, with cash earning the Fed Funds rate | A published convention, so nothing is tuned on this data; cash earns what a money-market fund would |
-| "Out" sells the whole portfolio | That's what the filter means: out of the market. Only stopping new buys would take six months to get out of a six-month hold |
-| Every strategy filtered, but only the average effect and the pre-declared ones reported | An average over many strategies is hard to fool; picking the best filtered one would be choosing on the results |
+| The filter's "out" sells the whole portfolio | Only stopping new buys would take six months to leave a six-month hold |
 | Strategies compared only on months they share | A line starting ten years earlier would look better from compounding alone |
-| The diagnosis is descriptive; ideas are written as hypotheses, not tested | Building the best-looking slice into a strategy and testing it on the same years would be choosing on the test |
-| Margins of error across months, not picks | Picks in the same month move together; counting them separately would overstate the certainty |
 | Calendar months not broken down | Six or seven observations per month: almost pure noise |
 
 ---
 
 ## 5. Caveats
 
-- **Previews only.** The early years still miss most acquired companies, and takeover targets are
+- **Previews only.** The early years still miss many acquired companies, and takeover targets are
   often among the recent winners. The numbers will change once the download finishes.
-- **The test years are few.** Under four years, dominated by one market theme. One strong stretch
-  can't settle whether the edge is lasting, and a single bad year for SPY would change the comparison.
-  (With the cut a year earlier, SPY's poor 2022 makes the rule look better on Sharpe too. That's why
-  the cut is fixed to the models' test window, not chosen by result.)
-- **The model strategies have only 36 and 45 months each.** Differences of a few hundred dollars
-  between versions can be chance. The conclusion rests on the headline losing in both periods to every
-  plain rule shown, not on any one gap.
-- **The trend filter met few downturns.** Since 2010 there were only a handful, and most recovered
-  fast. Published tests credit trend filters mainly with long bear markets like 2000–2002 and 2008,
-  and none falls in these years. The result says it didn't help here, not that it never does.
-- **Rebalancing between the parts of a staggered portfolio isn't charged.** That trading is small next
-  to the monthly picks, but it isn't zero.
-- **The equal-weight yardstick has no costs,** so it's slightly flattered compared with the rules.
-- **Taxes, short-term price impact and the bid-ask spread on small trades are not modelled.** The 0.1% per
-  side is meant to cover the spread and commissions of a liquid large-cap stock.
+- **The test years are few:** under four, dominated by one market theme. A single bad year for SPY
+  would change the comparison; with the cut a year earlier, SPY's poor 2022 makes the rule win on
+  Sharpe too, which is why the cut was fixed in advance.
+- **The model strategies have only 36 and 45 months.** Gaps of a few hundred dollars between versions
+  can be chance; the conclusion rests on the headline losing to every plain rule in both periods.
+- **The trend filter met few downturns,** and most recovered fast. Published tests credit such filters
+  mainly with long bear markets like 2000–2002 and 2008, outside these years: it didn't help *here*.
+- **Some costs aren't modelled:** rebalancing between the parts of a staggered portfolio (small, not
+  zero), costs for the equal-weight yardstick (slightly flattering it), taxes, price impact, and wider
+  spreads on small trades. The 0.1% a side covers the spread and commissions of a liquid large-cap.
