@@ -1464,6 +1464,25 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - **Section 4:** you were right that the example didn't add up. Funding a new slot means selling part of the existing ones, and the text skipped that. The backtest splits the whole portfolio back into equal slots every month (its return is the average of the slots'), which is the standard method. Now a month-by-month table shows the money moving, with a new caveat: moves between slots aren't charged costs (large in the first five months, usually small after).
   - **Sections 8 + 9:** kept separate (you agreed). Every chapter shares the five-part shape.
 - **Lesson:** a worked example has to be checked as arithmetic, dollar by dollar, not just as a description. "Each slot is a sixth of current value" was true, but it hid the trades that make it true.
+- **Shipped as PR #58** (Chapter 1, the README front page, Appendix A). #22's boxes ticked for the data sources, dataset size, decision rule and Appendix A.
+- **The 8 Nov AV run (result 0), 23 tried:**
+  - ok 6;
+  - reused 9: BEAM, LIFE, MI, MMI, NSM, PCS, PGN, S, SUN;
+  - no data 8: BMC, CBE, CEPH, GR, MEE, MOLX, NOVL, NYX.
+
+  Totals: 138 tried (94 ok, 29 reused, 15 no data), 78 left; it should empty after the 12 Nov run. The success rate falls as the queue reaches 2011–13 acquisitions, so the remaining gap sits in the early years.
+- **Trap:** the AV log lines carry colour codes, so a PowerShell filter on `^2026-…` matched nothing. Use `grep -a` in Bash.
+- **Chapter 2 review.** You chose three of four suggestions; the traps were kept as they are.
+  - **Error fixed:** prices start in 2000, not 2007, and "200-day averages" is gone.
+  - **Counts reconciled from the data, not guessed:**
+    - 321 removed, not 320: Kenvue left on 30 Oct.
+    - 108 is how many have a Yahoo series starting before removal; the volume check then rejects 6 (5 acquired), leaving 102. The chapter gave both numbers without the step between them.
+    - Chapter 4's 316 is the hand-labelled sectors: 320 minus 3 renames (CDAY → DAY, WLTW → WTW, KFT → MDLZ) and MasterBrand, which joined and left within Dec 2022 and is never a month-end member (0 rows in the table).
+    - 415 index changes, 362 since 2010.
+    - 628 series: 627, plus Kenvue's file saved after it left.
+  - **Updated:** the AV status as of 8 Nov, with the early-years point, and a preview caveat added.
+- **A claim caught by checking:** I'd drafted "the three renames are still in the index". Dayforce has since left, so the chapter now says their history continues under the new symbols.
+- **Code comment, not changed here:** `FRED_START`'s comment still says "a year before PRICE_START, so yearly changes exist from 2007" (stale since the 2000 start). Fix it in #20's PR; it's code, which would trigger the Docker workflow in a docs PR.
 
 ---
 

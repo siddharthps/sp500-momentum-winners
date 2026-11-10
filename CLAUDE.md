@@ -64,18 +64,9 @@ is merged with CI green (both the CI and Docker workflows).
   For each chapter: summarise it in plain words, check it against the code and the data, list
   suggestions (errors first), and ask which to apply (one prompt). Apply them, build the book, and
   commit locally, one commit per chapter. **Don't push** until the user asks.
-- **State (9 Nov):** branch `22-data-dictionary`, unpushed. It holds the README front page and
-  Appendix A (3ded8f2) and the Chapter 1 review (822e845, plus the "Chapter 1, second pass" commit
-  after the user's read). Chapter 1 is waiting for the user's look at the second pass.
-  **Chapter 2 is next, not yet changed.** Findings so far, to re-offer:
-  - **Error:** it says daily prices start in Jan 2007 (a "3-year warm-up", "200-day averages"). It's
-    2000 (`PRICE_START`; monthly indicators need ~5 years), as Chapter 4 says. Its counts are from that
-    older download: 627 series and 2.86M rows (now 628 and 3.67M).
-  - **Stale:** the Alpha Vantage status is from 3 Nov. On 7 Nov: 92 tried (74 ok, 14 reused, 4 no data),
-    124 left. The failures are all takeovers, buy-outs and bankruptcies, a direction of bias.
-  - **To reconcile, by checking the data first:** 102 usable vs 108 downloaded removed members, and
-    320 left since 2010 here vs 316 in Chapter 4.
-  - **Small:** a preview caveat, as in Chapter 1.
+- **State (9 Nov):** Chapter 1 is approved and merged (PR #58). Chapter 2's review is committed
+  locally on branch `22-chapter-2`, unpushed, and waits for the user's read. **Chapter 3 is next,
+  not started:** wait for the go-ahead.
 - **The ask behind it:** the published book didn't make the setup clear to a first-time reader. Read
   each chapter as that reader would, not as its author.
 - **For #20's refresh, beyond rerunning the notebooks:**

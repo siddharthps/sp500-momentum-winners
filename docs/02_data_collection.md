@@ -15,9 +15,9 @@ Collect everything the project needs, from free sources:
 
 | Step | What was collected | Source |
 | --- | --- | --- |
-| 1 | Today's 503 members, plus a list of 414 index changes (1976 → Oct 2026) | Wikipedia |
-| 2 | Which of the 320 members removed since 2010 still have price history on Yahoo Finance | Yahoo Finance |
-| 3 | Daily prices from 2007 for members, removed members Yahoo has, and market series | Yahoo Finance |
+| 1 | Today's 503 members, plus a list of 415 index changes (1976 → Oct 2026) | Wikipedia |
+| 2 | Which of the 321 members removed since 2010 still have price history on Yahoo Finance | Yahoo Finance |
+| 3 | Daily prices from 2000 for members, removed members Yahoo has, and market series | Yahoo Finance |
 | 4 | Monthly prices for the removed members Yahoo lacks | Alpha Vantage (free tier) |
 | 5 | Core inflation, the Fed Funds rate, 1/5/10-year Treasury yields, potential GDP | FRED (St. Louis Fed) |
 
@@ -30,32 +30,41 @@ Collect everything the project needs, from free sources:
 - The current list comes from Wikipedia's *List of S&P 500 companies*. The history of changes is on a
   separate page, *Historical components of the S&P 500*.
 - The record is sparse before 2008: 2 changes in the 1970s, 8 in the 1990s, 43 in the 2000s, then
-  **220 in the 2010s** and 141 in the 2020s. That's why the study starts in **2010** (361 changes since).
+  **220 in the 2010s** and 142 in the 2020s. That's why the study starts in **2010** (362 changes since).
 - Each removal comes with a free-text reason. These were sorted into buckets (acquired, market cap,
   spin-off, failed, ticker change) with keyword rules.
 
 ### 3.2 The survivorship gap
 
-320 companies left the index between 2010 and Oct 2026 and aren't members today. Yahoo Finance has
+321 companies left the index between 2010 and Oct 2026 and aren't members today. Yahoo Finance has
 usable history for only about a third of them:
 
-| Why it was removed | Total | On Yahoo | Missing |
-| --- | --- | --- | --- |
-| Acquired or merged | 149 | 5 | **144** |
-| Market cap / index rules | 126 | 81 | 45 |
-| Spin-off or restructuring | 33 | 13 | 20 |
-| Failed (SVB, Signature Bank, First Republic) | 3 | 0 | 3 |
-| Ticker change | 4 | 1 | 3 |
-| Other | 5 | 2 | 3 |
-| **Total** | **320** | **102** | **218** |
+| Why it was removed | Total | Yahoo has a series | Usable after the volume check | Missing |
+| --- | --- | --- | --- | --- |
+| Acquired or merged | 150 | 10 | 5 | **145** |
+| Market cap / index rules | 126 | 82 | 81 | 45 |
+| Spin-off or restructuring | 33 | 13 | 13 | 20 |
+| Failed (SVB, Signature Bank, First Republic) | 3 | 0 | 0 | 3 |
+| Ticker change | 4 | 1 | 1 | 3 |
+| Other | 5 | 2 | 2 | 3 |
+| **Total** | **321** | **108** | **102** | **219** |
 
 Companies dropped for market cap mostly still trade on smaller indexes, so Yahoo has them.
 **Acquired companies are almost all missing.** That's the gap that matters most for this question
 ([Chapter 1](01_problem.md#3-why-its-harder-than-it-looks-survivorship-bias)).
 
-"Usable" means more than one row of data, starting before the removal date. Two cases count as missing:
-- a 1-row "stub" (Yahoo keeps only the last price of some recent delistings);
-- data that starts after the removal (another company reused the ticker).
+A series counts as usable after two checks:
+
+1. **It starts before the removal date and has more than one row.** That rules out a 1-row "stub"
+   (Yahoo keeps only the last price of some recent delistings) and data that starts after the
+   removal (another company reused the ticker). 108 series pass, and all of them are downloaded.
+2. **It trades like an S&P 500 company.** A later check ([Chapter 3](03_monthly_table.md)) compares
+   each series' trading volume with what a member's would be. It finds 6 more that belong to a much
+   smaller company using the old ticker, 5 of them for acquired companies. That leaves **102**.
+
+The three ticker changes counted as missing aren't real gaps. Each company kept trading under its new
+symbol (Kraft Foods as Mondelez, Willis Towers Watson as WTW, Ceridian as Dayforce), and its history
+continues there.
 
 ### 3.3 Filling the gap: Alpha Vantage
 
@@ -69,23 +78,29 @@ monthly returns, which is what the strategy trades on.
   including the March 2023 crash (288.11 → 0.905).
 - **It's collected a little every day.** Each evening an automatic run fetches the next ~23 companies,
   most important first: failed banks, then acquisitions, then the rest. It stops when the daily limit
-  is reached. At that pace the full list takes about two weeks. **Status on 3 Nov (evening):** 23
-  companies fetched (22 with data; First Republic has none), 192 to go, finishing around 12–14 Nov.
+  is reached. At that pace the full list of 216 takes about ten days.
+- **Status on 8 Nov:** 138 of the 216 tried. 94 have prices, 29 return a different company that
+  now uses the old ticker, and 15 have no data at all. 78 are left, finishing around 12 Nov. Every
+  one that failed is a takeover, a buy-out or a bankruptcy. The success rate has fallen as the
+  queue reaches older acquisitions (2011–2013), which have less free data. So the gap that remains
+  is concentrated in the **early years**, among exactly the companies survivorship bias leaves out.
 
 ### 3.4 Daily prices (Yahoo Finance)
 
 | Group | Series |
 | --- | --- |
 | Current members | 503 |
-| Removed members Yahoo covers | 108 |
+| Removed members Yahoo has a series for (6 later rejected, Section 3.2) | 108 |
 | Market series | 16 |
-| **Total** | **627 series, 2,861,374 daily rows** |
+| Kenvue, which left the index in October 2026 | 1 |
+| **Total** | **628 series, 3,673,295 daily rows** |
 
 The 16 market series are SPY, the 11 sector funds (technology, financials, energy, …), VIX, the Dow
 Jones, gold and WTI oil.
 
-- **From Jan 2007.** That's a 3-year warm-up before the first decision in 2010, so 12-month measures and
-  200-day averages exist from the start.
+- **From January 2000.** That's ten years before the first decision in 2010. Every feature is built
+  from monthly bars (Chapter 4), and the slowest monthly indicators need about five years of history
+  before they give a value.
 - **To the previous day's close**, so a half-finished trading day is never stored.
 - **Prices are kept both raw and dividend-adjusted.** Dividends and splits stay visible, and the
   price at the next morning's open can be adjusted the same way as the close.
@@ -122,6 +137,8 @@ before anyone could. Here, a figure is only used once it would have been public.
 ---
 
 ## 5. Caveats and traps found
+
+**The counts here are previews,** refreshed once the download of delisted companies is complete.
 
 These are the problems found while collecting the data, and how each was handled:
 
