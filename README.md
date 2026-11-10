@@ -18,8 +18,8 @@ this project rebuilds **who was in the index on each date** since 2010, finds pr
 companies that later left, and tests two pickers against SPY, after trading costs, on the same
 untouched years:
 
-- **The plain rule:** rank members by their return over the past 1, 3, 6 or 12 months; buy the top 1,
-  5 or 10; hold 1, 3, 6 or 12 months (60 versions, all reported).
+- **The plain rule:** rank members by their return over the past 1, 3, 6 or 12 months, or 12 months
+  skipping the latest; buy the top 1, 5 or 10; hold 1, 3, 6 or 12 months (60 versions, all reported).
 - **Machine-learning models:** seven models rank members on 152 features (past returns, risk, technical
   indicators, comparisons with other members, the market and the economy), predicting next month.
 

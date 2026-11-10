@@ -64,8 +64,9 @@ is merged with CI green (both the CI and Docker workflows).
   For each chapter: summarise it in plain words, check it against the code and the data, list
   suggestions (errors first), and ask which to apply (one prompt). Apply them, build the book, and
   commit locally, one commit per chapter. **Don't push** until the user asks.
-- **State (7 Nov):** branch `22-data-dictionary`, unpushed. It holds the README front page and
-  Appendix A (3ded8f2) and the Chapter 1 review (822e845). Chapter 1 is waiting for the user's read.
+- **State (9 Nov):** branch `22-data-dictionary`, unpushed. It holds the README front page and
+  Appendix A (3ded8f2) and the Chapter 1 review (822e845, plus the "Chapter 1, second pass" commit
+  after the user's read). Chapter 1 is waiting for the user's look at the second pass.
   **Chapter 2 is next, not yet changed.** Findings so far, to re-offer:
   - **Error:** it says daily prices start in Jan 2007 (a "3-year warm-up", "200-day averages"). It's
     2000 (`PRICE_START`; monthly indicators need ~5 years), as Chapter 4 says. Its counts are from that

@@ -1455,6 +1455,16 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   Totals: 115 tried, 101 left (~5 nights, still ~12 Nov). All nine are acquisitions.
 - **To check in #20, not assumed:** ACE was arguably the *surviving* company of its 2016 deal (it bought Chubb and took the Chubb name and the CB ticker). So it may be a rename repair like DISCA → WBD rather than a gap. Check CB's history against ACE's dates and volume before deciding.
 
+### Session 33 — Monday, 9 Nov 2026 (Chapter 1, second pass)
+
+- **Your read of the new Chapter 1, and what changed:**
+  - **Goal:** now the two questions, the rule and then the model ("C" of three versions). "Beat" is defined as after costs and per unit of risk.
+  - **Section 2:** the rule's three settings are named as steps (look-back, how many, hold), with the 60-version count and the table split into ranks-by / buys / holds. **Error found:** the chapter, and the README, listed four look-backs. There are five: the 12 months skipping the latest is missing. Both fixed, and Section 7's rules table gained a look-back row.
+  - **Section 3 (survivorship):** tightened by about a third.
+  - **Section 4:** you were right that the example didn't add up. Funding a new slot means selling part of the existing ones, and the text skipped that. The backtest splits the whole portfolio back into equal slots every month (its return is the average of the slots'), which is the standard method. Now a month-by-month table shows the money moving, with a new caveat: moves between slots aren't charged costs (large in the first five months, usually small after).
+  - **Sections 8 + 9:** kept separate (you agreed). Every chapter shares the five-part shape.
+- **Lesson:** a worked example has to be checked as arithmetic, dollar by dollar, not just as a description. "Each slot is a sixth of current value" was true, but it hid the trades that make it true.
+
 ---
 
 ## 9. Decisions and Parking Lot

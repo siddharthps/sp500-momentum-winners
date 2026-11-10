@@ -2,11 +2,15 @@
 
 ## 1. Goal
 
-> **At the end of each month, if you buy the S&P 500 stocks that rose the most and hold them for a
-> while, do you beat the S&P 500 itself?**
+This project answers two questions:
 
-This chapter sets out the question, why it's harder to answer honestly than it looks, and the rules
-the test follows.
+1. **If, at each month-end, you buy the S&P 500 stocks that rose the most recently and hold them for
+   a while, do you beat the index itself, after trading costs and per unit of risk?**
+2. **Can a machine-learning model, looking at much more than past returns, choose better stocks than
+   that simple rule?**
+
+This chapter sets out the idea, why it's harder to test honestly than it looks, and the rules the
+test follows.
 
 ---
 
@@ -15,17 +19,21 @@ the test follows.
 Every month-end:
 
 1. Take every company that was **in the S&P 500 on that date**.
-2. Rank them by how much they rose over a past stretch (the **"winners"**).
-3. Buy the top ones at the **next morning's open**.
-4. Hold them for a fixed number of months, then sell.
+2. Measure how much each one rose over a **look-back window**: the past 1, 3, 6 or 12 months, or the
+   past 12 months skipping the latest one. The biggest risers are the **"winners"**.
+3. Buy the **top 1, 5 or 10** at the **next morning's open**, in equal amounts.
+4. **Hold** them for a fixed 1, 3, 6 or 12 months, then sell.
 5. Compare the result with simply holding **SPY**, an S&P 500 fund (dividends included).
+
+That gives the plain rule three settings: 5 look-backs × 3 sizes × 4 holds = **60 versions**, all
+tested and all reported. "The 6-month winners, top 5, held 6 months" is one of them.
 
 Two ways of picking the stocks are compared:
 
-| Picker | How it ranks the stocks | Holds for |
-| --- | --- | --- |
-| **The plain rule** (the baseline) | By its return over the past 1, 3, 6 or 12 months (each one tested). Buy the top 1, 5 or 10 | 1, 3, 6 or 12 months |
-| **A machine-learning model** | By the model's score for next month, from many inputs, past returns among them: how likely the stock is to beat SPY, or by how much (the chosen model predicts how much). Buy the top 1, 5 or 10 | 1 month, because it predicts one month ahead |
+| Picker | Ranks the members by | Buys | Holds for |
+| --- | --- | --- | --- |
+| **The plain rule** (the baseline) | Return over the look-back window | Top 1, 5 or 10 | 1, 3, 6 or 12 months |
+| **A machine-learning model** | The model's score for next month, from many inputs (past returns among them): how likely the stock is to beat SPY, or by how much (the chosen model predicts how much) | Top 1, 5 or 10 | 1 month, because it predicts one month ahead |
 
 The model only earns its place if it beats the **plain rule**, not just SPY. "Buy what went up
 recently" is a well-known and surprisingly hard benchmark, so beating it is the real test.
@@ -48,22 +56,18 @@ later left.
 
 ## 3. Why it's harder than it looks: survivorship bias
 
-The obvious way to test the idea is to download today's 503 S&P 500 members and look back. That
-gives a badly wrong answer. Today's list only contains the companies that **survived**. It leaves out
-everything that was acquired, went bust or got dropped from the index along the way.
+Testing on today's 503 members gives a flattering answer: the list holds only the **survivors**, not
+the companies acquired, bankrupt or dropped along the way. For a "buy the winners" rule, two gaps
+matter most:
 
-For a "buy the winners" strategy, two of those gaps matter most:
-
-- **Takeovers.** A takeover bid is one of the most common reasons a stock is the month's top gainer.
-  After the jump, the price sits near the deal price until the deal closes, so it barely moves while
-  the market keeps going. Without acquired companies, the rule never picks a takeover target, and it
-  looks better than it would really have been.
-- **Crashes during the hold.** A stock bought as a winner can collapse and then get dropped from the
-  index. Silicon Valley Bank fell **−99.7%** in March 2023. If it's missing from the data, the test
-  never sees that loss.
+- **Takeovers.** A bid is one of the commonest reasons a stock tops the month. Afterwards its price
+  sits near the deal price while the market moves on. Leave acquired companies out, and the rule
+  never buys these stalled winners.
+- **Collapses during a hold.** Silicon Valley Bank fell **−99.7%** in March 2023 and left the index.
+  Leave it out, and the loss never happens.
 
 So the project rebuilds **who was in the index on each date** (point-in-time membership), and finds
-prices for the companies that later left. [Chapter 2](02_data_collection.md) covers how.
+prices for the companies that later left ([Chapter 2](02_data_collection.md)).
 
 ---
 
@@ -74,14 +78,15 @@ Take one rule: **buy the top 5, hold each for 6 months**, starting with $6,000.
 It doesn't mean "buy 5 stocks in January and do nothing until July". The result would then depend on
 the luck of the starting month: a January start and a March start can give very different answers.
 It doesn't mean adding new money every month either, which would make the comparison with SPY
-unequal. Instead, the money is split into **six equal slots**, one per month of the hold:
+unequal. Instead, the money is spread over up to **six equal slots**, one per month of the hold,
+and every month the whole portfolio is split back into equal slots:
 
-| Date | What happens |
+| Month | What happens |
 | --- | --- |
-| Early January | Slot 1 buys December's top 5, equal amounts each |
-| Early February | Slot 2 buys January's top 5, even if some are already held by slot 1. Slot 1 keeps holding |
-| March to June | Slots 3 to 6 do the same, one new batch a month |
-| Early July | Slot 1 has held for six months: it sells and buys June's top 5. Slot 2 follows in August, and so on |
+| January | Slot 1 buys December's top 5: all $6,000, so $1,200 each |
+| February | Say the portfolio is now worth $6,300. It's split into **two equal slots of $3,150**: slot 1 sells half of each holding, and that cash buys January's top 5 (even if some are already held) |
+| March to June | One more slot each month (three, four, five, then six). The existing slots each sell a little to fund the new one |
+| July onwards | Six slots. The oldest has held its stocks for six months: it sells them and buys June's top 5. All six are reset to equal size every month, so at $7,200 in total each holds $1,200, and slots that grew pass money to slots that shrank |
 
 From then on there are always **six overlapping batches** (up to 30 stocks, fewer when a stock
 appears in more than one). Each month **a sixth of the money changes hands**, and every stock is held
@@ -90,10 +95,12 @@ six possible starting months.
 
 A few details fill the picture in:
 
-- **No new money is added, and none sits idle.** In the first months, before all six slots exist,
-  the money is spread over the slots that do (all of it in January's five). After that, each slot is
-  a sixth of the portfolio's *current* value, so gains are reinvested: if $6,000 has grown to $7,200,
-  the slot refreshed that month gets $1,200.
+- **No new money is added, and none sits idle.** Gains are reinvested, because every slot is a share
+  of the portfolio's *current* value.
+- **Moving money between slots isn't charged trading costs.** It's a simplification. The amounts
+  are large in the first five months, while the slots fill up, and usually small after that,
+  because the slots differ only by how their stocks did. Costs are charged whenever a slot swaps its
+  stocks (on the difference only, for a stock it keeps).
 - **SPY gets the same starting money and is simply held**, dividends reinvested.
 - **With a 1-month hold, there's one slot:** sell everything and buy the new top 5 every month.
 - **Fractional shares are assumed.** The test works in percentages, not share counts, so $240 in a
@@ -162,6 +169,7 @@ February 2024. [Chapter 6](06_modelling.md) has the details.
 | **Decision time** | The last trading day of each month | One decision a month, matching the idea |
 | **The golden rule** | Everything the strategy uses is known **at the month-end close**; it trades **at the next open** | No peeking at the future |
 | **Model target** | Does the stock beat SPY over the next month, and by how much? | Directly answers "does it beat the index?". About 49% of stocks do in a typical month, so it's a fair coin to start with |
+| **Look-backs (plain rule)** | 1, 3, 6 and 12 months, and 12 months skipping the latest | The skipped month is the standard research version: last month's biggest risers tend to fall back the month after |
 | **Hold periods (plain rule)** | 1, 3, 6 and 12 months | Research on momentum finds the effect over roughly 3–12 months. 1 month tests the idea as first stated |
 | **Benchmarks** | SPY, plus an equal-weight basket of all members | The second shows whether an edge is real stock picking or just a tilt towards smaller members |
 | **Costs** | ~0.1% per buy and per sell | A monthly rule replaces most of its holdings every month |
