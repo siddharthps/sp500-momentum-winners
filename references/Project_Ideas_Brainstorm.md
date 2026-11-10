@@ -1421,6 +1421,49 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 - **Research cited by name, looked up before shipping** (I'd recalled both from memory):
   - Gu, Kelly and Xiu (2020, *Review of Financial Studies*) report a monthly stock-level R² of about 0.3–0.4% for trees and nets, so "well under 1%" holds. Network performance peaks at three hidden layers and declines with more, so the chapter says that rather than "shallow beats deep".
   - Avramov, Cheng and Metzker (2023, *Management Science* 69(5)): the deep-learning payoff falls 62% when microcaps are excluded, and falls further when distressed firms are dropped. The chapter says "about 60%".
+- **Shipped as PR #57.** Then, on a new branch, the rest of #22's number-free parts:
+  - **Appendix A, the data dictionary:** all 186 columns in 10 groups (10 identifiers, 24 targets, 152 features), each defined from the code that builds it, not from its name. A script checked it against the table's schema: none missing, no stray names. My first draft said 28 targets; it's 6 kinds × 4 holds = 24, caught by checking that the counts add up to Chapter 4's 152.
+  - **README front page:** the question and its context, the result so far (preview, three rows), the decision rule in plain terms, links, a quickstart, data sources with sizes, and the 30-odd features built here. The old status block (it still called the vector check and Docker "next") is gone.
+- **Two corrections found by checking:**
+  - **The issue said "highest-probability picks", but the headline is the by-how-much model:** it ranks on predicted return above SPY. The README says so, and Chapter 1's table now says the model scores how likely, or by how much.
+  - **Chapter 1 says "2.86M daily prices"; the files hold 3,673,295 rows** (628 series, benchmarks included). Refresh in #20 along with the other counts.
+- **Sizes, counted from file metadata (no data printed):**
+  - 3.67 M Yahoo daily rows, plus 15,777 Alpha Vantage monthly rows for 74 companies;
+  - 101,431 member-months, 202 month-ends, 819 companies, 91.2% priced.
+
+  These are the 5 Nov data, newer than the book's 4 Nov snapshot.
+- **The headline's test-years worst fall (−31%)** came from the saved strategy table; the book never quoted it.
+- **You started a chapter-by-chapter review**, to understand each chapter and suggest changes. Everything is committed locally, nothing pushed.
+- **Chapter 1, all four suggestions applied** (822e845):
+  - why momentum might work, and its crash risk;
+  - survivorship bias moved up to section 3;
+  - a preview caveat;
+  - the old "what makes this different" section folded into section 2, which also removed the stale 2.86M figure.
+
+  Fixed along the way: a doubled divider, and the model-target row now says "and by how much".
+- **Chapter 2, reviewed but not changed.**
+  - **One real error:** prices start in 2000, not 2007, and Chapter 4 already says 2000.
+  - **Stale:** the Alpha Vantage status.
+  - **Two count mismatches to check in the data:** 102 vs 108 departed companies, and 320 vs 316.
+- **You paused there** to read the new Chapter 1. The new rule is to wait for your go-ahead before each chapter. It's noted in CLAUDE.md as temporary, with the Chapter 2 findings, so the next session can resume.
+- **CLAUDE.md also gained:** research is looked up before it's cited, and counts shared between chapters must agree.
+- **The 21:00 AV run (task result 0):** 23 tried.
+  - ok 14;
+  - reused tickers 6: ADT, CAM, POM, ALTR, PLL, DTV;
+  - no data 3: ESV, PCL, ACE.
+
+  Totals: 115 tried, 101 left (~5 nights, still ~12 Nov). All nine are acquisitions.
+- **To check in #20, not assumed:** ACE was arguably the *surviving* company of its 2016 deal (it bought Chubb and took the Chubb name and the CB ticker). So it may be a rename repair like DISCA → WBD rather than a gap. Check CB's history against ACE's dates and volume before deciding.
+
+### Session 33 — Monday, 9 Nov 2026 (Chapter 1, second pass)
+
+- **Your read of the new Chapter 1, and what changed:**
+  - **Goal:** now the two questions, the rule and then the model ("C" of three versions). "Beat" is defined as after costs and per unit of risk.
+  - **Section 2:** the rule's three settings are named as steps (look-back, how many, hold), with the 60-version count and the table split into ranks-by / buys / holds. **Error found:** the chapter, and the README, listed four look-backs. There are five: the 12 months skipping the latest is missing. Both fixed, and Section 7's rules table gained a look-back row.
+  - **Section 3 (survivorship):** tightened by about a third.
+  - **Section 4:** you were right that the example didn't add up. Funding a new slot means selling part of the existing ones, and the text skipped that. The backtest splits the whole portfolio back into equal slots every month (its return is the average of the slots'), which is the standard method. Now a month-by-month table shows the money moving, with a new caveat: moves between slots aren't charged costs (large in the first five months, usually small after).
+  - **Sections 8 + 9:** kept separate (you agreed). Every chapter shares the five-part shape.
+- **Lesson:** a worked example has to be checked as arithmetic, dollar by dollar, not just as a description. "Each slot is a sixth of current value" was true, but it hid the trades that make it true.
 
 ---
 
