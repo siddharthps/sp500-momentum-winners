@@ -5,10 +5,9 @@
 
 ## 1. Goal
 
-Everything before this chapter looks backwards. This step makes the system look **forwards**. Once
-a month it answers *"what would each strategy buy at the next open?"* from fresh data, saves the
-answer, and so builds a record of picks made before their results were known. That record is the
-only test this project will ever have that no choice could have touched.
+Run the strategies **forwards**: each month, from fresh data, record what each would buy at the next
+open, before the result is known. That record is the one test no choice in this project could have
+touched.
 
 ---
 
