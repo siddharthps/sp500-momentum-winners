@@ -1543,6 +1543,12 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - **Two Decisions rows removed as repeats:** "feature analysis on 2010–22 only" (§2) and "tuning across successive years" (§3.3).
   - **The 0.26 claim tempered:** it's ~3.2 standard errors on 156 months, but the 12-month SPY returns overlap, so there are far fewer independent months. Suggestive, not proof.
   - **Wording:** "most" → "many" acquired companies (twice), and "comes next" → "comes in Chapter 7".
+  - **Your read:** the chart explanations were too wordy, §3.2 most of all. Each was cut to two or three sentences with every number kept, and IC is now spelled out where the chart discussion starts (its only definition had been in a table cell in §2).
+- **Chapter 6 review (branch `22-chapter-6`, from the unpushed Chapter 5 branch):** every number in §3.6–3.8 matches `model_comparison.csv` and `model_cv_results.csv` (the medians of the tries too); the selection rule, tries, seeds and November gaps match the code.
+  - **Errors fixed:** the preview caveat's "12,700 missing, ~12,000 still fillable" predated the 9 Nov rebuild (now ~4,150 fillable in all years), so it now points to Chapter 3. "About 450 rows a month" → 440 (88,137 / 201). 88,137 is dated to the 4 Nov snapshot the models were trained on, so it doesn't seem to contradict Chapter 3's 9 Nov counts.
+  - **Eight Decisions rows removed as repeats** of §3.2–3.5; eight remain.
+  - **Tightened** the gap, percentile and closing paragraphs. §3.7 now says the headline won under the rule fixed before the comparison, rather than giving reasons that read as chosen afterwards. The goal points to Chapter 1 for the plain rule.
+  - **Not added:** the test-years chart (your call). The importance chart's PNG is from 4 Nov with the old "(in dollars)" labels (fixed in code 5 Nov); it refreshes in #20. It also shows `ta_atr` and `ta_natr` both in the headline's top 15: one more reason to drop `ta_natr`.
 
 ---
 
