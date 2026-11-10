@@ -1482,6 +1482,12 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
     - 628 series: 627, plus Kenvue's file saved after it left.
   - **Updated:** the AV status as of 8 Nov, with the early-years point, and a preview caveat added.
 - **A claim caught by checking:** I'd drafted "the three renames are still in the index". Dayforce has since left, so the chapter now says their history continues under the new symbols.
+- **You approved Chapter 2.**
+- **The 9 Nov AV run stopped after 3 calls** (GENZ, MFE, AYE, all ok) with "25 requests per day". The cause is the rolling 24 h window:
+  - the 8 Nov run started its calls 4 s late (21:00:08–21:00:50);
+  - the 9 Nov run started on time (21:00:04), so all 23 of the previous calls still counted.
+
+  The 2-call buffer (23 of 25) absorbs only about 4 s of start jitter; this was the first night it wasn't enough. Nothing is lost (each ticker is recorded on fetch, the key is masked in the log, task result 0). 141 tried, 75 left: 23 on each of 10, 11 and 12 Nov, then 6 on **13 Nov**, so a one-day slip. No change: extra calls tonight would only eat into tomorrow's window, and a wait-for-24h fix isn't worth it with four nights left.
 - **Code comment, not changed here:** `FRED_START`'s comment still says "a year before PRICE_START, so yearly changes exist from 2007" (stale since the 2000 start). Fix it in #20's PR; it's code, which would trigger the Docker workflow in a docs PR.
 
 ---
