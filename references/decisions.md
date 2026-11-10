@@ -482,6 +482,30 @@ a stock is the month's top gainer.
     - Rescan: 0 Python findings.
 - **The Trivy action is pinned to a commit** (v0.36.0, `ed142fd…`), not a tag. The pin I first wrote from memory (`0.28.0`) doesn't exist, and the action's tags were re-created in March 2026, so a tag can't be trusted to stay put.
 
+**The buyer kept the target's ticker (9 Nov, #59)**
+
+- **Found while reviewing Chapter 3,** from local files only (no API calls). In some takeovers the buyer kept or took the target's ticker, and Yahoo or Alpha Vantage files the buyer's history under it. The target's member rows then carried the buyer's prices. The volume check can't see it, because both companies were large.
+- **Five cases checked on dividends and price levels** (fixed unless stated):
+
+  | Case | What the series really holds |
+  | --- | --- |
+  | ACE / Chubb | Yahoo's `CB` before 2016 is ACE's |
+  | Tyco / Johnson Controls | Yahoo's `JCI` before Sep 2016 is Tyco's |
+  | Dow / DuPont | Yahoo's `DD` before Sep 2017 is Dow Chemical's |
+  | AGL / Nicor | Alpha Vantage's `GAS` before Dec 2011 is AGL's |
+  | Actavis / Allergan | The pre-2015 `AGN` line is Actavis, priced correctly; the old Allergan's line is missing (documented, not added) |
+
+- **The fix: `PRICE_OVERRIDES`, separate from renames.** Each member row's price series is chosen per date window. A company with no free history of its own stays unpriced (`None`) rather than carrying the buyer's prices.
+  - Renames merge two membership lines into one. Here both lines are right, and only the price series is wrong.
+- **A new invariant:** no two priced rows on the same date may use the same price series. The build refuses otherwise.
+- **Effect on the rebuilt table:**
+  - 238 wrong-company member-months are now unpriced: the old Chubb, the old Johnson Controls, the old DuPont;
+  - 258 are now priced from their own history: ACE, Tyco, the old Dow, DowDuPont;
+  - Nicor's 23 rows stay unpriced, rather than getting AGL's prices.
+- **Missing lines, documented rather than invented:** the old Allergan, 21st Century Fox (2013–2019) and the old News Corp (2010–2013). A made-up ticker would leak into the download queues, and no free source has their prices.
+- **Checked and fine:** IR/TT, LIN (Praxair), RTX (United Technologies), TFC, ELV, KDP, AVGO, and the same companies re-added later (ILMN, FSLR, AMD, PCG, EQT, TER, JBL).
+- **Corrects 6 Nov:** I'd said JCI's series continues the old Johnson Controls' history. It's Tyco's.
+
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 

@@ -1490,6 +1490,28 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   The 2-call buffer (23 of 25) absorbs only about 4 s of start jitter; this was the first night it wasn't enough. Nothing is lost (each ticker is recorded on fetch, the key is masked in the log, task result 0). 141 tried, 75 left: 23 on each of 10, 11 and 12 Nov, then 6 on **13 Nov**, so a one-day slip. No change: extra calls tonight would only eat into tomorrow's window, and a wait-for-24h fix isn't worth it with four nights left.
 - **Code comment, not changed here:** `FRED_START`'s comment still says "a year before PRICE_START, so yearly changes exist from 2007" (stale since the 2000 start). Fix it in #20's PR; it's code, which would trigger the Docker workflow in a docs PR.
 
+### Session 34 — Monday, 9 Nov 2026, evening (#59: the buyer kept the target's ticker)
+
+- **Found while starting Chapter 3's review.** The record of changes says "ACE Ltd acquired Chubb and retained the CB ticker". So whose history is Yahoo's `CB`?
+  - **Test, from local files only:** dividends and price levels against the two companies. `CB` before 2016 pays ACE's dividends (0.63–0.67), and it moved +0.8% on the deal day, as a buyer does. It's ACE's history.
+  - So the old Chubb's rows had ACE's prices, and ACE's rows had none.
+- **A scan for more:** a removed ticker that is a member again later, or reasons where one company took another's name or ticker. Then the same test on each:
+  - **fixed:** Tyco/JCI, Dow/DD (DowDuPont too), AGL/GAS;
+  - **a missing line, documented:** the old Allergan (the `AGN` line before 2015 is Actavis, priced correctly), 21st Century Fox, the old News Corp;
+  - **fine:** IR/TT, LIN, RTX, TFC, ELV, KDP, AVGO, and the same companies re-added.
+- **I was wrong on 6 Nov:** I said JCI continues the old Johnson Controls' history. Its dividends are exactly Tyco's ÷ 0.955, the merger's reverse split.
+- **You chose to fix it before #20 (recommended).** Issue #59, milestone 10.
+  - `PRICE_OVERRIDES` in the config chooses each row's price series per date window (`None` = no free source).
+  - A new check refuses the build if one series prices two members on the same date.
+  - 3 new tests; 145 pass.
+- **Rebuilt `monthly build` and `features build`:**
+  - 238 wrong-company rows are now unpriced, and 258 are priced from their own history;
+  - no series is used twice; no "Unknown" sectors;
+  - 92.9% of rows priced, up from 91.2%, which includes the AV nights since 5 Nov.
+  - Notebooks aren't rerun: that's #20.
+- **Book:** Chapter 3 gained a repair row, how the cases were checked, a decision row and a caveat for the missing lines. Chapter 9 gained a limitation.
+- **Trap for the future:** a ticker can carry the *buyer's* history for years before a deal. The volume check can't see it, but dividends and price levels can.
+
 ---
 
 ## 9. Decisions and Parking Lot

@@ -192,6 +192,33 @@ RENAMES = [
     ("DISCA", "WBD", "2022-04-11", "2022-04-11"),
 ]
 
+# Price overrides (#59): in some takeovers the buyer kept or took the target's ticker, and the data
+# sources file the buyer's history under that ticker. The membership lines are right (two companies,
+# two lines), so this isn't a rename: only the price series a member's rows use changes, inside a
+# window of decision dates. `None` means no free source has that company's own history, so its rows
+# stay unpriced rather than carry another company's prices. Each was checked on dividends and price
+# levels against the two companies (9 Nov, local files only):
+PRICE_OVERRIDES = [
+    # (member ticker, price series or None, decisions from, decisions to)
+    # ACE bought Chubb (14 Jan 2016) and took its name and CB ticker. Yahoo's CB before 2016 is
+    # ACE's (dividends 0.63-0.67; +0.8% on the 1 Jul 2015 deal day), not the old Chubb's.
+    ("ACE", "CB", "2010-01-01", "2016-01-18"),
+    ("CB", None, "2010-01-01", "2016-01-18"),
+    # Tyco bought Johnson Controls (Sep 2016) and took the JCI ticker. Yahoo's JCI before then is
+    # Tyco's (its dividends are Tyco's 0.16/0.18/0.205 divided by the merger's 0.955 reverse split).
+    ("TYC", "JCI", "2010-01-01", "2016-09-05"),
+    ("JCI", None, "2010-01-01", "2016-09-05"),
+    # Dow Chemical merged with DuPont as DowDuPont (DWDP, Sep 2017), which renamed itself DuPont
+    # and took DD in 2019. Yahoo's DD is Dow Chemical's history before 2017 (dividends and the
+    # end-2015 close are Dow's x 1.786), so it prices the old Dow and DowDuPont, not the old DuPont.
+    ("DOW", "DD", "2010-01-01", "2017-08-31"),
+    ("DWDP", "DD", "2017-09-01", "2019-06-30"),
+    ("DD", None, "2010-01-01", "2017-08-31"),
+    # AGL Resources bought Nicor (Dec 2011) and took the GAS ticker. Alpha Vantage's GAS before
+    # then is AGL's (closes $36-39 and dividends 0.44-0.45; Nicor traded near $50).
+    ("GAS", None, "2010-01-01", "2011-12-11"),
+]
+
 # Current members that joined after the study start but have no "added" row in Wikipedia.
 # Without one, the backward walk would treat them as members all the way back.
 MISSING_ADDS = {

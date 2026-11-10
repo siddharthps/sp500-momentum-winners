@@ -47,6 +47,16 @@ Walking backwards only works if the record is complete. It isn't quite:
 | **Addition never recorded** | Smurfit Westrock (`SW`) joined in 2024 with no entry | It would count back to 2010, priced with data from an older, unrelated "SW" | Add the missing entry |
 | **Typos** | One entry reads `ALLE \|` / `JCP \|` | JCPenney was never looked up for prices | Strip stray characters from tickers |
 | **Misleading reason** | Bemis was acquired, but the text reads like a ticker change | It wasn't fetched as an acquired company | Correct the reason by hand |
+| **The buyer kept the target's ticker** | ACE bought Chubb in 2016 and took its name and `CB` ticker. The price sources file ACE's history under `CB` | The old Chubb would be priced with ACE's prices, and ACE would have none | Price each company from its own history: ACE from `CB` before the deal, and the old Chubb left unpriced, because no free source has its history. The same for Tyco and Johnson Controls (`JCI`), Dow and DuPont (`DD`), and AGL and Nicor (`GAS`) |
+
+**How the kept-ticker cases were found and checked.** Each came from the record of changes ("acquired
+Chubb and retained the CB ticker") or from a ticker that came back into the index. Each was then
+checked on the series itself: whose **dividends** it pays, and whose **price level** it trades at.
+Yahoo's `CB` before 2016 pays ACE's dividends, and it barely moved on the day the deal was announced,
+as a buyer's shares do. The target's shares would have jumped towards the offer, about 30% above
+their last close. Yahoo's `DD` before 2017 pays
+Dow Chemical's dividends and closes at Dow's price, both scaled by the same factor. These cases slip
+past the volume check (Section 3.4), because both companies were large.
 
 ### 3.3 Monthly prices
 
@@ -127,6 +137,7 @@ reported, not hidden.
 | Walk the changes backwards from today's list | Today's list is accurate. Errors can only come in from the changes, and those can be checked |
 | Renames limited to their own dates | Tickers get reused (Q, UA, SUN). A permanent rule would silently give one company another's prices |
 | A $10M daily trading check | It catches wrong-company data that starts *before* the removal date, which the date check misses |
+| Kept-ticker cases fixed by choosing each row's price series, not by a rename | Both companies were members, so both lines stay. Only the price series each line uses changes. A company with no free history of its own stays unpriced, rather than carrying the buyer's prices |
 | Keep a delisted stock's prices to the end of its removal month | Removes the penny prices that follow a failure, without hiding the crash itself |
 | Trade at the next open, not the month-end close | The golden rule: decide on the close, trade the next morning |
 
@@ -138,5 +149,9 @@ reported, not hidden.
   Any results built on the table now are previews, still flattered by survivorship bias.
 - **Companies with only monthly prices trade at the month-end close, not the next open.** That's a
   small timing difference for a minority of rows.
+- **A few takeover targets are missing as lines, not just as prices.** The record of changes merges
+  them into their buyer's line: the old Allergan (until Actavis bought it and took its name in 2015),
+  21st Century Fox (2013–2019) and the old News Corp (2010–2013). No free source has their history,
+  so adding them back would only add unpriced rows. They're stated here instead.
 - **Six very large monthly moves are still flagged.** All look real: Apache (APA) in the 2020 oil crash,
   and SanDisk, Intel, Dell and Moderna in 2026, all on heavy trading.
