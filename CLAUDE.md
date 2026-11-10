@@ -64,11 +64,12 @@ is merged with CI green (both the CI and Docker workflows).
   For each chapter: summarise it in plain words, check it against the code and the data, list
   suggestions (errors first), and ask which to apply (one prompt). Apply them, build the book, and
   commit locally, one commit per chapter. **Don't push** until the user asks.
-- **State (10 Nov):** Chapters 1–3 are approved and merged. #59, found while checking Chapter 3, is
-  fixed and merged. **Chapter 4's review is in progress.**
+- **State (10 Nov):** Chapters 1–4 are approved and merged. #59, found while checking Chapter 3, is
+  fixed and merged. **Chapter 5's review is in progress.**
 - **Detail split (agreed 10 Nov):** a chapter says what was done and why. The proof (evidence,
   factors, per-case checks) goes in decisions.md and the journal, which the book reaches through
-  Appendix B. Keep chapters tight.
+  Appendix B. Keep chapters tight. **Decisions tables hold only decisions whose *why* isn't already
+  given in "What came out":** check every row for repeats in each review (Chapter 4 had four).
 - **The ask behind it:** the published book didn't make the setup clear to a first-time reader. Read
   each chapter as that reader would, not as its author.
 - **For #20's refresh, beyond rerunning the notebooks:**

@@ -1519,6 +1519,24 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - **The flag caveat** now says how each of the six moves was checked.
   - "Early years missing **most** acquired companies" became "many": 2010 is 80% priced now.
 - **10 Nov, your read of Chapter 3:** you found Section 3 too verbose and left the call to me. I tightened it (37 lines out, 23 in) and kept every fact: shorter repair-table cells, two sentences instead of the "how found" paragraph, one sentence instead of the six-series bullets, and a shorter SVB paragraph and gap table. The full evidence (dividend factors, deal-day moves, Discovery's 0.98 correlation) stays in decisions.md and this journal, which the book reaches through Appendix B. That's the split: the chapter says what was done and why, the working record keeps the proof.
+- **Shipped Chapter 3 (PR #62).** You approved it and said to carry on, which I took as go for Chapter 4.
+- **Chapter 4 review.** You chose three of my four suggestions (not TRIX at ~6%).
+  - **Error: the course was mentioned four times**, against the book's rule. Now "a review against common practice and research". A search of the whole book finds no other mention outside Appendix B.
+  - **Error: two counts.** "About 200 monthly-only companies" is 97 so far, of 216 queued. "316 labelled by hand" is 317, out of 321 departures; the four without a label are the three renames and MasterBrand, which matches Chapter 2.
+  - **The fill check moved:** 99.6% (Yahoo) vs 99.0% (monthly-only), where it had said 99.6% vs 99.8%.
+    - Checked whether that's a leak: the blanks are in the slowest indicators (TRIX, the Hilbert cycle measures, the 36-month measures).
+    - Leaving out each stock's first five years in the table and the table's first year, both sources are 99.99% filled.
+    - So a blank tracks history length and early years, both known at the decision, not the company's fate.
+    - **Claim caught:** I'd first written "after five years both are 100% filled", having checked one indicator only. Across all 152 it needs the first-year condition too (the market-level 12-month measures).
+- **Your toothcomb on Chapter 4's Decisions table:** I checked all 12 rows against §3.1–3.5.
+  - **Four repeated what's above almost word for word:** monthly bars, the eight added features, exact copies removed, no split flag. You agreed to remove them.
+  - Row 9's one new point ("more of the same kind would only add noise") moved into §3.5's opening.
+  - The 8 rows left each give a reason not stated above.
+  - Also fixed a missing blank line before a list in §3.5.
+- **A rule for the remaining chapters:** the Decisions table holds only decisions whose *why* isn't already given in "What came out". Check each row for repeats as part of each review.
+- **Same check on Chapter 4's §3 ("What came out"):** no repeats, but two errors, fixed directly.
+  - **A paragraph had drifted.** "That last check is also a first, sober preview…" refers to §3.4's last check (the 0.021 correlation), but it sat at the end of §3.5, after the dividend paragraph. Moved back under §3.4's table.
+  - **A claim was no longer true:** "the eight new features are filled as often for monthly-only stocks". Residual momentum and idiosyncratic volatility are 94.9% vs 98.1%, the 5-year seasonal average 96.9% vs 98.6%. Same warm-up effect as §3.4, now stated.
 
 ---
 

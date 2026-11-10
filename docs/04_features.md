@@ -25,8 +25,9 @@ close**, the golden rule from [Chapter 1](01_problem.md#7-the-rules-of-the-test)
 
 ### 3.1 Why everything is built from monthly bars
 
-About 200 of the companies that later left the index only have monthly prices (Chapter 2). Daily
-measures, like a 14-day RSI or the share of up days, can't be worked out for them.
+Many of the companies that later left the index only have monthly prices: 97 so far, of the 216 on
+the Alpha Vantage list (Chapter 2). Daily measures, like a 14-day RSI or the share of up days, can't
+be worked out for them.
 
 Leaving those values blank would have been worse than it sounds. **"No daily data" happens exactly
 for companies that are later delisted**, mostly acquired. A model would soon learn that a blank
@@ -59,9 +60,11 @@ the same indicator values.
 
 ### 3.3 Sectors for companies that left
 
-The current member list has each company's sector. For the 316 companies that left the index since
-2010, none is recorded anywhere in the membership data. Each was labelled by hand with its last
-sector, using the same 11-sector scheme as today's members.
+The current member list has each company's sector. For the 321 companies that left the index since
+2010, none is recorded anywhere in the membership data. 317 were labelled by hand with their last
+sector, using the same 11-sector scheme as today's members. The other four don't need one: three
+were renamed and keep their sector under the new ticker, and MasterBrand joined and left within
+December 2022, so it was never a member at a month-end.
 
 The labels were then compared with Yahoo Finance's own sector field for the ~100 companies Yahoo
 still lists:
@@ -82,14 +85,21 @@ are differences between the two sector schemes.
 | Inflation used for the August 2026 decision | **July's** figure. August's wasn't published until mid-September |
 | 10-year yield used on 30 Oct 2026 | **29 Oct's** value. A day's yield is published the next day |
 | Fed Funds rate used on 30 Oct 2026 | **September's** figure. October's comes out in November |
-| Share of features filled: Yahoo stocks vs monthly-only stocks | **99.6% vs 99.8%**. A blank says nothing about where the data came from, or whether the company later leaves |
+| Share of features filled: Yahoo stocks vs monthly-only stocks | **99.6% vs 99.0%**. The gap is in the slowest indicators (TRIX, the cycle measures, the 36-month risk measures), which need years of history. Monthly-only companies more often have a short history or rows in the early years, and both are known at the decision. Leaving out each stock's first five years in the table and the table's first year, both sources are 99.99% filled. So a blank says how long a stock has traded, not whether it later leaves |
 | Strongest link between any single feature and next month's result (2010–2022) | An average rank correlation of **0.021**. A leaked feature typically shows 0.1 or more |
 
-### 3.5 Eight more features, after a review against the course material
+That last check is also a first, sober preview. **No single feature predicts next month's winners
+strongly**, which is normal for stock picking. Last month's return, the plain rule's signal, is among
+the strongest, but it points the wrong way: last month's winners did slightly worse the next month
+(Chapter 5). Whether the features add up to something useful *together* is the question for the
+models (Chapter 6).
 
-A later review compared the features with those built in the course this project grew out of, and
-with well-known findings from research on stock returns. Most of the course's features were already
-here in monthly form. Eight measure something none of the others did:
+### 3.5 Eight more features, after a review against common practice and research
+
+A later review compared the features with those commonly built for stock-picking models, and with
+well-known findings from research on stock returns. Most were already here in monthly form. Eight
+measure something none of the others did, so only those were added; more of the same kind would
+only add noise:
 
 | Feature | What it measures | Why it's useful |
 | --- | --- | --- |
@@ -103,14 +113,17 @@ here in monthly form. Eight measure something none of the others did:
 | Same calendar month, past 5 years | The stock's average return in next month's calendar month | A known seasonal pattern, unrelated to momentum |
 
 They passed the same checks as the rest. They use only months up to the decision (a test cuts the data
-and confirms earlier values don't change), are filled as often for monthly-only stocks as for the
-others, and none reaches even 0.02 on its own.
+and confirms earlier values don't change), and none reaches even 0.02 on its own. The three that need
+three to five years of history (residual momentum, idiosyncratic volatility and the 5-year seasonal
+average) are blank a little more often for monthly-only stocks (95–97% filled against 98–99%), for the
+warm-up reason in Section 3.4.
 
 Three columns were **removed** at the same time: three rescalings of the rate of change (divided by
 100, plus 1, and plus 100) that are the same number in different units. They were dropped because
 their formulas are identical, not because of how they performed. That's 147 − 3 + 8 = 152.
 
-Two of the course's features were **not** added:
+Two common features were **not** added:
+
 - **A stock-split flag.** The monthly prices for companies that left have no split information, so the
   flag would be missing exactly for them, the same leak as Section 3.1.
 - **Day-of-week and ticker flags.** Every row is a month-end, and a flag per company would let a model
@@ -120,19 +133,12 @@ Some of the new values are extreme but real. A few companies show dividend yield
 Weyerhaeuser's 2010 special distribution, and spin-offs recorded as dividends. They're kept as they are;
 the modelling step limits extreme values in a consistent way.
 
-That last check is also a first, sober preview. **No single feature predicts next month's winners
-strongly**, which is normal for stock picking. Last month's return, the plain rule's signal, is among
-the strongest, but it points the wrong way: last month's winners did slightly worse the next month
-(Chapter 5). Whether the features add up to something useful *together* is the question for the
-models (Chapter 6).
-
 ---
 
 ## 4. Decisions and why
 
 | Decision | Why |
 | --- | --- |
-| Monthly bars for every stock, no daily-only features | Blank daily features would reveal which companies are later delisted (Section 3.1) |
 | Prices from 2000, though decisions start in 2010 | The slowest monthly indicators need years of history. MACD needs about 3, the cycle indicators about 5 |
 | Technical indicators kept, candlestick patterns dropped | A one-day candle pattern says little about the next month. Patterns would add ~60 mostly empty columns |
 | Market series: SPY, Dow, the sector fund, gold, oil, the 10-year yield | This is a US stock picker. Foreign indexes and crypto would add little |
@@ -140,9 +146,6 @@ models (Chapter 6).
 | Ranks computed within each date only | Comparing a stock with other members on the *same* date keeps bull and bear months comparable, and can't mix in later information |
 | Sectors labelled by hand, never "unknown" | An "unknown" sector would mean "this company left the index later", the same leak as Section 3.1 |
 | Sector funds that didn't exist yet are replaced | Real Estate uses the financials fund before its own started (2015), and Communication Services uses SPY before 2018 |
-| Eight features added after a review against the course and research | Each measures something no other feature does. More of the same kind would only add noise |
-| Exact copies removed by formula | The same number in different units adds nothing. Removing them by formula, not by results, keeps the choice independent of the data |
-| No split flag | It would exist only for the companies that stayed, revealing which ones left |
 | Months in the index from the changes record only, for every company | Today's member list has exact join dates, but only for companies still in the index. Using it would make the feature sharper exactly for the survivors |
 
 ---
