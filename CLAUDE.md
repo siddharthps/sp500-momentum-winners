@@ -94,6 +94,10 @@ is merged with CI green (both the CI and Docker workflows).
   the backtest (run as of Jan 2023 it reproduces the test fit's scores exactly).
 - **Tickers get reused.** An old symbol can return a different company (FB, STI, CPWR). Always check a
   series against the removal date and trading volume. Membership repairs live in `config.py`.
+  When a buyer keeps the target's ticker (ACE/CB, Tyco/JCI, Dow/DD, AGL/GAS), the source files the
+  *buyer's* history under it for years before the deal, and the volume check can't see it. Check
+  whose dividends and price level the series has, then fix it with `PRICE_OVERRIDES` (#59), not a
+  rename.
 - **Features come from monthly bars for every stock.** Never add a daily-only feature: it would be
   blank exactly for the later-delisted (Alpha Vantage) names and leak their fate.
 - **Look-ahead checks for every feature:**

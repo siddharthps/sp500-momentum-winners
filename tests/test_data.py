@@ -332,6 +332,68 @@ def test_suspect_tickers_only_counts_member_months():
     assert out.index.tolist() == ["JUNK"]
 
 
+def _two_series_prices():
+    """Monthly prices for SPY and CB (the series the buyer, ACE, kept), Dec 2015 to Mar 2016."""
+    months = pd.period_range("2015-12", "2016-03", freq="M")
+    return pd.DataFrame(
+        {
+            "price_ticker": ["SPY"] * 4 + ["CB"] * 4,
+            "month": list(months) * 2,
+            "close_adj": [100.0, 101.0, 102.0, 103.0, 50.0, 55.0, 60.0, 66.0],
+            "entry_px": [100.0, 101.0, 102.0, 103.0, 50.0, 55.0, 60.0, 66.0],
+            "source": "yahoo",
+        }
+    )
+
+
+CHUBB = [("ACE", "CB", "2010-01-01", "2016-01-18"), ("CB", None, "2010-01-01", "2016-01-18")]
+
+
+def test_price_override_gives_the_buyer_its_history_and_the_target_none():
+    """ACE kept Chubb's CB ticker: before the deal, the CB series is ACE's, so ACE's rows use it
+    and the old Chubb's rows get no price. After the window, CB is priced as CB again."""
+    from sp500_momentum.monthly import apply_price_overrides
+
+    members = pd.DataFrame(
+        {
+            "date": pd.to_datetime(["2015-12-31", "2015-12-31", "2016-02-29"]),
+            "ticker": ["ACE", "CB", "CB"],
+        }
+    )
+    out = apply_price_overrides(members, CHUBB)
+    assert out["price_ticker"].tolist()[0] == "CB"
+    assert pd.isna(out["price_ticker"].iloc[1])
+    assert out["price_ticker"].iloc[2] == "CB"
+
+
+def test_build_panel_applies_overrides():
+    from sp500_momentum.monthly import build_panel
+
+    members = pd.DataFrame(
+        {
+            "date": pd.to_datetime(["2015-12-31", "2015-12-31", "2016-02-29"]),
+            "ticker": ["ACE", "CB", "CB"],
+        }
+    )
+    panel = build_panel(members, _two_series_prices(), holds=[1], overrides=CHUBB)
+    ace, old_chubb, new_chubb = (panel.iloc[i] for i in range(3))
+    assert ace["has_price"] and ace["price_ticker"] == "CB"
+    assert ace["fwd_ret_1m"] == pytest.approx(55 / 50 - 1)  # ACE's own next month
+    assert not old_chubb["has_price"] and pd.isna(old_chubb["price_ticker"])
+    assert new_chubb["has_price"] and new_chubb["price_ticker"] == "CB"
+
+
+def test_build_panel_refuses_one_series_for_two_members():
+    """Without the override, ACE (priced by the override) and the old Chubb would both use CB."""
+    from sp500_momentum.monthly import build_panel
+
+    members = pd.DataFrame(
+        {"date": pd.to_datetime(["2015-12-31", "2015-12-31"]), "ticker": ["ACE", "CB"]}
+    )
+    with pytest.raises(ValueError, match="two members"):
+        build_panel(members, _two_series_prices(), holds=[1], overrides=CHUBB[:1])
+
+
 def _queue(tickers, removed="2020-06-30"):
     return pd.DataFrame(
         {

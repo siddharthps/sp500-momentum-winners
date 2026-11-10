@@ -35,6 +35,7 @@ from sp500_momentum.config import (
     MONTHLY_PANEL,
     MONTHLY_PRICES,
     PRICE_FLAGS,
+    PRICE_OVERRIDES,
     RENAMES,
     START_DATE,
     WIKIPEDIA_DIR,
@@ -140,34 +141,65 @@ def load_prices() -> pd.DataFrame:
     return pd.concat(parts, ignore_index=True)
 
 
+def apply_price_overrides(members: pd.DataFrame, overrides) -> pd.DataFrame:
+    """Add `price_ticker`, the price series each member row uses: its own ticker, except inside an
+    override's window of decision dates, where it's the override's series (None: no price)."""
+    out = members.copy()
+    out["price_ticker"] = out["ticker"].astype(object)
+    for ticker, series, start, end in overrides:
+        rows = (out["ticker"] == ticker) & out["date"].between(
+            pd.Timestamp(start), pd.Timestamp(end)
+        )
+        out.loc[rows, "price_ticker"] = series
+    return out
+
+
 def suspect_tickers(
     members: pd.DataFrame, prices: pd.DataFrame, min_dollar_vol: float
 ) -> pd.Series:
-    """yfinance tickers whose median daily dollar volume over their member months is too low
-    for an S&P 500 stock: the data belongs to another security that reused the ticker."""
+    """yfinance series whose median daily dollar volume over their member months is too low
+    for an S&P 500 stock: the data belongs to another security that reused the ticker.
+
+    Member months are matched on the series each row uses (`price_ticker` if given)."""
     y = prices[prices["source"] == "yahoo"][["price_ticker", "month", "dollar_vol"]]
     m = members.assign(month=members["date"].dt.to_period("M"))
-    j = m.merge(y, left_on=["ticker", "month"], right_on=["price_ticker", "month"])
-    med = j.groupby("ticker")["dollar_vol"].median()
+    if "price_ticker" not in m:
+        m["price_ticker"] = m["ticker"]
+    j = m.dropna(subset=["price_ticker"]).merge(y, on=["price_ticker", "month"])
+    med = j.groupby("price_ticker")["dollar_vol"].median()
     return med[med.fillna(0) < min_dollar_vol]
 
 
-def build_panel(members: pd.DataFrame, prices: pd.DataFrame, holds: list[int]) -> pd.DataFrame:
+def check_one_row_per_series(panel: pd.DataFrame):
+    """Two priced member rows on the same date must not use the same price series: that would
+    mean one company's prices stand in for two members (a missed rename or a wrong override)."""
+    priced = panel[panel["has_price"]]
+    dup = priced[priced.duplicated(["date", "price_ticker"], keep=False)]
+    if len(dup):
+        pairs = dup.groupby("price_ticker")["ticker"].unique().head(10).to_dict()
+        raise ValueError(f"price series used by two members on the same date: {pairs}")
+
+
+def build_panel(
+    members: pd.DataFrame, prices: pd.DataFrame, holds: list[int], overrides=()
+) -> pd.DataFrame:
     """Join membership to returns and add SPY-relative targets.
 
-    `prices` must hold one series per ticker, with wrong-security series already removed."""
+    `prices` must hold one series per ticker, with wrong-security series already removed.
+    `overrides`: PRICE_OVERRIDES, the rows priced from another series or left unpriced."""
     spy = prices[prices["price_ticker"] == "SPY"]
     data_end = spy.loc[spy["entry_px"].notna(), "month"].max()
     rets = prices.groupby("price_ticker", group_keys=False)[prices.columns].apply(
         add_returns, holds=holds, data_end=data_end
     )
     spy_f = rets[rets["price_ticker"] == "SPY"].set_index("month")
-    panel = members.copy()
+    panel = apply_price_overrides(members, overrides)
     panel["month"] = panel["date"].dt.to_period("M")
-    panel = panel.merge(
-        rets, left_on=["ticker", "month"], right_on=["price_ticker", "month"], how="left"
-    )
+    panel = panel.merge(rets, on=["price_ticker", "month"], how="left")
     panel["has_price"] = panel["close_adj"].notna()
+    # As before overrides existed: an unpriced row names no price series.
+    panel.loc[~panel["has_price"], "price_ticker"] = np.nan
+    check_one_row_per_series(panel)
     for x in holds:
         f = f"fwd_ret_{x}m"
         panel[f"spy_fwd_ret_{x}m"] = panel["month"].map(spy_f[f])
@@ -196,7 +228,9 @@ def build(start: str = START_DATE):
     dates = month_ends(spy_days, start)
     members = point_in_time(current, changes, dates)
     prices = load_prices()
-    suspect = suspect_tickers(members, prices, MIN_MEMBER_DOLLAR_VOLUME)
+    suspect = suspect_tickers(
+        apply_price_overrides(members, PRICE_OVERRIDES), prices, MIN_MEMBER_DOLLAR_VOLUME
+    )
     logger.info(
         f"{len(suspect)} yfinance tickers fail the liquidity check (median member-month dollar "
         f"volume < ${MIN_MEMBER_DOLLAR_VOLUME / 1e6:.0f}M), prices dropped:\n"
@@ -208,7 +242,7 @@ def build(start: str = START_DATE):
     ).to_csv(YAHOO_SUSPECT, index=False)
     prices = prefer_alphavantage(prices)
     prices = prices[~(prices["price_ticker"].isin(suspect.index) & (prices["source"] == "yahoo"))]
-    panel = build_panel(members, prices, HOLD_MONTHS)
+    panel = build_panel(members, prices, HOLD_MONTHS, PRICE_OVERRIDES)
 
     MONTHLY_PANEL.parent.mkdir(parents=True, exist_ok=True)
     panel.to_parquet(MONTHLY_PANEL, index=False)

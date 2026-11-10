@@ -100,6 +100,10 @@ But their edge doesn't come from a deeper model that finds a "holy grail":
 - **Reused tickers.** An old symbol can now belong to a different company (Staples' old symbol,
   Tyco's, EMC's and others). Those series were rejected rather than spliced onto the old company,
   which adds to the gap above.
+- **Takeover targets whose buyer kept the ticker.** The price sources file the buyer's history under
+  the shared ticker. These were found and fixed: each company is priced from its own history, or left
+  unpriced where no free source has it. But it shows how easily a target's own record disappears.
+  A few targets are missing even as members (the old Allergan, 21st Century Fox, the old News Corp).
 - **No company accounts.** No earnings, valuations or analyst data, as above.
 
 **The test**
