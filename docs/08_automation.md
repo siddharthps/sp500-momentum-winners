@@ -98,70 +98,29 @@ so it needs no server.
 
 ### 3.6 Part 3: the data snapshots
 
-Rebuilding from nothing takes an Alpha Vantage key and about nine nights of downloads. A snapshot
-(on Hugging Face) removes that barrier and gives the dashboard and the cloud run one place to read
-from. There are **two**, because the price data isn't ours to give away:
+Rebuilding from nothing takes an Alpha Vantage key and about nine nights of downloads, so the data is
+also published as snapshots on Hugging Face. There are two, because the vendors' prices may be used
+but not redistributed:
 
 | | Private | Public |
 | --- | --- | --- |
-| **Contents** | Everything: the downloads, every table, the trained models | What this project computed: features and the member table with the raw price and volume columns removed, every model's out-of-sample scores, the live picks, the result tables |
-| **Who can read it** | Anyone with access, by token: the cloud run, the dashboard, collaborators | Anyone, without an account |
-| **Why** | Yahoo Finance's and Alpha Vantage's terms allow personal use and forbid redistribution | Returns, ranks, indicators and results are this project's own calculations; index membership (from Wikipedia) and the economic series (US government data) can be shared with attribution |
+| **Contents** | Everything: the downloads, every table, the trained models | This project's own calculations: features and the member table without raw prices, model scores, live picks, results |
+| **Who reads it** | The cloud run and collaborators, by token | Anyone, without an account |
 
-With access to the private snapshot, the whole pipeline after the downloads runs without any
-source or key. Everyone else can follow and check the analysis from the public tables, and rebuild
-the prices with their own access.
-
-**Every upload is scanned for the project's secrets first** (the API key and the tokens), because a
-leaked token can't be removed from a dataset's history, only revoked. A hit refuses the upload and
-names only the file. The first scan covered 700 files and found none.
-
-**What was verified:**
-
-- the private snapshot is private (an anonymous request is refused), and complete;
-- the public one opens without an account, and none of its tables has a raw price column;
-- a download of the private snapshot matched the local files byte for byte (700 of 700).
-
-Each upload is a commit in the dataset's history. The final snapshot after the last rebuild will be
-tagged, so the numbers in this book can always be traced to the exact data behind them.
+Every upload is scanned for the project's secrets first, because a leaked token can't be removed from
+a dataset's history. The final snapshot will be tagged, so the book's numbers trace to their exact
+data.
 
 ### 3.7 Part 4: the live dashboard
 
-A public web page, **[sp500-momentum-winners.streamlit.app](https://sp500-momentum-winners.streamlit.app/)**,
-shows the project at a glance and keeps itself up to date:
+A public page, **[sp500-momentum-winners.streamlit.app](https://sp500-momentum-winners.streamlit.app/)**,
+shows this month's picks for both strategies, the live record (from January 2027), the backtest (the
+same numbers as Chapter 7), and **input drift**: whether this month's values of the model's ten most
+important stock-level inputs look unlike the training years' (by the Population Stability Index;
+over 0.25 is a major shift). Drift is the one check that works before any live result exists.
 
-| Tab | Shows |
-| --- | --- |
-| Overview | The idea, what the backtests found, "research output, not advice" |
-| This month's picks | Both lists, with sectors and scores, and the date to trade at |
-| Live record | Each live month's return for both strategies against SPY's, how many picks beat it, and the base rate. Empty until January 2027, and it says so |
-| Backtest | $10,000 month by month, for the test years or 2020–2022, and the summary table: the same numbers as Chapter 7 |
-| Model monitoring | **Input drift** for the model's ten most important stock-level inputs, and the live hit rate once months accrue |
-
-**It reads only the public dataset,** so the page holds no secret and shows only public data. Each
-monthly run pushes new tables there, and the page picks them up within six hours. The page never
-downloads the large feature table: the run precomputes four small tables for it.
-
-**Input drift works before any result exists.** For each of the model's ten most important
-stock-level inputs, the page compares this month's spread of values across stocks with the training
-years', using the Population Stability Index, the standard measure in credit and model-risk work
-(under 0.1 stable, 0.1–0.25 moderate, over 0.25 major). A major shift means the model is being asked
-about a market unlike the one it learned from. Market-wide inputs have one value a month, so no
-spread to compare.
-
-**The page's numbers match the book's.** Its test-year figures (the chosen rule 60.7% a year, the
-6-month rule 33.0%, the headline model 4.1%, SPY 19.7%) are recomputed from the same simulation and
-agree with Chapter 7.
-
-**Where it's hosted.** Hugging Face Spaces now host Streamlit only on paid plans, so it runs on
-Streamlit Community Cloud, free, straight from the public repository. The page reads its data from
-the dataset, so moving hosts changed no code. An idle page sleeps; the next visitor wakes it in about
-half a minute.
-
-**Found while building it: two inputs were one.** The drift chart showed two volatility inputs with
-the same score: one is exactly 100 times the other (average true range ÷ price, in two units). Like
-the three copies dropped earlier, it's removed before the final rebuild. The same check found three
-chart labels wrongly saying "in dollars"; every price-like indicator here is divided by the price.
+It reads only the public snapshot, so it holds no secret, and picks up each monthly run within six
+hours. It's hosted free on Streamlit Community Cloud.
 
 ### 3.8 Part 5: the whole workflow in one place
 

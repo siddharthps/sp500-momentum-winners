@@ -1561,6 +1561,7 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - **Error fixed:** the 5 Nov label fix corrected **three** "(in dollars)" labels (ATR, MACD, MACD fixed periods), not two.
   - **Your ask:** §3.5 never said the notifications come from a Telegram bot; it now does, and names the public channel and private chat as Telegram's.
   - **14 of 18 Decisions rows removed as repeats;** four remain. Prose tightened throughout (3,182 → 2,517 words). A list under "What was verified" lacked its blank line, so the site ran it into the paragraph; fixed.
+  - **Your read: §3.6–3.7 still too long, §3.7 most.** §3.6 is now one sentence of why, a two-row table and one sentence on the scan and the tag; §3.7 two short paragraphs (the tab table, hosting backstory and duplicate-input story dropped; the duplicate is in Appendix A and #20's list). The verification list (private refused anonymously, public has no raw price column, 700/700 byte-identical) stays here in the journal as proof. **Error caught:** §3.6's table listed the dashboard as a private-snapshot reader; it reads only the public one. Chapter 8: 2,517 → 1,985 words.
   - **Trap:** a bare `python -` in a Bash heredoc chain waits on stdin and hangs the command; use a scratch script or the Edit tool.
 
 ---
