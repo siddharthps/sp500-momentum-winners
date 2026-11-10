@@ -65,9 +65,9 @@ is merged with CI green (both the CI and Docker workflows).
   suggestions (errors first), and ask which to apply (one prompt). Apply them, build the book, and
   commit locally, one commit per chapter. **Don't push** until the user asks.
 - **State (10 Nov):** Chapters 1–4 are approved and merged. #59, found while checking Chapter 3, is
-  fixed and merged. Chapters 5 and 6 are pushed as stacked PRs #64 and #65,
-  not merged. Chapter 7's review is committed locally on `22-chapter-7` (stacked on Chapter 6),
-  unpushed, and waits for the user's read. **Chapter 8 is next:** wait for the go-ahead.
+  fixed and merged. Chapters 5, 6, 7 and 8 are pushed as stacked PRs #64 → #65 →
+  #66 → (Chapter 8), none merged; merge in that order, rebasing each onto `main` after the one
+  below it is squash-merged. **Chapter 9 is next:** wait for the go-ahead.
 - **Detail split (agreed 10 Nov):** a chapter says what was done and why. The proof (evidence,
   factors, per-case checks) goes in decisions.md and the journal, which the book reaches through
   Appendix B. Keep chapters tight. **Decisions tables hold only decisions whose *why* isn't already

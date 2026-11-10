@@ -1556,6 +1556,11 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - **Tightened** the preface, §3.4's fairness paragraph, §3.8's filter setup, the closings of §3.5, 3.7 and 3.10, §3.11 (it repeated §3.7's bottom line) and §3.12's intro: 4,237 → 3,692 words.
   - **Your read: would a reader lose interest by the end of §3?** Likely: 15 subsections, with the answer only in §3.7/3.11. You chose an answer-first box at the top (over a separate results chapter, which would renumber 8–9 and every link): five questions answered with the key numbers, each linking to its section (anchors checked in the built site), then the bottom line and the map of the four parts.
   - **Then moved:** at the top it gave results before any explanation (your read). The five answers now replace Chapter 9 §2's three thin bullets ("What the project found", a summary written after the results), each linking back into Chapter 7; Chapter 7 keeps its short map of the parts.
+  - **Your read of §4–5:** trimmed four Decisions rows and merged three cost caveats into one (→ 3,578 words). Pushed as PR #66, stacked on #65.
+- **Chapter 8 review (branch `22-chapter-8`, stacked on Chapter 7):** checked against the code: the 95% priced check, the 497-score refit match, the dashboard's six-hour refresh and ten stock-level drift inputs, its 60.7/33.0/4.1/19.7% figures, the 700-file scan, the 2.9 GB image.
+  - **Error fixed:** the 5 Nov label fix corrected **three** "(in dollars)" labels (ATR, MACD, MACD fixed periods), not two.
+  - **Your ask:** §3.5 never said the notifications come from a Telegram bot; it now does, and names the public channel and private chat as Telegram's.
+  - **14 of 18 Decisions rows removed as repeats;** four remain. Prose tightened throughout (3,182 → 2,517 words). A list under "What was verified" lacked its blank line, so the site ran it into the paragraph; fixed.
   - **Trap:** a bare `python -` in a Bash heredoc chain waits on stdin and hangs the command; use a scratch script or the Edit tool.
 
 ---
