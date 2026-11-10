@@ -43,7 +43,7 @@ What $10,000 became over the test years (decisions Jan 2023 – Sept 2026, 45 mo
 in advance clearly beats SPY per unit of risk.** The rule tripled SPY's return, but through far more
 risk and a handful of AI and chip stocks; per unit of risk it tied. The book's
 [short version](https://siddharthps.github.io/sp500-momentum-winners/) and
-[Chapter 9](docs/09_lessons.md) explain why.
+[Chapter 9](docs/09_results.md) give the results; [Chapter 10](docs/10_lessons.md) explains why.
 
 ## The decision rule, in plain terms
 

@@ -28,8 +28,8 @@ words, with a worked example.
 - **The machine-learning models did worse.** None picked winners more often than chance in the years
   they were compared on, and the chosen one turned $10,000 into about $11,600 in the test years.
 - **Bottom line:** on this data the models add nothing that a plain 6-month momentum rule doesn't do
-  better, and no strategy chosen in advance clearly beats SPY per unit of risk. Chapter 9 discusses
-  why.
+  better, and no strategy chosen in advance clearly beats SPY per unit of risk. [Chapter 9](09_results.md)
+  has the results in more depth, and [Chapter 10](10_lessons.md) discusses why.
 
 Each chapter has the same shape:
 
@@ -49,9 +49,10 @@ Each chapter has the same shape:
 | 4 | [Features](04_features.md) | Draft |
 | 5 | [Exploratory analysis](05_eda.md) | Draft |
 | 6 | [Modelling](06_modelling.md) | Draft (setup and results; preview numbers) |
-| 7 | [Trading simulation and results](07_simulation.md) | Draft (Parts 1–4: the baseline rule, the models traded, paths and the trend filter, why the model loses) |
+| 7 | [Trading simulation](07_simulation.md) | Draft (Parts 1–4: the baseline rule, the models traded, paths and the trend filter, why the model loses) |
 | 8 | [Automation](08_automation.md) | Draft (Parts 1–5: the monthly run, notifications, snapshots, the dashboard, the whole workflow) |
-| 9 | [Limitations, lessons and next steps](09_lessons.md) | Draft (why the models lost, limitations, next steps; numbers refreshed after the final run) |
+| 9 | [Results](09_results.md) | Draft (the two questions answered, with the key numbers; refreshed after the final run) |
+| 10 | [Limitations, lessons and next steps](10_lessons.md) | Draft (why the models lost, what a professional fund would do differently, limitations, next steps) |
 
 ## Appendices
 
