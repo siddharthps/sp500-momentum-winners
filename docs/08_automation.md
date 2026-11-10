@@ -48,9 +48,8 @@ The run stops, writes nothing, and says why if:
   caught up. Only three exchange holidays can fall on a month's last weekday (Good Friday, Memorial
   Day and Thanksgiving), and they're allowed for.
 - **SPY has no close for that month,** or fewer than 95% of the month's members have a price;
-- **a member has no sector.** This happened on the first run: a company had just left the index, so
-  its sector no longer came from the current list. It would have added a feature column the model
-  had never seen. It now stops the run until the sector is filled in;
+- **a member has no sector** (a company that has just left the index needs one added by hand): it
+  would add a feature column the model never saw;
 - **the feature columns differ from the ones the model was tuned on,** in name or order.
 
 ### 3.3 The model is refitted each month, never re-tuned
