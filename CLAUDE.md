@@ -64,9 +64,14 @@ is merged with CI green (both the CI and Docker workflows).
   For each chapter: summarise it in plain words, check it against the code and the data, list
   suggestions (errors first), and ask which to apply (one prompt). Apply them, build the book, and
   commit locally, one commit per chapter. **Don't push** until the user asks.
-- **State (9 Nov):** Chapter 1 is approved and merged (PR #58). Chapter 2's review is committed
-  locally on branch `22-chapter-2`, unpushed, and waits for the user's read. **Chapter 3 is next,
-  not started:** wait for the go-ahead.
+- **State (9 Nov):** Chapters 1 and 2 are approved and merged. **Chapter 3's review has started.**
+  Checking it against the data found #59, the takeovers where the buyer kept the target's ticker,
+  fixed in its own PR. Chapter 3's own suggestions haven't been offered yet:
+  - stale counts (the share priced and the by-year row, now from the 9 Nov rebuild);
+  - the six wrong-company series' Alpha Vantage outcomes;
+  - "about 550 member-months can't be filled", now far more once the Alpha Vantage failures count;
+  - the DISCA → WBD repair;
+  - the flagged-price review.
 - **The ask behind it:** the published book didn't make the setup clear to a first-time reader. Read
   each chapter as that reader would, not as its author.
 - **For #20's refresh, beyond rerunning the notebooks:**
