@@ -1537,6 +1537,12 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 - **Same check on Chapter 4's §3 ("What came out"):** no repeats, but two errors, fixed directly.
   - **A paragraph had drifted.** "That last check is also a first, sober preview…" refers to §3.4's last check (the 0.021 correlation), but it sat at the end of §3.5, after the dividend paragraph. Moved back under §3.4's table.
   - **A claim was no longer true:** "the eight new features are filled as often for monthly-only stocks". Residual momentum and idiosyncratic volatility are 94.9% vs 98.1%, the 5-year seasonal average 96.9% vs 98.6%. Same warm-up effect as §3.4, now stated.
+- **Shipped Chapter 4 (PR #63).**
+- **Chapter 5 review, all four suggestions applied:**
+  - **Error:** §3.4 said the market finding "supports the planned strategy of buying only when the market is in an uptrend". Chapter 7 tested that filter, which lowered every pre-declared strategy's Sharpe in every period, and it wasn't adopted. The line now says the finding motivated the test, and what the test found.
+  - **Two Decisions rows removed as repeats:** "feature analysis on 2010–22 only" (§2) and "tuning across successive years" (§3.3).
+  - **The 0.26 claim tempered:** it's ~3.2 standard errors on 156 months, but the 12-month SPY returns overlap, so there are far fewer independent months. Suggestive, not proof.
+  - **Wording:** "most" → "many" acquired companies (twice), and "comes next" → "comes in Chapter 7".
 
 ---
 
