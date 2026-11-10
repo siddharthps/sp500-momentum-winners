@@ -64,10 +64,12 @@ is merged with CI green (both the CI and Docker workflows).
   For each chapter: summarise it in plain words, check it against the code and the data, list
   suggestions (errors first), and ask which to apply (one prompt). Apply them, build the book, and
   commit locally, one commit per chapter. **Don't push** until the user asks.
-- **State (10 Nov):** Chapters 1–4 are approved and merged. #59, found while checking Chapter 3, is
-  fixed and merged. Chapters 5, 6, 7 and 8 are pushed as stacked PRs #64 → #65 →
-  #66 → (Chapter 8), none merged; merge in that order, rebasing each onto `main` after the one
-  below it is squash-merged. **Chapter 9 is next:** wait for the go-ahead.
+- **State (10 Nov):** Chapters 1–8 are approved and merged (#60–#67). #59, found while checking
+  Chapter 3, is fixed and merged. **Chapter 9 is next** (its §2 now holds the five answers moved
+  from Chapter 7), then the appendices: wait for the go-ahead.
+- **Stacked PRs:** after squash-merging the lower PR, `git rebase --onto origin/main <lower> <upper>`
+  and force-push the upper branch (with lease); GitHub retargets it to `main` when the lower branch
+  is deleted.
 - **Detail split (agreed 10 Nov):** a chapter says what was done and why. The proof (evidence,
   factors, per-case checks) goes in decisions.md and the journal, which the book reaches through
   Appendix B. Keep chapters tight. **Decisions tables hold only decisions whose *why* isn't already
