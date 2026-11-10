@@ -94,12 +94,11 @@ the strongest, but it points the wrong way: last month's winners did slightly wo
 (Chapter 5). Whether the features add up to something useful *together* is the question for the
 models (Chapter 6).
 
-### 3.5 Eight more features, after a review against common practice and research
+### 3.5 Eight features from research and common practice
 
-A later review compared the features with those commonly built for stock-picking models, and with
-well-known findings from research on stock returns. Most were already here in monthly form. Eight
-measure something none of the others did, so only those were added; more of the same kind would
-only add noise:
+The features were compared with those commonly built for stock-picking models, and with well-known
+findings from research on stock returns. Most were already here in monthly form. These eight measure
+something none of the others does; more of the same kind would only add noise:
 
 | Feature | What it measures | Why it's useful |
 | --- | --- | --- |
@@ -118,9 +117,8 @@ three to five years of history (residual momentum, idiosyncratic volatility and 
 average) are blank a little more often for monthly-only stocks (95–97% filled against 98–99%), for the
 warm-up reason in Section 3.4.
 
-Three columns were **removed** at the same time: three rescalings of the rate of change (divided by
-100, plus 1, and plus 100) that are the same number in different units. They were dropped because
-their formulas are identical, not because of how they performed. That's 147 − 3 + 8 = 152.
+Three rescalings of the rate of change (divided by 100, plus 1, and plus 100) were **dropped**: the
+same number in different units, removed for their formulas, not their performance.
 
 Two common features were **not** added:
 
