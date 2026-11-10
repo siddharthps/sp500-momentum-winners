@@ -1511,6 +1511,14 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - Notebooks aren't rerun: that's #20.
 - **Book:** Chapter 3 gained a repair row, how the cases were checked, a decision row and a caveat for the missing lines. Chapter 9 gained a limitation.
 - **Trap for the future:** a ticker can carry the *buyer's* history for years before a deal. The volume check can't see it, but dividends and price levels can.
+- **Shipped:** PR #60 (Chapter 2) and PR #61 (#59; CI and the Docker workflow both green). #59 is closed and Done.
+- **Chapter 3 review, all four suggestions applied:**
+  - **Error:** "about 550 member-months can't be filled", with Dow among the examples. Dow is priced now (#59), and with the AV failures counted it's **about 3,040 (3%)** already: reused tickers 1,820, no data 504, partial series 296, kept-ticker targets 261, ticker now used by a current member 161 (SanDisk, Dell, Constellation, Qwest). Another ~4,150 are still to try. It's now a table, labelled preview.
+  - **Refreshed** from tonight's rebuild: 92.9% priced, and the by-year row 80 → 100%.
+  - **Repairs:** the six wrong-company series' AV outcomes (El Paso and Genzyme ok; Sunoco has no source; Compuware, King and Smith still queued), plus a DISCA → WBD row. All 147 Discovery rows before Apr 2022 are priced (the 6 Nov "145" counted only the unpriced ones).
+  - **The flag caveat** now says how each of the six moves was checked.
+  - "Early years missing **most** acquired companies" became "many": 2010 is 80% priced now.
+- **10 Nov, your read of Chapter 3:** you found Section 3 too verbose and left the call to me. I tightened it (37 lines out, 23 in) and kept every fact: shorter repair-table cells, two sentences instead of the "how found" paragraph, one sentence instead of the six-series bullets, and a shorter SVB paragraph and gap table. The full evidence (dividend factors, deal-day moves, Discovery's 0.98 correlation) stays in decisions.md and this journal, which the book reaches through Appendix B. That's the split: the chapter says what was done and why, the working record keeps the proof.
 
 ---
 

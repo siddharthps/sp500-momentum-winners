@@ -47,16 +47,12 @@ Walking backwards only works if the record is complete. It isn't quite:
 | **Addition never recorded** | Smurfit Westrock (`SW`) joined in 2024 with no entry | It would count back to 2010, priced with data from an older, unrelated "SW" | Add the missing entry |
 | **Typos** | One entry reads `ALLE \|` / `JCP \|` | JCPenney was never looked up for prices | Strip stray characters from tickers |
 | **Misleading reason** | Bemis was acquired, but the text reads like a ticker change | It wasn't fetched as an acquired company | Correct the reason by hand |
-| **The buyer kept the target's ticker** | ACE bought Chubb in 2016 and took its name and `CB` ticker. The price sources file ACE's history under `CB` | The old Chubb would be priced with ACE's prices, and ACE would have none | Price each company from its own history: ACE from `CB` before the deal, and the old Chubb left unpriced, because no free source has its history. The same for Tyco and Johnson Controls (`JCI`), Dow and DuPont (`DD`), and AGL and Nicor (`GAS`) |
+| **Rename recorded as a removal** | Discovery renamed itself Warner Bros. Discovery in 2022, recorded as "WBD added, DISCA removed" | Discovery (2010–2022) would look like a company that left, with no price | Treat it as a rename, priced from WBD's unbroken history |
+| **The buyer kept the target's ticker** | ACE bought Chubb in 2016 and took its `CB` ticker; the sources file ACE's history under `CB` | The old Chubb would carry ACE's prices, and ACE would have none | Price each from its own history: ACE from `CB`, the old Chubb unpriced. The same for Tyco/Johnson Controls, Dow/DuPont and AGL/Nicor |
 
-**How the kept-ticker cases were found and checked.** Each came from the record of changes ("acquired
-Chubb and retained the CB ticker") or from a ticker that came back into the index. Each was then
-checked on the series itself: whose **dividends** it pays, and whose **price level** it trades at.
-Yahoo's `CB` before 2016 pays ACE's dividends, and it barely moved on the day the deal was announced,
-as a buyer's shares do. The target's shares would have jumped towards the offer, about 30% above
-their last close. Yahoo's `DD` before 2017 pays
-Dow Chemical's dividends and closes at Dow's price, both scaled by the same factor. These cases slip
-past the volume check (Section 3.4), because both companies were large.
+The kept-ticker cases slip past the volume check (Section 3.4), because both companies were large.
+Each was confirmed from the series itself: whose dividends it pays, and whose price level it trades
+at.
 
 ### 3.3 Monthly prices
 
@@ -77,8 +73,9 @@ and −75% within a month.
 
 A real S&P 500 company trades far more than $10 million of shares a day. Any series whose typical daily
 trading, over its months as a member, falls below that has its prices thrown out. Six were caught:
-**Compuware, El Paso, Genzyme, King Pharmaceuticals, Smith International and Sunoco**. They're now on
-the Alpha Vantage list instead.
+**Compuware, El Paso, Genzyme, King Pharmaceuticals, Smith International and Sunoco**, and sent to
+Alpha Vantage instead. El Paso and Genzyme were found there, and Sunoco wasn't (its ticker is reused
+there too). The other three are still in the queue.
 
 ### 3.5 What happened next (the targets)
 
@@ -96,37 +93,41 @@ For each hold period (1, 3, 6 and 12 months), every row records:
 Past returns over 1, 3, 6 and 12 months, and over 12 months skipping the latest month, are recorded
 too. These are the "winner" measures the plain rule ranks on.
 
-**Stocks that disappear during the hold.** A delisted company's prices are kept up to the end of the
-month it left the index, then they stop. A position still open is valued at that last price and held
-as cash for the rest of the hold.
-
-The removal month itself must be kept. Silicon Valley Bank left the index on 15 Mar 2023. Its February
-month-end price was 288.11, its March one 0.905. Stopping before March would turn a −99.7% loss into
-no loss at all. With this rule, a stock bought at the end of January 2023 and held 3 months shows
-**−99.7%**, as it should.
+**Stocks that disappear during the hold.** A delisted company's prices are kept to the end of the
+month it left the index. An open position is valued at that last price, then held as cash. Keeping
+the removal month matters: Silicon Valley Bank went from 288.11 at the end of February 2023 to 0.905
+at the end of March, the month it left. Stopping in February would turn its **−99.7%** into no loss.
 
 ### 3.6 The result
 
-| Item | Value (3 Nov 2026) |
+| Item | Value (9 Nov 2026, preview) |
 | --- | --- |
 | Rows | **101,431** (one per member per month-end) |
 | Month-ends | 202 (Jan 2010 → Oct 2026) |
 | Distinct tickers | 819 |
 | Members per month-end | 499–504 |
-| Rows with a price | 87.4% |
+| Rows with a price | 92.9% |
 | Share of rows that beat SPY the next month | 49% |
 
 **Share of members with a price, by year:**
 
 | 2010 | 2012 | 2014 | 2016 | 2018 | 2020 | 2022 | 2024 | 2026 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 70% | 73% | 78% | 84% | 89% | 94% | 98% | 99.7% | 100% |
+| 80% | 84% | 88% | 92% | 96% | 98% | 99% | 99.7% | 100% |
 
-Almost all of the missing early rows are companies still on the Alpha Vantage list. About **550
-member-months can't be filled from any free source**. These are mostly old companies whose ticker a
-current member now uses, so no source keeps the old history: Dow Chemical before 2017, the old
-SanDisk, Dell before its 2013 buyout, and Constellation Energy before 2012. That gap is measured and
-reported, not hidden.
+**Rows still without a price:** 7,193 (7%). About 4,150 are companies still on the Alpha Vantage
+list. The other **~3,040 (3%) can't be filled from any free source**:
+
+| Why there's no price | Member-months |
+| --- | --- |
+| Another company now uses the old ticker on Alpha Vantage | 1,820 |
+| Alpha Vantage has no data | 504 |
+| Alpha Vantage covers only part of the company's time in the index | 296 |
+| The buyer kept the target's ticker (Section 3.2) | 261 |
+| A current member now uses the ticker (the old SanDisk, Dell, Constellation, Qwest) | 161 |
+
+Almost all are takeovers, buy-outs or failures in the early years: exactly what survivorship bias
+leaves out. The final count comes once the download is complete.
 
 ---
 
@@ -145,7 +146,8 @@ reported, not hidden.
 
 ## 5. Caveats
 
-- **Until the Alpha Vantage list is finished, the early years are missing most acquired companies.**
+- **Until the Alpha Vantage list is finished, the early years are still missing many acquired
+  companies.**
   Any results built on the table now are previews, still flattered by survivorship bias.
 - **Companies with only monthly prices trade at the month-end close, not the next open.** That's a
   small timing difference for a minority of rows.
@@ -153,5 +155,10 @@ reported, not hidden.
   them into their buyer's line: the old Allergan (until Actavis bought it and took its name in 2015),
   21st Century Fox (2013–2019) and the old News Corp (2010–2013). No free source has their history,
   so adding them back would only add unpriced rows. They're stated here instead.
-- **Six very large monthly moves are still flagged.** All look real: Apache (APA) in the 2020 oil crash,
-  and SanDisk, Intel, Dell and Moderna in 2026, all on heavy trading.
+- **Six very large monthly moves are still flagged** (more than +100% or below −75% in a month). Each
+  was checked one by one, and all are real:
+  - **Apache (APA), March and April 2020:** one day of −54% in the oil crash, then a steady rebound.
+  - **SanDisk, Intel and Dell in 2026:** steady climbs over 13–14 up days, with no split and heavy
+    trading.
+  - **Moderna, August 2026 (+156%):** one day of +177%, on 33 times its usual volume. A second price
+    source agrees exactly.
