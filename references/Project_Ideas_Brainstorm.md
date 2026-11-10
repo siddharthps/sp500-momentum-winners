@@ -1548,7 +1548,15 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - **Errors fixed:** the preview caveat's "12,700 missing, ~12,000 still fillable" predated the 9 Nov rebuild (now ~4,150 fillable in all years), so it now points to Chapter 3. "About 450 rows a month" → 440 (88,137 / 201). 88,137 is dated to the 4 Nov snapshot the models were trained on, so it doesn't seem to contradict Chapter 3's 9 Nov counts.
   - **Eight Decisions rows removed as repeats** of §3.2–3.5; eight remain.
   - **Tightened** the gap, percentile and closing paragraphs. §3.7 now says the headline won under the rule fixed before the comparison, rather than giving reasons that read as chosen afterwards. The goal points to Chapter 1 for the plain rule.
+  - **Your verbosity pass:** a second trim of the preface, goal, §3.1–3.3, the precision definition and the closings of §3.6, 3.8 and 3.9 (2,668 → 2,217 words). Pushed as PR #64 (Chapter 5) and #65 (Chapter 6, stacked on it).
   - **Not added:** the test-years chart (your call). The importance chart's PNG is from 4 Nov with the old "(in dollars)" labels (fixed in code 5 Nov); it refreshes in #20. It also shows `ta_atr` and `ta_natr` both in the headline's top 15: one more reason to drop `ta_natr`.
+- **Chapter 7 review (branch `22-chapter-7`, stacked on Chapter 6):** every number traced matches the reports or notebook outputs (53/7/60, t-statistics, grid medians, the 3.3 and 3.5 tables, turnover and buffer effects, 12 of 121, the filter table and rates, the Part 4 figures). Inverse volatility's +0.05/−0.11 is the top-10 average; so is the buffer's ~3 turns a year.
+  - **Errors fixed:** the goal covered only Part 1, so a first-time reader wasn't told the models, the filter and the diagnosis follow; one line added. "Most" → "many" acquired companies (twice). Chapter 4's caveat still says "most"; left for #20's count refresh.
+  - **13 of 21 Decisions rows removed as repeats** of §2–3; eight remain.
+  - **Tightened** the preface, §3.4's fairness paragraph, §3.8's filter setup, the closings of §3.5, 3.7 and 3.10, §3.11 (it repeated §3.7's bottom line) and §3.12's intro: 4,237 → 3,692 words.
+  - **Your read: would a reader lose interest by the end of §3?** Likely: 15 subsections, with the answer only in §3.7/3.11. You chose an answer-first box at the top (over a separate results chapter, which would renumber 8–9 and every link): five questions answered with the key numbers, each linking to its section (anchors checked in the built site), then the bottom line and the map of the four parts.
+  - **Then moved:** at the top it gave results before any explanation (your read). The five answers now replace Chapter 9 §2's three thin bullets ("What the project found", a summary written after the results), each linking back into Chapter 7; Chapter 7 keeps its short map of the parts.
+  - **Trap:** a bare `python -` in a Bash heredoc chain waits on stdin and hangs the command; use a scratch script or the Edit tool.
 
 ---
 

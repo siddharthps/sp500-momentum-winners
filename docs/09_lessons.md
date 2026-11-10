@@ -12,15 +12,26 @@ far more data have done better, what limits the conclusions, and what would be w
 
 ## 2. What the project found
 
-In short ([Chapter 7](07_simulation.md) has the full results):
+Each answer links to the part of [Chapter 7](07_simulation.md) that shows how it was reached.
 
-- **Buying recent winners mostly buys more risk.** In a market that rose for most of 2010–2026, more
-  risk was paid for with more return, but not with more return per unit of risk.
-- **The best plain rule, chosen on 2010–2022** (the top 5 by 6-month return, held 6 months), earned
-  about three times SPY's return in the test years, and tied with it per unit of risk. Its gain came
-  from one market theme, the AI and chip boom.
-- **No model beat a random pick** on the years the models were compared on, and the chosen one
-  trailed SPY and every plain rule in the test years.
+1. **Does buying recent winners beat SPY?** On return, usually; per unit of risk, rarely. Of 60
+   versions over 2010–2026, 53 earned more a year than SPY, only 7 more per unit of risk, and all 60
+   had a deeper worst fall. ([7, §3.1–3.2](07_simulation.md#31-more-return-but-more-risk))
+2. **And the best rule, chosen in advance?** The top 5 by 6-month return, held 6 months, was chosen
+   on 2010–2022. In the test years it turned $10,000 into **$59,209**, against SPY's $19,650, but only
+   tied SPY per unit of risk (a Sharpe ratio of 1.21 each), with a worst fall of −27% against −8%.
+   Most of the gain came from AI and chip stocks.
+   ([7, §3.3](07_simulation.md#33-chosen-on-20102022-followed-through-the-test-years))
+3. **Can a model pick better?** No. None beat a random pick on the years the models were compared
+   on, and the headline model turned $10,000 into **$11,640** in the test years, behind SPY and every
+   plain rule. ([7, §3.5–3.7](07_simulation.md#35-the-headline-model-loses-to-spy-and-to-the-plain-rules))
+4. **Does a market-trend filter help?** No. It lowered the risk-adjusted return of SPY and of every
+   pre-declared strategy, mostly by sitting out rebounds.
+   ([7, §3.9](07_simulation.md#39-the-filter-lowered-risk-adjusted-returns-everywhere))
+5. **What does the model actually buy?** Volatile, beaten-down stocks: a bet on rebounds, not on
+   momentum, that loses most when the market falls. ([7, §3.12–3.13](07_simulation.md#312-part-4-why-the-model-loses))
+
+**Bottom line: no strategy chosen in advance clearly beats SPY per unit of risk.**
 
 ---
 
