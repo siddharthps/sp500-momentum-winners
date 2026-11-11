@@ -82,11 +82,13 @@ is merged with CI green (both the CI and Docker workflows).
 - **For #20's refresh, beyond rerunning the notebooks:**
   - the README's result table and sizes;
   - Appendix A (drop `ta_natr`);
+  - #72 first: the `FOX` → `TFCF` class-B rename (Sep 2015), so the rebuild prices 21st Century Fox;
   - Chapter 9's numbers (Results) and Chapter 10's;
   - **then a last sweep of every page** (chapters, appendices, `docs/running.md`, the README, the
     dashboard text) for holdovers: "preview" notes and "still running", dated counts ("9 Nov",
     "4 Nov snapshot"), 186 → 185 columns, numbers that appear on two pages agreeing, and the
-    21st Century Fox caveats (Chapters 3 and 10) if #20 adds it back. Then remove this section.
+    21st Century Fox caveats (Chapters 3 and 10; #72 shows it was never a missing line). Then
+    remove this section.
 
 ## Traps (don't re-learn these)
 
