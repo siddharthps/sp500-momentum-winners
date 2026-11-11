@@ -83,7 +83,10 @@ is merged with CI green (both the CI and Docker workflows).
   - the README's result table and sizes;
   - Appendix A (drop `ta_natr`);
   - Chapter 9's numbers (Results) and Chapter 10's;
-  - the contents page's short version.
+  - **then a last sweep of every page** (chapters, appendices, `docs/running.md`, the README, the
+    dashboard text) for holdovers: "preview" notes and "still running", dated counts ("9 Nov",
+    "4 Nov snapshot"), 186 → 185 columns, numbers that appear on two pages agreeing, and the
+    21st Century Fox caveats (Chapters 3 and 10) if #20 adds it back. Then remove this section.
 
 ## Traps (don't re-learn these)
 
