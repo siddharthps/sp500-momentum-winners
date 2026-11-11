@@ -1,4 +1,4 @@
-# Chapter 7: Trading simulation and results
+# Chapter 7: Trading simulation
 
 > **Part 1** (3.1–3.3): the plain rule. **Part 2** (3.4–3.7): the Chapter 6 models, traded. **Part 3**
 > (3.8–3.11): the paths, and a market-trend filter. **Part 4** (3.12–3.15): why the model loses.

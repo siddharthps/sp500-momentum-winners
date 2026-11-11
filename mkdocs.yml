@@ -20,8 +20,9 @@ nav:
   - 4. Features: 04_features.md
   - 5. Exploratory analysis: 05_eda.md
   - 6. Modelling: 06_modelling.md
-  - 7. Trading simulation and results: 07_simulation.md
+  - 7. Trading simulation: 07_simulation.md
   - 8. Automation: 08_automation.md
-  - 9. Limitations, lessons and next steps: 09_lessons.md
+  - 9. Results: 09_results.md
+  - 10. Limitations, lessons and next steps: 10_lessons.md
   - Appendix A. Data dictionary: appendix_a_data_dictionary.md
   - Appendix B. The full working record: appendix_b_working_record.md
