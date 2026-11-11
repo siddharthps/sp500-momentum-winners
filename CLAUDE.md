@@ -87,7 +87,8 @@ is merged with CI green (both the CI and Docker workflows).
   - **then a last sweep of every page** (chapters, appendices, `docs/running.md`, the README, the
     dashboard text) for holdovers: "preview" notes and "still running", dated counts ("9 Nov",
     "4 Nov snapshot"), 186 → 185 columns, numbers that appear on two pages agreeing, and the
-    21st Century Fox caveats (Chapters 3 and 10; #72 shows it was never a missing line). Then
+    21st Century Fox caveats (Chapters 3 and 10; #72 shows it was never a missing line), and one
+    new limitation in Chapters 9 and 10: the rule chosen on 2010–22 isn't tracked live (11 Nov). Then
     remove this section.
 
 ## Traps (don't re-learn these)

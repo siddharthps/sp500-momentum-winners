@@ -527,6 +527,12 @@ a stock is the month's top gainer.
 - **Known limit (GitHub docs, checked 11 Nov):** scheduled workflows in public repositories are disabled after 60 days without repository activity; re-enable on the Actions tab. Stated in Chapter 8's caveats.
 - **The remaining third-party actions are pinned to commit SHAs,** each looked up: `astral-sh/setup-uv` v6.8.0, `docker/setup-buildx-action` v3.12.0, `docker/build-push-action` v6.19.2, `docker/login-action` v3.7.0.
 
+**What the live record tracks (11 Nov)**
+
+- **Two lists only: the headline model and its plain twin, the 6-month top 10 held one month.** They differ only in how stocks are chosen (same N, same members, same next open, same one-month hold, equal weights), so a live difference can only come from the model's choices. This continues the backtest's own pairing (Chapters 6–7).
+- **The rule chosen on 2010–2022 (top 5, held 6 months) is not tracked live** (your call, as recommended). It differs from the model in three ways at once; its monthly "picks" are one sixth of a 30-stock staggered portfolio, so a one-month score wouldn't describe it; and live slice accounting is new code before the deadline. It could have been declared without bias (no live month existed yet), so its absence is a stated limitation: its result rests on the backtest alone.
+- **No live comparison of many rules:** picking the best of several live would be choosing on the live data.
+
 **A Cloudflare Worker starts the monthly run (16 Nov, #76)**
 
 - **Why:** GitHub ran the schedule ~7 h late on 12 and 13 Nov (19:16 and 18:52 UTC vs 12:00), and its docs (read verbatim) say the `schedule` event "can be delayed during periods of high loads… some queued jobs may be dropped". On 1 Dec that would post the picks after the 14:30 UTC open.
