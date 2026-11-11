@@ -22,7 +22,7 @@ adjusted for dividends and splits. "The decision month" is the month that ends o
 | `date` | The decision date: the last trading day of the month |
 | `month` | The same month as text (year-month) |
 | `ticker` | The member's ticker in the index records on that date |
-| `price_ticker` | The ticker whose prices are used. Usually the same as `ticker`; it differs after a repaired rename, where a company's history continues under its new symbol |
+| `price_ticker` | The ticker whose prices are used. Usually the same as `ticker`. It differs after a repaired rename (a company's history continues under its new symbol), and in takeovers where the buyer kept the target's ticker (each company is priced from its own history). Blank when no usable price exists |
 | `source` | Where the prices come from: daily prices, or monthly-only prices for companies that left the index and have no daily history |
 | `has_price` | Whether a price was found for this member and month. Members without one stay in the table, so the gap can be measured |
 | `close_adj` | The month-end close, adjusted for dividends and splits |

@@ -506,6 +506,15 @@ a stock is the month's top gainer.
 - **Checked and fine:** IR/TT, LIN (Praxair), RTX (United Technologies), TFC, ELV, KDP, AVGO, and the same companies re-added later (ILMN, FSLR, AMD, PCG, EQT, TER, JBL).
 - **Corrects 6 Nov:** I'd said JCI's series continues the old Johnson Controls' history. It's Tyco's.
 
+**The book review (7–10 Nov, #22)**
+
+- **Read as a first-time reader, one chapter at a time,** checking every number against the code and the data; each chapter merged on its own PR (#58, #60, #62–#69).
+- **The detail split:** a chapter says what was done and why. The proof (evidence, per-case checks, how something was found) goes in this log and the journal, which the book reaches through Appendix B. Build stories ("found on the first run", "a later review") were moved out of the chapters.
+- **Decisions tables hold only decisions whose *why* isn't already given in "What came out".** Every table was checked for repeats; up to 14 rows per chapter were removed.
+- **A separate results chapter (Chapter 9):** the findings had been buried mid-chapter in Chapter 7. Chapter 9 answers the book's two questions with the key numbers, each linking to its evidence; the lessons became Chapter 10, and Chapter 7 was renamed "Trading simulation". An answer box at the top of Chapter 7 was tried first and dropped: it stated results before any explanation.
+- **Research is named only in a References section** (Chapter 10, §8), not in the running text. Every citation was looked up before it shipped, never quoted from memory.
+- **Terms are defined once and used exactly:** "the plain rule" (buying recent winners) and "the model" (the ML picks), defined in Chapter 9's goal.
+
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 
