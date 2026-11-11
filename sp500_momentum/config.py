@@ -239,6 +239,10 @@ REASON_OVERRIDES = {"BMS": "acquired"}
 AV_DAILY_BUDGET = 23
 AV_SLEEP_SECONDS = 1.5
 
+# Yahoo: tickers still empty after the first small-batch retry get one more round after this
+# pause (seconds). Rate limits are more common on cloud runners (#39).
+YAHOO_RETRY_PAUSE = 30
+
 HTTP_HEADERS = {"User-Agent": "sp500-momentum-winners research script"}
 
 # If tqdm is installed, configure loguru with tqdm.write

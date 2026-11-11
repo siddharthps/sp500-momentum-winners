@@ -122,3 +122,38 @@ def test_headline_settings_reads_the_tuned_parameters():
         }
     )
     assert pr.headline_settings(comparison, cv) == ("xgb", {"max_depth": 3})
+
+
+# --- #39: the record, not a local picks file, decides whether a month is done ---------------
+
+
+def _record(*decision_dates):
+    return pd.DataFrame({"decision_date": list(decision_dates), "strategy": "model", "rank": 1})
+
+
+def test_done_months_reads_the_running_record():
+    rec = _record("2026-09-30", "2026-10-30")
+    assert pr.done_months(rec) == {pd.Period("2026-09", "M"), pd.Period("2026-10", "M")}
+    assert pr.done_months(None) == set()
+    assert pr.done_months(_record()) == set()
+
+
+def test_is_due_on_a_weekday_when_last_month_is_missing():
+    rec = _record("2026-10-30")
+    assert pr.is_due(rec, pd.Timestamp("2026-12-01"))  # Tue: November's picks are missing
+    assert not pr.is_due(rec, pd.Timestamp("2026-11-11"))  # October's are done
+    assert pr.is_due(None, pd.Timestamp("2026-11-11"))  # an empty record: everything is due
+
+
+def test_is_due_waits_for_a_weekday():
+    rec = _record("2026-10-30")
+    assert not pr.is_due(rec, pd.Timestamp("2026-08-01"))  # a Saturday
+    assert not pr.is_due(rec, pd.Timestamp("2026-08-02"))  # a Sunday
+
+
+def test_is_due_catches_up_later_in_the_month():
+    # Missed the first weekday (the job didn't run): still due until the picks exist.
+    assert pr.is_due(_record("2026-10-30"), pd.Timestamp("2026-12-09"))
+    # A January run looks for December's picks across the year boundary.
+    assert pr.is_due(_record("2026-11-30"), pd.Timestamp("2027-01-04"))
+    assert not pr.is_due(_record("2026-12-31"), pd.Timestamp("2027-01-04"))

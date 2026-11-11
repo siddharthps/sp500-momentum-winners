@@ -2,8 +2,8 @@
 
 Course final project (Stock Markets Analytics Zoomcamp 2026). **Deadline: Fri 20 Nov 2026, 23:59 Dublin.**
 **Do things the professional, industry-standard way, not the quickest way.** ~30 h is a soft guide,
-not a cap. The extras (Telegram bot, Docker, dashboard, book site) are built; the last one (the
-cloud run, #39) must never cost the final rebuild (#20) or the write-up (#22).
+not a cap. The extras (Telegram bot, Docker, dashboard, book site, the cloud monthly run #39) are
+built. None of them may cost the final rebuild (#20) or the write-up (#22).
 
 ## The project
 
@@ -97,8 +97,13 @@ is merged with CI green (both the CI and Docker workflows).
   once the queue is empty (~12–14 Nov). Each ticker is recorded in the manifest as soon as it's
   fetched. If a run is killed (log stops after the header, task result `0xC000013A`), the next run,
   or `av-pull --max-calls 0` now, records the saved files without any calls.
-- **The monthly run** (task `sp500-momentum-monthly-run`, daily at 07:00, a no-op unless last
-  month's picks are missing on a weekday; log `logs/monthly_run.log`) refits the headline with its
+- **The monthly run** runs in GitHub Actions (`.github/workflows/monthly.yml`, weekdays 12:00 UTC;
+  #39): `predict due` reads only the running record from the private snapshot, and `predict run
+  --from-file` runs only when last month's picks are missing. "Done" comes from the record
+  (`live_picks.csv`), never a local picks file: a fresh runner has none. **Never run it in two
+  places** (the local task `sp500-momentum-monthly-run` too): both would post the picks. A manual
+  workflow run is a dry run by default. GitHub disables the schedule after 60 days without repo
+  activity (re-enable on the Actions tab). The run refits the headline with its
   tuned settings, never re-tunes. It stops on purpose when a newly removed member has no sector:
   add it to `references/removed_sectors.csv` (KVUE, the first time). Its refit must keep matching
   the backtest (run as of Jan 2023 it reproduces the test fit's scores exactly).
@@ -156,8 +161,9 @@ is merged with CI green (both the CI and Docker workflows).
   or folder starts feeding the pipeline, add it to both `paths:` lists in `docker.yml`.
 - **Pin new third-party GitHub Actions to commit SHAs** (version in a comment), and look every
   version up (`gh api repos/<owner>/<repo>/releases`), never recall it: a pin written from memory
-  (`trivy-action@0.28.0`) didn't exist, and that action's tags had been re-created. (Trivy is pinned
-  to a SHA; `astral-sh/setup-uv` and the `docker/*` actions are still on tags.)
+  (`trivy-action@0.28.0`) didn't exist, and that action's tags had been re-created. (Every
+  third-party action is pinned to a SHA since #39, 11 Nov; first-party `actions/*` stay on major
+  tags.)
 - **The book site** (GitHub Pages, `.github/workflows/pages.yml`) builds `docs/` with
   `scripts/mkdocs_hooks.py`: chapters keep GitHub-style paths (`../reports/figures/x.png`,
   `../references/...`) and the hook adapts them. Keep writing chapters that way; `--strict` in CI

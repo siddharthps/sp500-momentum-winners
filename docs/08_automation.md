@@ -1,7 +1,8 @@
 # Chapter 8: Automation
 
 > **Parts:** the monthly run (3.1–3.4), Telegram notifications (3.5), data snapshots (3.6), the live
-> dashboard (3.7), the whole workflow in one notebook (3.8), the container (3.9).
+> dashboard (3.7), the whole workflow in one notebook (3.8), the container (3.9), the run in the
+> cloud (3.10).
 
 ## 1. Goal
 
@@ -23,10 +24,11 @@ touched.
 | 4. Pick | The headline model's top 10 and the 6-month rule's top 10 | Both published, labelled |
 | 5. Save | One file of picks per month, and a running record of every pick | The record is what later monitoring reads |
 
-**It runs on the first weekday of each month at 07:00 (US Central),** after the month's last close
-and before the next open, so the golden rule still holds: features at the month-end close, the trade
-at the next open. If the computer is off that morning, the run happens on the first weekday it's on
-afterwards. A month that's already done is never redone by accident.
+**It runs on the first weekday of each month, early in the morning (US time),** after the month's
+last close and before the next open, so the golden rule still holds: features at the month-end
+close, the trade at the next open. It runs on GitHub's servers (Section 3.10), so it doesn't depend
+on any one computer being on. A missed day is caught up on the next weekday, and a month that's
+already done is never redone by accident.
 
 ---
 
@@ -86,7 +88,7 @@ are split by who they're for:
 | Why a run stopped, exactly as its checks put it (for example "no sector for KVUE") | A private Telegram chat | On any failure |
 | The night's Alpha Vantage pull: how many tickers were tried, how they came back, and how many are left; a reminder to retire the job when the queue is empty | The private chat | Each night until the download ends |
 
-**The channel is public on purpose.** The picks are already in the repository, so it reveals nothing
+**The channel is public on purpose.** The picks are already in the public dataset, so it reveals nothing
 new, but Telegram timestamps each post independently: proof the picks existed before their results.
 Anyone can read it in a browser, without an account. Operational alerts would be noise there.
 
@@ -159,6 +161,26 @@ the tests run in, on any machine with Docker.
 
 The image is about 2.9 GB, mostly the scientific libraries; slimming it wasn't worth the time.
 
+### 3.10 Part 7: the run in the cloud
+
+The live record is only worth something if no month is missed, and the first truly live picks come
+after this project ends. So the monthly run doesn't depend on one computer being on: a scheduled job
+on GitHub's servers runs it.
+
+- **Each weekday morning it asks one question first:** are last month's picks in the running
+  record? Usually they are, and it stops within a minute. On the first weekday of a month they
+  aren't, so it starts from the private snapshot, downloads fresh prices, and runs the same five
+  steps, with the same code and the model's settings frozen.
+- **"Done" is read from the running record, which travels with the snapshot,** not from a file on
+  the machine. A fresh machine therefore knows what's been done, a missed day is caught up on the
+  next weekday, and a month is never picked twice.
+- **Downloads are retried,** with longer waits each time, since a shared cloud machine meets more
+  temporary refusals than a home computer. If prices are still incomplete, the month-end checks
+  (Section 3.2) stop the run, nothing is published, and the private chat is told. A failure before
+  the run even starts alerts the chat too.
+- **The tokens live in the repository's secret store,** never in the code or the logs, and the job
+  can only read the repository, not change it.
+
 ---
 
 ## 4. Decisions and why
@@ -181,7 +203,8 @@ The image is about 2.9 GB, mostly the scientific libraries; slimming it wasn't w
 - **The live result is measured slightly differently from the backtest:** from the next open to the
   following month-end close, rather than to the open after it. The difference is one overnight
   move, the price of reporting on the first weekday of the month.
-- **It runs on one computer for now.** A copy in the cloud, so it doesn't depend on the computer
-  being on, is a separate step.
+- **GitHub switches scheduled jobs off in public repositories after 60 days without any change to
+  the repository.** If the project goes quiet, the monthly job has to be switched back on by hand,
+  and it may stop without any alert.
 - **New companies need their price history and sector.** Additions to the index are picked up from
   the current list automatically. Removals need their sector filled in by hand, and the run says so.

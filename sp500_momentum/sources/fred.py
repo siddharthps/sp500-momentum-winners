@@ -10,6 +10,8 @@ import io
 import pandas as pd
 import requests
 
+from sp500_momentum.retries import with_retries
+
 URL = "https://fred.stlouisfed.org/graph/fredgraph.csv"
 
 
@@ -24,8 +26,12 @@ def parse_csv(text: str, series_id: str) -> pd.DataFrame:
 
 def fetch_series(series_id: str, start: str) -> pd.DataFrame:
     """One FRED series from `start` on."""
-    r = requests.get(URL, params={"id": series_id, "cosd": start}, timeout=60)
-    r.raise_for_status()
-    if not r.text.startswith("observation_date"):
-        raise RuntimeError(f"Unexpected FRED reply for {series_id}: {r.text[:200]}")
-    return parse_csv(r.text, series_id)
+
+    def fetch() -> str:
+        r = requests.get(URL, params={"id": series_id, "cosd": start}, timeout=60)
+        r.raise_for_status()
+        if not r.text.startswith("observation_date"):
+            raise RuntimeError(f"Unexpected FRED reply for {series_id}: {r.text[:200]}")
+        return r.text
+
+    return parse_csv(with_retries(fetch, f"FRED {series_id}"), series_id)

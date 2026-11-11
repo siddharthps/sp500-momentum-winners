@@ -1,0 +1,88 @@
+# The monthly run in the cloud (#39): each weekday at 12:00 UTC, check whether last month's
+# picks exist yet; on the first weekday of a month (or the first run after it), rebuild from
+# the private snapshot plus fresh prices, make both strategies' picks, post them to Telegram and
+# publish both Hugging Face datasets. Every other day it stops after the check.
+#
+# Before the open: 12:00 UTC is 06:00 or 07:00 in Chicago, and US markets open at 13:30/14:30 UTC.
+# Secrets live in GitHub Secrets only (HF_USER, HF_TOKEN, TELEGRAM_*); nothing is committed back.
+# GitHub turns scheduled workflows off after 60 days without repository activity (public repos):
+# re-enable it on the Actions tab if that happens.
+name: Monthly run
+
+on:
+  schedule:
+    - cron: "0 12 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run: print the messages, publish nothing"
+        type: boolean
+        default: true
+      force:
+        description: "Redo last month's picks even if they already exist"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: monthly-run
+  cancel-in-progress: false # never cut a run short mid-publish
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      HF_USER: ${{ secrets.HF_USER }}
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      NO_COLOR: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        with:
+          enable-cache: true
+
+      - name: Install (exact versions from uv.lock)
+        run: uv sync --locked
+
+      - name: Is there work today? (reads only the running record)
+        id: due
+        run: uv run python -m sp500_momentum.modeling.predict due
+
+      - name: The monthly run (snapshot, fresh prices, picks, messages, publish)
+        if: steps.due.outputs.due == 'true' || github.event_name == 'workflow_dispatch'
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
+          FORCE: ${{ inputs.force }}
+        run: |
+          args=(--from-file)
+          if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run-notify --no-publish); fi
+          if [ "$FORCE" = "true" ]; then args+=(--force); fi
+          uv run python -m sp500_momentum.modeling.predict run "${args[@]}"
+
+      - name: Keep this run's picks with the run
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: picks-${{ github.run_id }}
+          path: reports/picks/
+          if-no-files-found: ignore
+          retention-days: 90
+
+      # The run alerts on its own failures; this covers the steps before it (install, the check).
+      - name: Alert the private chat if a scheduled run failed
+        if: failure() && github.event_name == 'schedule'
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          curl -sS -o /dev/null --fail-with-body \
+            "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=Monthly run failed on GitHub Actions: ${RUN_URL}" \
+            || echo "Telegram alert failed too"

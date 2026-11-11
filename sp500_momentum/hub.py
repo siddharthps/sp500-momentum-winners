@@ -7,7 +7,8 @@
 
 Why two (decisions.md, 5 Nov): Yahoo Finance and Alpha Vantage prices are licensed for personal
 use and their terms forbid redistribution. So the full data, raw prices included, is a **private**
-dataset, reached with a token by the cloud run, the dashboard and anyone given access. The
+dataset, reached with a token by the cloud run and anyone given access (the dashboard
+reads only the public one). The
 **public** dataset carries only what this project computed: features without raw price columns,
 model scores, the live picks and the strategies' results, plus a card naming every source.
 
@@ -270,6 +271,26 @@ def pull_snapshot(revision: str | None = None) -> None:
         token=_token(),
         allow_patterns=[f"{f.relative_to(PROJ_ROOT).as_posix()}/**" for f in PRIVATE_FOLDERS],
     )
+
+
+def fetch_file(local_path: Path) -> Path | None:
+    """One file of the private snapshot (by its project path), or None if it isn't there yet.
+    Lets a scheduled run decide whether it has work before pulling everything."""
+    from huggingface_hub import hf_hub_download
+    from huggingface_hub.errors import EntryNotFoundError
+
+    private_id, _ = repo_ids()
+    try:
+        return Path(
+            hf_hub_download(
+                repo_id=private_id,
+                repo_type="dataset",
+                filename=local_path.relative_to(PROJ_ROOT).as_posix(),
+                token=_token(),
+            )
+        )
+    except EntryNotFoundError:
+        return None
 
 
 @app.command()

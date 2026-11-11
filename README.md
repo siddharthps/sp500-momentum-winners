@@ -63,6 +63,7 @@ sectors, or features unlike the model's). The picks are a research output, not a
 | **The project book** | [siddharthps.github.io/sp500-momentum-winners](https://siddharthps.github.io/sp500-momentum-winners/): each step as a chapter, in plain words |
 | **Running the project** | [The full guide](docs/running.md): setup, every pipeline step, snapshots, Docker, notebooks, development |
 | **Live dashboard** | [sp500-momentum-winners.streamlit.app](https://sp500-momentum-winners.streamlit.app/): this month's picks, the live record, the backtest, model monitoring |
+| **The monthly run** | [GitHub Actions](https://github.com/siddharthps/sp500-momentum-winners/actions/workflows/monthly.yml): the picks are made in the cloud on the first weekday of each month, before the open |
 | **Monthly picks on Telegram** | [t.me/s/sp500_momentum_picks](https://t.me/s/sp500_momentum_picks) (readable in a browser) |
 | **Public dataset** | [huggingface.co/datasets/siddharthps/sp500-momentum-winners](https://huggingface.co/datasets/siddharthps/sp500-momentum-winners): the features and results, without the vendors' raw prices |
 | **Docker image** | `ghcr.io/siddharthps/sp500-momentum-winners` |
