@@ -64,9 +64,8 @@ is merged with CI green (both the CI and Docker workflows).
   For each chapter: summarise it in plain words, check it against the code and the data, list
   suggestions (errors first), and ask which to apply (one prompt). Apply them, build the book, and
   commit locally, one commit per chapter. **Don't push** until the user asks.
-- **State (10 Nov):** Chapters 1–8 are approved and merged (#60–#67). #59, found while checking
-  Chapter 3, is fixed and merged. On `22-chapter-9` (local, unpushed): Chapter 9's review, then a
-  new **Chapter 9: Results** and the lessons renamed **Chapter 10**; waits for the user's read.
+- **State (10 Nov):** Chapters 1–10 are approved and merged (Chapter 9 is the new Results
+  chapter; the lessons are Chapter 10). #59, found while checking Chapter 3, is fixed and merged.
   **The appendices are next:** wait for the go-ahead.
 - **Stacked PRs:** after squash-merging the lower PR, `git rebase --onto origin/main <lower> <upper>`
   and force-push the upper branch (with lease); GitHub retargets it to `main` when the lower branch
