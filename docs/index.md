@@ -1,37 +1,13 @@
 # S&P 500 momentum winners: the project book
 
-This book explains the project one step at a time, in the order the work was done. It covers the
-*why* of each step: what question it answers, what came out, and the choices made along the way. How
-to run the project is in the [README](../README.md).
+At each month-end, does buying the S&P 500's recent winners beat simply holding the index (SPY)?
+And can a machine-learning model pick better than "buy what went up"? This book follows the project
+step by step, from the data to the answer: what each step does, why, and what came out.
 
-## The short version
+Start with [Chapter 1](01_problem.md) for the setup in plain words, or go straight to the answers in
+[Chapter 9](09_results.md). [Running the project](running.md) has every command.
 
-**The question.** At each month-end, buy the S&P 500 stocks that rose the most and hold them for a
-while. Does that beat simply holding the index (SPY)? And can a machine-learning model pick better
-than "buy what went up"?
-
-**How it was tested.** Using the companies that were in the index *at each date*, including the ones
-that later left. Each strategy buys at the next morning's open, pays trading costs, and is compared
-with SPY on return per unit of risk. Every choice was made on 2010–2022, and every strategy is judged
-on the same untouched years, from 2023 on. [Chapter 1](01_problem.md) explains the setup in plain
-words, with a worked example.
-
-**What came out** (preview numbers, see the note at the end of this page):
-
-- **Buying recent winners mostly buys more risk.** Of 60 versions of the plain rule over 2010–2026, 53
-  earned more per year than SPY, but only 7 earned more per unit of risk, and every one had a deeper
-  worst fall.
-- **The best rule, chosen on 2010–2022, tripled SPY's return in the test years**: buying the top 5 by
-  6-month return and holding each 6 months turned $10,000 into about $59,000, against about $20,000
-  for SPY. But per unit of risk it only tied, with a worst fall of −27% against SPY's −8%. Most of
-  the gain came from a handful of AI and chip stocks.
-- **The machine-learning models did worse.** None picked winners more often than chance in the years
-  they were compared on, and the chosen one turned $10,000 into about $11,600 in the test years.
-- **Bottom line:** on this data the models add nothing that a plain 6-month momentum rule doesn't do
-  better, and no strategy chosen in advance clearly beats SPY per unit of risk. [Chapter 9](09_results.md)
-  has the results in more depth, and [Chapter 10](10_lessons.md) discusses why.
-
-Each chapter has the same shape:
+Most chapters have the same shape:
 
 1. **Goal**: the question the step answers.
 2. **What was done**: the path, in plain steps.
@@ -61,5 +37,11 @@ Each chapter has the same shape:
 | A | [Data dictionary](appendix_a_data_dictionary.md): every column of the final table | Draft (column list refreshed after the final run) |
 | B | [The full working record](appendix_b_working_record.md): for readers who want the whole process | Live |
 
-> **Numbers in the draft chapters are as of 3 Nov 2026.** The download of delisted companies is still
-> running (until about 12–14 Nov). Every count and result gets refreshed once it's done.
+## Running the project
+
+| Guide | What's in it | Status |
+| --- | --- | --- |
+| [Running the project](running.md) | Setup, every pipeline step and command, the data snapshots, Docker, the dashboard, notifications, what to rerun after a change, the notebooks and the development workflow | Live |
+
+> **The numbers are previews.** The download of delisted companies is still running (until about
+> 13 Nov). Every count and result is refreshed once it's done.

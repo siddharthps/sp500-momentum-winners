@@ -1,7 +1,7 @@
 # sp500-momentum-winners
 
 <a target="_blank" href="https://cookiecutter-data-science.drivendata.org/">
-    <img src="https://img.shields.io/badge/CCDS-Project%20template-328F97?logo=cookiecutter" />
+    <img src="https://img.shields.io/badge/CCDS-Project%20template-328F97?logo=cookiecutter" alt="Cookiecutter Data Science template" />
 </a>
 <a href="https://github.com/siddharthps/sp500-momentum-winners/actions/workflows/ci.yml">
     <img src="https://github.com/siddharthps/sp500-momentum-winners/actions/workflows/ci.yml/badge.svg" alt="CI" />
@@ -12,23 +12,22 @@ while, do you beat the S&P 500 itself? And can a machine-learning model pick bet
 went up"?**
 
 "Momentum" (recent winners keep winning for a while) is one of the best-documented patterns in stock
-returns, and it's easy to test badly. Using today's index members to look back leaves out every
-company that was acquired, went bust or was dropped, which flatters any "buy the winners" rule. So
-this project rebuilds **who was in the index on each date** since 2010, finds prices for the
-companies that later left, and tests two pickers against SPY, after trading costs, on the same
-untouched years:
+returns, and it's easy to test badly: looking back with today's index members leaves out every
+company that was acquired, went bust or was dropped. So this project rebuilds **who was in the index
+on each date** since 2010, finds prices for the companies that later left, and tests two kinds of
+strategy against SPY, after trading costs:
 
-- **The plain rule:** rank members by their return over the past 1, 3, 6 or 12 months, or 12 months
-  skipping the latest; buy the top 1, 5 or 10; hold 1, 3, 6 or 12 months (60 versions, all reported).
-- **Machine-learning models:** seven models rank members on 152 features (past returns, risk, technical
-  indicators, comparisons with other members, the market and the economy), predicting next month.
+- **The plain rule:** buy the members that rose the most over the past 1–12 months (60 versions, all
+  reported).
+- **The model:** buy the members a machine-learning model, trained on 152 features, rates most likely
+  to beat SPY next month.
 
-Every choice is made on decisions in 2010–2022, and every strategy is then judged once on the
-decisions from January 2023.
+Every choice is made on 2010–2022, and every strategy is then judged once on the decisions from
+January 2023.
 
 ## The result so far (preview)
 
-> **Preview numbers:** the download of delisted companies is still running (until ~12 Nov 2026), and
+> **Preview numbers:** the download of delisted companies is still running (until ~13 Nov 2026), and
 > everything is rerun once it's complete.
 
 What $10,000 became over the test years (decisions Jan 2023 – Sept 2026, 45 months, after costs):
@@ -41,9 +40,8 @@ What $10,000 became over the test years (decisions Jan 2023 – Sept 2026, 45 mo
 
 **The models add nothing that a plain 6-month momentum rule doesn't do better, and no strategy chosen
 in advance clearly beats SPY per unit of risk.** The rule tripled SPY's return, but through far more
-risk and a handful of AI and chip stocks; per unit of risk it tied. The book's
-[short version](https://siddharthps.github.io/sp500-momentum-winners/) and
-[Chapter 9](docs/09_results.md) give the results; [Chapter 10](docs/10_lessons.md) explains why.
+risk and a handful of AI and chip stocks; per unit of risk it tied.
+[Chapter 9](docs/09_results.md) has the results and [Chapter 10](docs/10_lessons.md) explains why.
 
 ## The decision rule, in plain terms
 
@@ -55,338 +53,50 @@ At each month-end close, using only what was known then:
    published next to it:** the 10 highest 6-month returns.
 3. Buy them in equal amounts at the next trading day's open, and hold for one month. Then repeat.
 
-**Nothing is bought** when the month's data can't be trusted. The monthly run then stops and
-publishes no picks: when the latest month-end isn't the month's last trading day, when SPY or more
-than 5% of members lack a price, when a member has no sector, or when the features differ from what
-the model was trained on. The picks are a research output, not advice.
+**Nothing is bought** when the month's data can't be trusted (an incomplete month, missing prices or
+sectors, or features unlike the model's). The picks are a research output, not advice.
 
 ## Links
 
 | | |
 | --- | --- |
-| **The project book** | [siddharthps.github.io/sp500-momentum-winners](https://siddharthps.github.io/sp500-momentum-winners/): each step as a chapter, in plain words (also as Markdown in [docs/](docs/index.md)) |
+| **The project book** | [siddharthps.github.io/sp500-momentum-winners](https://siddharthps.github.io/sp500-momentum-winners/): each step as a chapter, in plain words |
+| **Running the project** | [The full guide](docs/running.md): setup, every pipeline step, snapshots, Docker, notebooks, development |
 | **Live dashboard** | [sp500-momentum-winners.streamlit.app](https://sp500-momentum-winners.streamlit.app/): this month's picks, the live record, the backtest, model monitoring |
 | **Monthly picks on Telegram** | [t.me/s/sp500_momentum_picks](https://t.me/s/sp500_momentum_picks) (readable in a browser) |
 | **Public dataset** | [huggingface.co/datasets/siddharthps/sp500-momentum-winners](https://huggingface.co/datasets/siddharthps/sp500-momentum-winners): the features and results, without the vendors' raw prices |
-| **Docker image** | `ghcr.io/siddharthps/sp500-momentum-winners` ([below](#docker)) |
+| **Docker image** | `ghcr.io/siddharthps/sp500-momentum-winners` |
 | **Progress** | [issues](https://github.com/siddharthps/sp500-momentum-winners/issues), [milestones](https://github.com/siddharthps/sp500-momentum-winners/milestones), the [project board](https://github.com/users/siddharthps/projects/1); decisions in [references/decisions.md](references/decisions.md) |
-
-## Quickstart
-
-```bash
-uv sync                                                  # Python 3.12 and every dependency, from the lock file
-uv run pytest                                            # the tests (offline, no data needed)
-uv run python -m sp500_momentum.pipeline rebuild-all --dry-run   # the whole workflow's steps, in order
-```
-
-- **To read the results without running anything:** the book, or the notebooks, which are committed
-  with their outputs ([Notebooks](#notebooks)).
-- **To rebuild everything from the sources:** add an Alpha Vantage key ([Setup](#setup)) and follow
-  the [data pipeline](#data-pipeline) from step 1. With access to the private snapshot, `hub pull`
-  replaces the downloads ([Data snapshots](#data-snapshots-on-hugging-face)).
-- **Or in Docker:** `docker run --rm ghcr.io/siddharthps/sp500-momentum-winners` ([Docker](#docker)).
 
 ## Data sources
 
-| Source | What it gives | Size |
-| --- | --- | --- |
-| **Wikipedia:** the current S&P 500 list and its record of index changes | Who was in the index on each date, rebuilt month by month (with repairs for renames and missing entries) | 819 companies over 202 month-ends |
-| **Yahoo Finance** (yfinance) | Daily prices from 2000 for current members, the departed companies it still covers, SPY, the sector funds, the Dow, VIX, gold and oil | 3.67 M daily rows, 628 series |
-| **Alpha Vantage** (free tier) | Monthly prices for departed companies Yahoo no longer has, or whose symbol now belongs to another company | 74 companies so far (the download is still running) |
-| **FRED** (St. Louis Fed) | Core inflation, the Fed Funds rate, 1/5/10-year Treasury yields, potential GDP, each used only after its publication date | 6 series from 2005 |
-
-The result is **one row per member per month-end: 101,431 rows** from January 2010, 91% with a
-price, each with 152 features and the targets.
-
-### Features built here
-
-Besides past returns and 52 standard technical indicators (computed on monthly bars, and made
-comparable between cheap and expensive stocks), the project builds these features. Every one is
-known at the month-end close. [Appendix A](docs/appendix_a_data_dictionary.md) defines every column.
-
-| Feature | What it measures |
+| Source | What it gives |
 | --- | --- |
-| `ret_12_1m` | The 12-month return skipping the latest month, the standard momentum measure |
-| `vol_3m`, `vol_12m`, `downside_vol_12m` | Volatility over 3 and 12 months, and of the losing months only |
-| `beta_36m` | How much the stock moves with SPY (36 months) |
-| `ivol_36m` | How much it moves on its own, after removing the market's part |
-| `resid_mom_12_1m` | Momentum after removing the market's part, per unit of its own volatility |
-| `mom_12_1m_per_vol` | Momentum per unit of risk |
-| `drawdown_12m`, `drawdown_ath` | Distance below the 12-month and all-time high |
-| `dist_high_12m`, `dist_low_12m` | Distance from the 12-month high and low |
-| `ma3_ratio`, `ma10_ratio`, `above_ma10` | Price against its 3- and 10-month average, and whether it's above the 10-month one |
-| `up_months_12m` | Share of the past 12 months that rose |
-| `ret_1m_z` | Last month's move in units of the stock's usual volatility |
-| `max_ret_12m` | The best single month of the year: one big jump (often takeover news) vs a steady climb |
-| `range_1m` | The month's high-to-low range relative to the price |
-| `log_dollar_vol`, `dollar_vol_ratio` | Trading value (size and liquidity), and a volume spike against the past year |
-| `div_yield_12m` | Dividends over the past year ÷ price |
-| `seasonality_5y` | The stock's average return in next month's calendar month over 5 years |
-| `rank_ret_*`, `sector_rank_ret_*` | Each past return's percentile among that month's members, and within the sector |
-| `rs_spy_*`, `rs_sector_*` | Return minus SPY's, and minus the sector fund's |
-| `breadth_above_ma10` | Share of members above their 10-month average: how broad the market's rise is |
-| `dispersion_1m` | Gap between the month's best and worst members (90th vs 10th percentile) |
-| `winners_excess_1m`, `winners_excess_12m` | How last month's top 10 did against SPY: whether momentum is working right now |
-| `months_in_index`, `new_member_12m` | Time since joining the index, and whether it joined within the year |
-| `sector_etf_ret_*`, `mkt_*` | The sector fund's, SPY's, the Dow's, gold's and oil's returns; changes in the 10-year yield |
-| `vix`, `vix_pct_60m` | Expected market volatility, and where it sits in its 5-year range |
-| `cpi_yoy`, `cpi_mom`, `fedfunds`, `dgs1`/`dgs5`/`dgs10`, `yield_slope_10_1`, `gdppot_*` | Inflation, rates, the yield-curve slope and potential growth, as published at the time |
-| `month_of_year_*`, `sector_is_*` | Calendar-month and sector flags |
+| **Wikipedia:** the current S&P 500 list and its record of index changes | Who was in the index on each date (819 companies over 202 month-ends), with repairs for renames and missing entries |
+| **Yahoo Finance** (yfinance) | Daily prices from 2000 for current members, the departed companies it still covers, SPY, the sector funds, the Dow, VIX, gold and oil (628 series) |
+| **Alpha Vantage** (free tier) | Monthly prices for departed companies Yahoo no longer has, or whose symbol now belongs to another company (the download is still running) |
+| **FRED** (St. Louis Fed) | Core inflation, the Fed Funds rate, 1/5/10-year Treasury yields and potential GDP, each used only after its publication date |
 
-## Setup
+The result is **one row per member per month-end: 101,431 rows** from January 2010, each with 152
+features and the targets. [Appendix A](docs/appendix_a_data_dictionary.md) defines every column.
 
-Requires [uv](https://docs.astral.sh/uv/) and Python 3.12.
+## How to run
+
+Requires [uv](https://docs.astral.sh/uv/) and Python 3.12. To read the results without running
+anything, use the book, or the [notebooks](notebooks/), which are committed with their outputs.
 
 ```bash
-uv sync
+uv sync                                                    # Python 3.12 and every dependency, from the lock file
+uv run pytest                                              # the tests (offline, no data needed)
+uv run python -m sp500_momentum.pipeline rebuild-all --dry-run   # the whole workflow's steps, in order
+docker run --rm ghcr.io/siddharthps/sp500-momentum-winners # or the same, in Docker
 ```
 
-Copy your Alpha Vantage key into `.env` (git-ignored):
-
-```
-ALPHAVANTAGE_API_KEY=your_key_here
-```
-
-## Data pipeline
-
-| Step | Command | Source | Output |
-|---|---|---|---|
-| 1. Membership | `uv run python -m sp500_momentum.dataset membership` | Wikipedia: current list + "Historical components of the S&P 500" | `data/raw/wikipedia/` |
-| 2. Coverage | `uv run python -m sp500_momentum.dataset coverage` | yfinance | `data/interim/removed_coverage.csv` |
-| 3. Daily prices | `uv run python -m sp500_momentum.dataset yahoo-daily` | yfinance: current members, removed members it covers, SPY, sector ETFs, VIX, Dow, gold, WTI (from 2000) | `data/raw/yahoo/` |
-| 3b. Macro | `uv run python -m sp500_momentum.dataset fred` | FRED: core CPI, Fed Funds, 1/5/10-year yields, potential GDP (from 2005) | `data/raw/fred/` |
-| 4. Delisted prices | `uv run python -m sp500_momentum.dataset av-pull` | Alpha Vantage (free tier, ~23 tickers/day, resumable) | `data/raw/alphavantage/` |
-| 5. Monthly table | `uv run python -m sp500_momentum.monthly build` | Steps 1–4 | `data/processed/monthly_panel.parquet`, plus every price series in `data/interim/monthly_prices.parquet` (for backtests) |
-| 6. Features | `uv run python -m sp500_momentum.features build` | Step 5 + monthly bars, FRED, `references/removed_sectors.csv` | `data/processed/features.parquet` (152 features in named sets) |
-| 7. Models | `uv run python -m sp500_momentum.modeling.train run` | Step 6 | `reports/model_cv_results.csv`, `reports/model_comparison.csv`, `data/processed/model_scores.parquet`, `models/` (~1¾ h; `--n-iter 1` for a quick smoke run) |
-| 8. Monthly run | `uv run python -m sp500_momentum.modeling.predict run` | Steps 1–3 (current members only), 5–6, the step 7 settings | `reports/picks/picks_<YYYY-MM>.csv` (the headline model's and the 6-month rule's top 10), `data/processed/live_picks.csv` (every pick so far), `models/live_headline.joblib` (~2 min; `--no-download` rebuilds from the files on disk; `--force` redoes a month) |
-| Everything (5–7, notebooks, snapshots) | `uv run python -m sp500_momentum.pipeline rebuild-all --tag <name>` | The data on disk | The final rebuild, timed and stopping at the first failure; `--dry-run` lists the steps and the checks to do by hand before and after (~2 h with retraining; `--no-retrain`, `--no-notebooks`, `--no-publish`) |
-| Progress | `uv run python -m sp500_momentum.dataset av-status` | | |
-
-Step 4 is rerun once a day (and step 5 after it) until the queue is empty (started 2 Nov 2026,
-expected to finish ~12–14 Nov). It skips tickers already pulled and stops cleanly when the daily
-quota runs out. Removed members whose yfinance data fails step 5's volume check (another security
-reused the ticker) are added to its queue automatically.
-
-On Windows, `scripts/register_av_task.ps1` schedules it daily at 21:00 (PC local time) with Task Scheduler.
-Each run appends to `logs/av_pull.log`.
-
-**Step 8, the monthly run,** is scheduled by `scripts/register_monthly_task.ps1` (task
-`sp500-momentum-monthly-run`). It starts at 07:00 every day, but only does anything on a weekday when
-last month's picks don't exist yet: in practice the first weekday of each month, with catch-up if
-the PC was off. Each run appends to `logs/monthly_run.log`, and `scripts/monthly_run.ps1 -Force`
-runs it by hand. It re-downloads the full history of today's members and the benchmarks (the
-adjusted close is recomputed after every dividend, so appending new days would mix two adjustments).
-It refits the headline model with its tuned settings (never re-tuned), and **stops without writing
-anything** when:
-- the latest month-end isn't the month's last trading day;
-- SPY or more than 5% of members lack a price;
-- a member has no sector (add it to `references/removed_sectors.csv`);
-- the feature columns differ from the tuned model's.
-
-The picks are a research output, not advice.
-
-### Data snapshots on Hugging Face
-
-Two datasets, because Yahoo Finance and Alpha Vantage prices are licensed and their terms forbid
-redistribution:
-
-| Dataset | Access | Contents |
-|---|---|---|
-| [`sp500-momentum-data`](https://huggingface.co/datasets/siddharthps/sp500-momentum-data) | **private** (by token) | Everything: raw downloads, interim and processed tables, trained models. Used by `--from-file`, the dashboard and the cloud run |
-| [`sp500-momentum-winners`](https://huggingface.co/datasets/siddharthps/sp500-momentum-winners) | **public** | What this project computed: features and the member table **without raw price columns**, model scores, the live picks, result tables, with a card naming every source |
-
-```bash
-uv run python -m sp500_momentum.hub push --target both           # upload (refuses if a secret from .env is in any file)
-uv run python -m sp500_momentum.hub pull                         # the private snapshot -> data/, models/
-uv run python -m sp500_momentum.modeling.predict run --from-file --no-download   # monthly run, no sources at all
-```
-
-Settings in `.env`: `HF_USER` (the account) and `HF_TOKEN` (a write token). With access to the
-private snapshot, `hub pull` replaces steps 1–4, so `monthly build` onwards runs without any
-download or API key. Without it, the public tables are enough to follow the analysis. Prices can be
-rebuilt with your own access through steps 1–4.
-
-### Docker
-
-The [`Dockerfile`](Dockerfile) builds the pipeline from uv's lock file (Python 3.12, TA-Lib from its
-prebuilt wheel). It holds no data, models or secrets: mount them, or pull the private snapshot with
-a token at run time. CI builds it and runs the tests inside it on every pull request that can change it (the
-build, the dependencies, the code, tests, notebooks, or the files the pipeline reads; docs-only
-changes skip it). Each such merge to `main` publishes it to GitHub Container Registry.
-
-```bash
-docker pull ghcr.io/siddharthps/sp500-momentum-winners:latest      # or: docker build -t sp500-momentum .
-docker run --rm ghcr.io/siddharthps/sp500-momentum-winners           # the final rebuild's steps (dry run)
-docker run --rm --env-file .env -v "$PWD/data:/app/data" -v "$PWD/models:/app/models" -v "$PWD/reports:/app/reports" \
-  ghcr.io/siddharthps/sp500-momentum-winners sp500_momentum.modeling.predict run --no-publish
-```
-
-Any project module runs as `docker run <image> <module> [args]`. The image is about 2.9 GB, mostly
-the scientific stack. A vulnerability scan (Trivy) reports high and critical findings in the build
-log. The base image's Debian packages are updated at build time, so what remains has no fix
-published yet.
-
-### Live dashboard
-
-**[sp500-momentum-winners.streamlit.app](https://sp500-momentum-winners.streamlit.app/)**: a
-Streamlit app ([`dashboard/`](dashboard/README.md)), hosted free on Streamlit Community Cloud from
-this repository's `main` branch. It may take ~30 s to wake if nobody has visited for a while. It has five tabs: the overview, this month's picks, the live
-record, the backtest, and model monitoring (input drift). It reads only the public dataset, so it
-holds no token. `uv run streamlit run dashboard/app.py` runs it locally.
-
-### Telegram notifications (optional)
-
-The monthly picks go to a public channel,
-[t.me/s/sp500_momentum_picks](https://t.me/s/sp500_momentum_picks) (readable in a browser, no
-account needed; the first real post is on 1 Dec 2026). Failure alerts and the nightly Alpha Vantage summary go
-to a private chat. Without these settings, every message is only logged, and nothing fails.
-
-1. In Telegram, message **@BotFather**, send `/newbot`, and copy the **token** it gives you.
-2. Send your new bot any message (this opens your private chat with it).
-3. Create a **public channel**, add the bot as an **administrator** (so it can post), and post
-   anything in it once.
-4. Put the token in `.env`, run `uv run python -m sp500_momentum.notify find-chats` to list the chat
-   IDs, and add them:
-
-```
-TELEGRAM_BOT_TOKEN=123456:ABC...
-TELEGRAM_CHANNEL_ID=@your_channel_name
-TELEGRAM_CHAT_ID=your_private_chat_id
-```
-
-5. Check with `uv run python -m sp500_momentum.notify test`; `--dry-run` prints instead of sending.
-
-A failed message never fails the run that sends it, and the token is never logged. The monthly run's
-`--dry-run-notify` prints its messages instead of sending them.
-
-Step 3 takes about a minute. It saves one parquet file per ticker (unadjusted OHLC, adjusted close,
-volume, dividends, splits), ending at the previous close. Reruns skip tickers already saved, and
-`--refresh` downloads everything again. To test the setup without using API calls, run
-`scripts/av_pull_daily.ps1 -MaxCalls 0`. That also records any downloaded file the manifest is
-missing, for example after a run was killed (each ticker is recorded as soon as it's fetched).
-
-### Rerunning after a change
-
-Each step reads only the outputs of the steps before it:
-
-```
-membership ─► coverage ─► yahoo-daily ─┐
-                  │                    ├─► monthly build ─► features build ─► models ─► simulation
-                  └─► av-pull (daily) ─┘        │
-fred ──────────────────────────────────────────┼──────────────► (features build)
-                                                └─► yahoo_suspect.csv ─► av-pull queue
-```
-
-If something earlier changes, rerun from the first affected step, then everything after it:
-
-| What changed | Rerun from |
-|---|---|
-| Wikipedia refreshed, or a membership repair in `config.py` (`RENAMES`, `MISSING_ADDS`, `REASON_OVERRIDES`) | `coverage` → `yahoo-daily` → `monthly build` → `features build` → models |
-| `PRICE_START`, or price data re-downloaded | `yahoo-daily --refresh` → `monthly build` → … |
-| New Alpha Vantage data (every night until ~12–14 Nov) | `monthly build` → `features build` → … |
-| Volume threshold (`MIN_MEMBER_DOLLAR_VOLUME`) | `monthly build` (rewrites the suspect list, which changes the AV queue) → … |
-| Hold periods, the delisting cutoff or the targets (`monthly.py`) | `monthly build` → … |
-| A FRED series or its publication lag (`FRED_SERIES`) | `fred` → `features build` → … |
-| Sectors (`references/removed_sectors.csv`, `SECTOR_ETF`) or any feature (`features.py`) | `features build` → … |
-| The rule grid, the strategy versions or their costs (`RULE_LOOKBACKS`, `RULE_TOP_NS`, `COST_PER_SIDE`, `RULE_CHECK_FROM`, `START_DOLLARS`, `BUFFER_MULTIPLE`, `INVERSE_VOL_FEATURE`, `TREND_MONTHS`, `backtest.py`, `diagnostics.py`) | `run_notebooks run 04`, `run 05` and `run 06` |
-| The model setup or the models (`modeling/prep.py`, `models.py`, `evaluate.py`, `train.py`), or anything that changes the features | `modeling.train run` → `run_notebooks run` |
-| Anything above, or the analysis or charts (`eda.py`, `plots.py`) | … → `run_notebooks run` (refreshes the notebooks and `reports/figures/`) |
-
-Raw files are never edited by hand, so every output can be rebuilt from the downloads.
-
-## Notebooks
-
-The notebooks show each step's results. They call the package's functions and hold no logic of their
-own. They're committed **with their outputs**, so the tables and charts can be read on GitHub without
-the data:
-
-| Notebook | What it shows |
-|---|---|
-| [`00_run_all`](notebooks/00_run_all.ipynb) | **The whole workflow end to end**, one call per step: data (regime `local`, `hub` or `download`), transform, predict (refit with the tuned settings and the monthly run's checks), simulate (both strategies, the chosen rule and SPY on 2020–2022 and the test years), the latest trades. The same functions as the monthly run, with no side effects (no message, no publishing, no live record). About two minutes |
-| [`01_data`](notebooks/01_data.ipynb) | Membership, the survivorship gap, the Alpha Vantage progress, prices, FRED, the monthly table and the feature sets |
-| [`02_features_eda`](notebooks/02_features_eda.ipynb) | The target, each feature's signal (2010–2022 only), its stability, duplicates, market regimes, and a preview of the plain rule |
-| [`03_models`](notebooks/03_models.ipynb) | The folds, each model's tuned setting (2014–19), the comparison on 2020–22 where the headline is chosen, the single test (2023 on), the model rule columns and what the headline looks at. Reads the training step's outputs |
-| [`04_simulation`](notebooks/04_simulation.ipynb) | Backtests. Part 1: the baseline grid (60 rules: look-back × top N × hold, staggered, 10 bps a side) vs SPY and equal weight, and the best rule chosen on decisions 2010–2022 and followed through the test years (decisions from 2023). Part 2: the models traded (1-month hold; equal or inverse-vol weights, with or without a 2N hold buffer) vs SPY and the rules, in dollars from $10,000, for 2020–2022 and the test years. Takes about two minutes |
-| [`05_risk`](notebooks/05_risk.ipynb) | The paths: $10,000 month by month, falls from the peak, and rolling 12-month returns minus SPY's, for 2020–2022 and the test years, plus the rules from 2010. The SPY trend filter (out of the market when SPY is below its 10-month average, cash at the Fed Funds rate) applied to every strategy, with its average effect. Takes about two minutes |
-| [`06_diagnostics`](notebooks/06_diagnostics.ipynb) | Why the headline model loses: what each strategy buys (volatility, beta, size, past returns as within-month percentiles), hit rates by market regime, sector and year with month-level margins of error, the worst picks, and hypotheses for future work. Descriptive only |
-
-They're only ever run by this command, top to bottom in a fresh kernel, so the stored outputs always
-match the code. They show summaries, never raw tables (full results are saved under `reports/`).
-After running, the command checks every output and **fails** if:
-- a cell prints more than 50 lines;
-- anything was written to stderr (logs, progress bars, warnings);
-- an output contains a local path, an e-mail address or the API key;
-- a notebook is over 300 KB.
-
-Charts are written to `reports/figures/`:
-
-```bash
-uv run python -m sp500_momentum.run_notebooks run        # all notebooks (after features build)
-uv run python -m sp500_momentum.run_notebooks run 02     # just 02_features_eda
-```
-
-## Development
-
-```bash
-uv sync                        # installs dev tools too (pytest, ruff, pre-commit)
-uv run pre-commit install      # once: ruff + safety checks on every commit
-uv run pytest                  # tests (offline)
-uv run ruff check              # lint
-uv run ruff format             # format
-uv run mkdocs serve            # preview the book at http://127.0.0.1:8000
-uv run mkdocs build --strict   # the book build CI runs (fails on any broken chart or link)
-```
-
-**Workflow.** Work is tracked as GitHub issues, grouped into milestones (one per phase) and shown on
-the project board. Each issue gets its own branch (`<issue>-<short-name>`, e.g. `10-eda`) and is
-merged into `main` through a pull request whose description says `Closes #<issue>`. CI (GitHub
-Actions: ruff check, ruff format --check, pytest) runs on every push and pull request. `main` is
-protected: changes arrive only through pull requests, CI must pass, merges are squashed, and force-pushes
-or deleting `main` are blocked.
-
-## Project organization
-
-```
-├── docs               <- The project book: one chapter per step (MkDocs-ready)
-├── data
-│   ├── external       <- Data from third-party sources
-│   ├── interim        <- Intermediate data (e.g. yfinance coverage of removed members)
-│   ├── processed      <- Final modelling tables
-│   └── raw            <- Downloads, one folder per source (never edited by hand)
-├── models             <- Trained models and predictions
-├── notebooks          <- 00_run_all (the whole workflow), 01_data … 06_diagnostics (executed, with outputs)
-├── references         <- Decision log, brainstorm and dated working journal
-├── reports/figures    <- Generated charts (reports/picks: the monthly picks)
-├── scripts            <- Task Scheduler setup: the daily Alpha Vantage run and the monthly run
-├── logs               <- Run logs (git-ignored)
-├── tests              <- pytest tests (offline, no network)
-├── mkdocs.yml         <- Optional website build for docs/
-├── .github/workflows  <- CI: lint, formatting and tests on every push and pull request
-├── .pre-commit-config.yaml <- Checks run on every commit (ruff, large files, private keys)
-└── sp500_momentum     <- Source code
-    ├── config.py      <- Paths, study settings, membership repairs, FRED lags
-    ├── dataset.py     <- Command-line download steps (see above)
-    ├── sources/       <- One module per data source: wikipedia, yahoo, alphavantage, fred
-    ├── membership.py  <- Point-in-time membership and repairs to Wikipedia's changes
-    ├── monthly.py     <- The monthly member table: prices, past and forward returns
-    ├── features.py    <- Features from monthly bars (TA-Lib, risk, ranks, market, macro) and feature sets
-    ├── eda.py         <- Exploratory analysis: summary tables, IC, stability, plain-rule preview
-    ├── backtest.py    <- `pred*` rule columns, staggered-portfolio simulation with costs, the rule grid,
-    │                     strategy versions (weighting, buffer, trend filter), dollar paths
-    ├── diagnostics.py <- What the picks look like and where they win or lose (month-level margins)
-    ├── monitoring.py  <- Input drift (PSI), the live record, strategy returns for the dashboard
-    ├── pipeline.py    <- The whole workflow as five calls (the run-all notebook)
-    ├── notify.py      <- Telegram: picks to the public channel, alerts to a private chat
-    ├── hub.py         <- Hugging Face: the private snapshot, the public derived dataset
-    ├── plots.py       <- Chart style (validated palette) and the charts
-    ├── run_notebooks.py <- Executes the notebooks in a fresh kernel and checks their outputs
-    ├── nb.py          <- Notebook setup (output caps, quiet logs, chart style) and the output rules
-    └── modeling/      <- prep.py: feature matrix, targets, time blocks with gaps, CV folds,
-                          in-fold preparation; models.py: the candidates and search ranges;
-                          evaluate.py: top-10 scoring; train.py: tuning, comparison, the test;
-                          predict.py: the monthly run (fresh data, checks, refit, picks)
-```
+To rebuild everything from the sources, add an Alpha Vantage key to `.env` and follow the pipeline:
+membership → coverage → daily prices → FRED → delisted prices → monthly table → features → models →
+notebooks. With access to the private data snapshot, one download replaces the first five steps.
+**[The full guide](docs/running.md)** has every command, what to rerun after a change, the snapshots,
+Docker, the dashboard, notifications and the development workflow.
 
 ## Acknowledgements
 
