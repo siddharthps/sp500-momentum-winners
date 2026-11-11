@@ -1578,6 +1578,11 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - §2 heading uses "the plain rule" (Chapter 9's term); §4.3's "per batch" → "at a time"; reason 2 shortened to one sentence linking to Chapter 9 §3.5.
   - **Your call:** the overlaps go too (§4.2's "12 of 121" bullet and the "fix the rules first" lesson), against my recommendation to keep them.
   - **Your call: references out of the text, into a References section.** §2 and §3 now describe the research without naming it ("research on US stocks finds…", "a well-known rule of thumb in fund management…"); §8 lists Avramov, Cheng and Metzker (2023, *Management Science* 69(5), 2587–2619), Grinold (1989, *JPM* 15(3), 30–37), Gu, Kelly and Xiu (2020, *RFS* 33(5), 2223–2273) and McLean and Pontiff (2016, *JF* 71(1), 5–32). All looked up; McLean and Pontiff's pages checked in the PDF (page 2 is numbered 6, 28 pages). §2 was included as well as §3, so the chapter cites one way. 1,368 → 1,335 words.
+- **Shipped Chapters 9 and 10** (PR #68, #69).
+- **Appendices review (branch `22-appendices`):**
+  - **Appendix A** checked exactly, as a set difference between the table's 186 columns and every name in the appendix (shorthands expanded): nothing missing, nothing extra; ranks (1 = top), the 11 sector flags and the four columns the public dataset drops all match the code. **Error fixed:** `price_ticker` was described as differing only after a rename; since #59 it also differs for the kept-ticker takeovers, and it's blank when no usable price exists (7,193 rows).
+  - **The decision log gained a dated "book review (7–10 Nov)" section:** the detail split, the Decisions-table rule, the Results chapter (and the dropped answer box), references in their own section, terms defined once. Appendix B promises "every decision", and the chapters now send readers there for the proof.
+  - **Appendix B now maps the record:** what's in the log and the journal (Sections 8 and 9), and two tables linking the notebooks (with what each produces and which chapters use it) and the result tables behind the numbers. Notebook 01's row was corrected after checking its headings (it also builds the feature table).
   - **Trap:** a bare `python -` in a Bash heredoc chain waits on stdin and hangs the command; use a scratch script or the Edit tool.
 
 ---
