@@ -11,20 +11,19 @@ what would be worth trying next.
 
 ---
 
-## 2. Why the models lost to plain momentum
+## 2. Why the models lost to the plain rule
 
 Several reasons add up. The features are only one of them, and probably not the main one.
 
-**1. Next month's result is mostly noise.** A large study of US stocks (Gu, Kelly and Xiu, 2020)
-found that even the best machine-learning methods explain well under 1% of the month-to-month
-variation in individual returns. A flexible model with 152 inputs will find patterns that held in its
-training years by accident. The tuning showed exactly this: each model's best setting looked
-promising, its typical setting no better than chance ([Chapter 6](06_modelling.md)).
+**1. Next month's result is mostly noise.** Research on US stocks finds that even the best
+machine-learning methods explain well under 1% of the month-to-month variation in individual returns.
+A flexible model with 152 inputs will find patterns that held in its training years by accident. The
+tuning showed exactly this: each model's best setting looked promising, its typical setting no better
+than chance ([Chapter 6](06_modelling.md)).
 
-**2. The model learned a different, weaker bet.** The plain rule buys the period's winners. The
-chosen model leaned on short-term trading indicators and the market's last month, and in practice
-bought **volatile, beaten-down stocks**: a bet on rebounds, not on momentum. That bet loses most in
-the months the market falls, and so it did.
+**2. The model learned a different, weaker bet.** It bet on rebounds, not on winners
+([Chapter 9, §3.5](09_results.md#35-why-the-model-lost-it-bet-on-rebounds-not-on-winners)), and that
+bet loses most when the market falls.
 
 **3. The inputs are mostly the same information, repackaged.** Nearly every feature comes from each
 stock's own prices and volume, plus sector and economic data. Momentum is the strongest known signal
@@ -37,9 +36,9 @@ while momentum shows up over 3–12 months. That's only part of the gap: the mod
 6-month rule held one month.
 
 **5. The S&P 500 is the hardest place to find an edge.** These are the most-watched, most-traded
-stocks in the world. Studies of machine learning in stock returns (for example Avramov, Cheng and
-Metzker, 2023) find that much of the gain comes from the smallest and most distressed companies: in
-that study, leaving out the smallest stocks alone cut the strategy's payoff by about 60%.
+stocks in the world. Research finds that much of machine learning's gain in stock picking comes from
+the smallest and most distressed companies: leaving out the smallest alone cuts the payoff by about
+60%.
 
 **6. The test years rewarded riding one trend.** 2023–2026 was dominated by the AI and chip boom. A
 momentum rule is built to keep buying what has been rising, so it rode the boom. A model averaging
@@ -57,7 +56,7 @@ things this project couldn't:
   markets, and alternative data such as card spending or news text. Value, quality and earnings
   revisions are well-documented signals that aren't built from prices. This project has none of
   them: its biggest single limitation.
-- **Many more bets.** Grinold's fundamental law of active management says a strategy's risk-adjusted
+- **Many more bets.** A well-known rule of thumb in fund management says a strategy's risk-adjusted
   edge grows roughly with its skill per bet times the square root of the number of independent bets.
   A 51–52% hit rate is noise on ten stocks a month; across thousands of positions, bought *and* sold
   short, it can add up, and the result no longer rides on the market's direction.
@@ -66,10 +65,10 @@ things this project couldn't:
 
 Two things wouldn't change:
 
-- **Noise doesn't give way to bigger models.** In Gu, Kelly and Xiu's study, neural networks did best
-  with three layers and got worse as more were added.
-- **Edges fade once they're known.** Across 97 published return predictors, McLean and Pontiff (2016)
-  found portfolio returns 26% lower after each original study's sample ended, and 58% lower after
+- **Noise doesn't give way to bigger models.** In the largest study of machine learning on US stock
+  returns, neural networks did best with three layers and got worse as more were added.
+- **Edges fade once they're known.** Across 97 published ways of predicting stock returns, returns
+  were about a quarter lower after each original study's data ended, and more than half lower after
   publication. A signal that works gets traded until it weakens, so the work never stops at one
   model.
 
@@ -96,16 +95,13 @@ Two things wouldn't change:
 
 - **One test window of 45 months,** dominated by one market theme, in a mostly rising market. A
   different four years could tell a different story.
-- **Many strategies were scored.** Of 121 simulated strategies, 12 edge SPY on the test years.
-  Among so many related tries, a few are expected to by chance, which is why only the strategies
-  declared in advance count.
 
 ### 4.3 The trading assumptions
 
 - **A flat cost of 0.1% a side,** with no allowance for the price moving against a large order.
 - **Fractional shares,** so every pick gets exactly its share of the money. Small real accounts would
   keep some leftover cash.
-- **Buy only, concentrated.** The strategies hold 1 to 10 stocks per batch, and never sell short.
+- **Buy only, concentrated.** The strategies hold 1 to 10 stocks at a time, and never sell short.
 
 ---
 
@@ -114,9 +110,6 @@ Two things wouldn't change:
 - **Most of the work is in the data, not the model.** Rebuilding who was in the index on each date,
   and finding prices for the companies that left, took most of the effort. Without it, every result
   would be flattered by survivorship bias.
-- **Fix the rules before looking at results.** The test years, the main version of each strategy and
-  the measures were set in advance. The model version that looked best on 2020–2022 turned out to be
-  its worst on the test, which is why only the main version counts.
 - **A simple benchmark is hard to beat.** "Buy what went up over six months" is decades old and
   public, and it still beat every model built here.
 - **A negative result is a result.** The honest answer, "the models add nothing here", is worth more
@@ -147,4 +140,19 @@ None of these was built or tested. The test years have been used, so each would 
 - **This chapter interprets results; it doesn't add tests.** The reasons in Section 2 fit the
   evidence, but none of them was tested on its own.
 - **The comparison with professional funds is general background,** drawn from published research
-  and common practice, not from anything measured here.
+  (below) and common practice, not from anything measured here.
+
+---
+
+## 8. References
+
+The research behind Sections 2 and 3:
+
+- Avramov, D., Cheng, S. and Metzker, L. (2023). Machine learning vs. economic restrictions: evidence
+  from stock return predictability. *Management Science*, 69(5), 2587–2619.
+- Grinold, R. C. (1989). The fundamental law of active management. *Journal of Portfolio Management*,
+  15(3), 30–37.
+- Gu, S., Kelly, B. and Xiu, D. (2020). Empirical asset pricing via machine learning. *Review of
+  Financial Studies*, 33(5), 2223–2273.
+- McLean, R. D. and Pontiff, J. (2016). Does academic research destroy stock return predictability?
+  *Journal of Finance*, 71(1), 5–32.
