@@ -31,6 +31,7 @@ from sp500_momentum.config import (
     WIKIPEDIA_DIR,
     YAHOO_DAILY_DIR,
     YAHOO_MANIFEST,
+    YAHOO_RETRY_PAUSE,
     YAHOO_SUSPECT,
 )
 from sp500_momentum.sources import alphavantage as av
@@ -138,9 +139,16 @@ def yahoo_daily(
 
     frames = yahoo.download_daily(todo["ticker"].tolist(), start=start, end=end)
     # yfinance sometimes drops a ticker inside a big batch; try those once more on their own.
-    retry = [t for t, df in frames.items() if df.empty]
-    if retry:
-        logger.info(f"Retrying {len(retry)} empty tickers one batch at a time: {retry[:10]}...")
+    # A cloud runner meets rate limits more often, so a second round waits first (#39).
+    for round_, pause in enumerate([0, YAHOO_RETRY_PAUSE]):
+        retry = [t for t, df in frames.items() if df.empty]
+        if not retry:
+            break
+        if pause:
+            time.sleep(pause)
+        logger.info(
+            f"Retry round {round_ + 1}: {len(retry)} empty tickers in small batches: {retry[:10]}..."
+        )
         frames.update(yahoo.download_daily(retry, start=start, end=end, chunk=10))
 
     for t, df in frames.items():

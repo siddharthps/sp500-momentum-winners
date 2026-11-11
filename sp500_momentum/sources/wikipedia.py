@@ -11,6 +11,7 @@ import pandas as pd
 import requests
 
 from sp500_momentum.config import HTTP_HEADERS
+from sp500_momentum.retries import with_retries
 
 CURRENT_URL = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
 CHANGES_URL = "https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500"
@@ -24,8 +25,12 @@ def normalize_ticker(t: str) -> str:
 
 
 def _get_tables(url: str) -> list[pd.DataFrame]:
-    html = requests.get(url, headers=HTTP_HEADERS, timeout=30).text
-    return pd.read_html(io.StringIO(html))
+    def fetch() -> str:
+        r = requests.get(url, headers=HTTP_HEADERS, timeout=30)
+        r.raise_for_status()  # an error page must not be parsed as the list
+        return r.text
+
+    return pd.read_html(io.StringIO(with_retries(fetch, "Wikipedia")))
 
 
 def fetch_current() -> pd.DataFrame:

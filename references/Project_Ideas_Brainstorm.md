@@ -1598,6 +1598,21 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - **21st Century Fox → #72 (milestone "10. Final run", board Todo).** It was never a missing line: walking back from 2019 gives `TFCFA`/`TFCF` as members 2010–19, only unpriced until the 10 Nov AV pull. `TFCFA`'s series in 2010 (~$12–15, ~475 M shares a month, $0.075 dividend) is News Corp class A, the same company renamed in 2013, so the "old News Corp" and "21st Century Fox" are one line. **New error found:** class B (`TFCF`) is a member from 2010, but joined only on 18 Sep 2015 (recorded as `FOX` added, never mapped to `TFCF`): ~68 extra member-months. The book's "missing as a line" claims (Chapter 3, Chapter 10 §4.1, decisions.md's #59 note) are wrong for these two; only the old Allergan remains. CLAUDE.md's #20 list now starts with #72.
   - **Trap:** a bare `python -` in a Bash heredoc chain waits on stdin and hangs the command; use a scratch script or the Edit tool.
 
+### Session 35 — Wednesday, 11 Nov 2026 (#39: the monthly run in the cloud)
+
+- **Back on.** On 10 Nov you dropped #39 (its clean-up branch was never pushed); after sleeping on it you chose to build it as first recommended, while the Alpha Vantage queue empties. The clean-up branch was deleted; its one real fix (`hub.py`'s docstring said the dashboard reads the private dataset) is kept here.
+- **The design problem:** the run decided "already done" by `reports/picks/picks_<month>.csv`, a folder the snapshot doesn't carry. On a fresh cloud machine every weekday would look due, and the picks would be posted daily. **Fix:** "done" now comes from the running record (`live_picks.csv`), which travels in the snapshot; the local file still counts too.
+- **`predict due`:** downloads only the running record (one small file, `hub.fetch_file`) and prints `due=true/false`, also to `$GITHUB_OUTPUT`. Tried against the live dataset: October is done, so `due=false` today.
+- **The workflow** (`monthly.yml`): weekdays 12:00 UTC; `due` first; then `predict run --from-file`; picks kept as a 90-day artifact; a failed scheduled run alerts the private chat even before Python starts. Manual runs default to a dry run (`--dry-run-notify --no-publish`), with `force` to redo a month. Inputs reach the shell through environment variables, not interpolated into it. Read-only repository access; secrets in GitHub Secrets.
+- **Retries:** `retries.with_retries` (three tries, doubling waits, errors by type only) around Wikipedia and FRED; Wikipedia now also raises on an HTTP error rather than parsing an error page. Yahoo gets a second small-batch round after `YAHOO_RETRY_PAUSE` (30 s).
+- **Pinned the last four third-party actions to commit SHAs,** looked up as the latest release in each major and dereferenced to the commit (each confirmed to exist): setup-uv v6.8.0, setup-buildx v3.12.0, build-push v6.19.2, login v3.7.0.
+- **Checked, not recalled:** GitHub's docs say scheduled workflows in public repos are disabled after 60 days without activity. The monthly run never commits, so this would bite after the project goes quiet; it's in Chapter 8's caveats and the guide. A claim that nothing alerts when it stops came from a vendor page only, so the chapter says "may stop without any alert".
+- **Trap (again):** a `
+` inside a heredoc Python patch became a real newline and broke an f-string; fixed with the Edit tool.
+- **Tests:** 7 new (the record-based due logic across weekends, month and year boundaries, an empty record; the retry helper's waits and final error).
+- **Docs:** Chapter 8 gains "3.10 Part 7: the run in the cloud" and its schedule paragraph and channel line no longer assume a PC or the repository; the running guide gains "The monthly run in the cloud" (secrets, the dry-run command, the 60-day limit) and says to use one scheduler, never both.
+- **Still to do:** you set the five secrets; merge; a manual dry run end to end; then retire the local monthly task (your OK), before 1 Dec.
+
 ---
 
 ## 9. Decisions and Parking Lot

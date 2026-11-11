@@ -515,6 +515,18 @@ a stock is the month's top gainer.
 - **Research is named only in a References section** (Chapter 10, §8), not in the running text. Every citation was looked up before it shipped, never quoted from memory.
 - **Terms are defined once and used exactly:** "the plain rule" (buying recent winners) and "the model" (the ML picks), defined in Chapter 9's goal.
 
+**The monthly run moves to the cloud (11 Nov, #39)**
+
+- **Your call, after a night's thought** (on 10 Nov it was dropped; the clean-up branch was never pushed). Why: the live record is the one untouched test, the first truly live picks (1 Dec) come after submission, and a missed month is a permanent gap.
+- **GitHub Actions, weekdays 12:00 UTC** (before the US open), `.github/workflows/monthly.yml`. A cheap `predict due` reads only the running record from the private snapshot; only if last month's picks are missing does `predict run --from-file` pull the snapshot, download fresh data, rebuild, pick, post and publish. Most days end after the check.
+- **"Done" is read from the running record, not a local picks file.** The record travels in the snapshot; a fresh runner has no `reports/picks/`. This also makes catch-up automatic and a second post impossible from the cloud side.
+- **Never two schedulers:** the local task posts too, so it's retired once the cloud run is verified (your OK).
+- **Retries:** Wikipedia and FRED retry three times with doubling waits (`retries.with_retries`); Yahoo gets a second small-batch round after a 30 s pause. Still incomplete → the month-end checks stop the run, nothing is published, the private chat is told. A failed scheduled run alerts the chat even before Python starts.
+- **Secrets in GitHub Secrets only** (`HF_USER`, `HF_TOKEN`, `TELEGRAM_*`); the job has read-only repository access and commits nothing. The month's picks are kept as a 90-day run artifact.
+- **A manual run is a dry run by default** (messages printed, nothing published), so testing can't post by accident.
+- **Known limit (GitHub docs, checked 11 Nov):** scheduled workflows in public repositories are disabled after 60 days without repository activity; re-enable on the Actions tab. Stated in Chapter 8's caveats.
+- **The remaining third-party actions are pinned to commit SHAs,** each looked up: `astral-sh/setup-uv` v6.8.0, `docker/setup-buildx-action` v3.12.0, `docker/build-push-action` v6.19.2, `docker/login-action` v3.7.0.
+
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 

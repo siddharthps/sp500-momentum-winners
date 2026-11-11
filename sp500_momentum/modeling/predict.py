@@ -20,6 +20,7 @@ A month already done is skipped unless `--force`. Nothing here trades: it's a re
 """
 
 import json
+import os
 import time
 
 from dateutil.easter import easter
@@ -231,6 +232,22 @@ def append_record(record: pd.DataFrame | None, picks: pd.DataFrame) -> pd.DataFr
     return out.reindex(columns=PICK_COLUMNS)
 
 
+def done_months(record: pd.DataFrame | None) -> set[pd.Period]:
+    """The decision months the running record already has picks for."""
+    if record is None or record.empty:
+        return set()
+    return set(pd.to_datetime(record["decision_date"]).dt.to_period("M"))
+
+
+def is_due(record: pd.DataFrame | None, today: pd.Timestamp) -> bool:
+    """Whether a run should do anything today: a weekday, and last month's picks not yet in
+    the running record. The record (not a local picks file) decides, because it travels in the
+    snapshot: a fresh cloud machine knows what's been done (#39)."""
+    if today.weekday() >= 5:
+        return False
+    return (today.to_period("M") - 1) not in done_months(record)
+
+
 # ---------------------------------------------------------------------------------------------
 # The command
 # ---------------------------------------------------------------------------------------------
@@ -306,8 +323,12 @@ def _run(download: bool, force: bool, dry_run_notify: bool, publish: bool = True
 
     decision = pd.Timestamp(feats["date"].max())
     out_file = PICKS_DIR / f"picks_{decision:%Y-%m}.csv"
-    if out_file.exists() and not force:
-        logger.info(f"{out_file.name} already exists; nothing to do (use --force to redo it)")
+    record = pd.read_csv(LIVE_PICKS) if LIVE_PICKS.exists() else None
+    done = out_file.exists() or decision.to_period("M") in done_months(record)
+    if done and not force:
+        logger.info(
+            f"Picks for {decision:%Y-%m} already made; nothing to do (--force redoes them)"
+        )
         return
 
     rows, scores, pipe, trained_to = refit_and_score(feats, name, params, decision)
@@ -323,7 +344,6 @@ def _run(download: bool, force: bool, dry_run_notify: bool, publish: bool = True
     ).assign(made_at=made_at)[PICK_COLUMNS]
     PICKS_DIR.mkdir(parents=True, exist_ok=True)
     picks.to_csv(out_file, index=False)
-    record = pd.read_csv(LIVE_PICKS) if LIVE_PICKS.exists() else None
     record = append_record(record, picks)
     record.to_csv(LIVE_PICKS, index=False)
 
@@ -365,6 +385,29 @@ def _run(download: bool, force: bool, dry_run_notify: bool, publish: bool = True
         f"{(time.time() - t0) / 60:.1f} min. Model: {name} {json.dumps(params, sort_keys=True)}, "
         f"refitted on decisions to {trained_to:%Y-%m-%d}; {len(rows)} members scored.\n{summary}"
     )
+
+
+@app.command()
+def due(
+    from_hub: bool = typer.Option(
+        True, help="Read the running record from the private snapshot (off: the local file)"
+    ),
+):
+    """Whether the monthly run has work today: prints due=true/false (and writes it to
+    $GITHUB_OUTPUT in a workflow). Cheap: reads only the running record."""
+    if from_hub:
+        from sp500_momentum import hub
+
+        path = hub.fetch_file(LIVE_PICKS)
+    else:
+        path = LIVE_PICKS if LIVE_PICKS.exists() else None
+    record = pd.read_csv(path) if path is not None else None
+    answer = "true" if is_due(record, pd.Timestamp.now()) else "false"
+    logger.info(f"Months already picked: {sorted(str(m) for m in done_months(record))[-3:]}")
+    if out := os.getenv("GITHUB_OUTPUT"):
+        with open(out, "a", encoding="utf-8") as f:
+            f.write(f"due={answer}\n")
+    print(f"due={answer}")
 
 
 if __name__ == "__main__":

@@ -6,6 +6,7 @@ the development workflow. The book's chapters explain *why* each step exists; th
 to run it.
 
 **Contents:** [Setup](#setup) · [Data pipeline](#data-pipeline) ·
+[The monthly run in the cloud](#the-monthly-run-in-the-cloud) ·
 [Data snapshots](#data-snapshots-on-hugging-face) · [Docker](#docker) ·
 [Live dashboard](#live-dashboard) · [Telegram notifications](#telegram-notifications-optional) ·
 [Rerunning after a change](#rerunning-after-a-change) · [Notebooks](#notebooks) ·
@@ -54,11 +55,14 @@ schedules it daily at 21:00 (PC local time) with Task Scheduler, and each run ap
 `scripts/av_pull_daily.ps1 -MaxCalls 0`. That also records any downloaded file the manifest is
 missing, for example after a run was killed (each ticker is recorded as soon as it's fetched).
 
-**Step 8, the monthly run,** is scheduled by `scripts/register_monthly_task.ps1` (task
-`sp500-momentum-monthly-run`). It starts at 07:00 every day, but only does anything on a weekday when
-last month's picks don't exist yet: in practice the first weekday of each month, with catch-up if
-the PC was off. Each run appends to `logs/monthly_run.log`, and `scripts/monthly_run.ps1 -Force`
-runs it by hand. It re-downloads the full history of today's members and the benchmarks (the
+**Step 8, the monthly run,** runs in the cloud: the GitHub Actions workflow
+[`monthly.yml`](../.github/workflows/monthly.yml) starts at 12:00 UTC every weekday, asks
+`predict due` whether last month's picks are in the running record, and only then runs
+`predict run --from-file` (see [The monthly run in the cloud](#the-monthly-run-in-the-cloud)).
+On a PC instead, `scripts/register_monthly_task.ps1` schedules the same run with Task Scheduler
+(task `sp500-momentum-monthly-run`, 07:00 daily, logging to `logs/monthly_run.log`;
+`scripts/monthly_run.ps1 -Force` runs it by hand). **Use one or the other, never both:** each would
+post the picks. It re-downloads the full history of today's members and the benchmarks (the
 adjusted close is recomputed after every dividend, so appending new days would mix two adjustments).
 It refits the headline model with its tuned settings (never re-tuned), and **stops without writing
 anything** when:
@@ -69,6 +73,34 @@ anything** when:
 - the feature columns differ from the tuned model's.
 
 The picks are a research output, not advice.
+
+## The monthly run in the cloud
+
+[`monthly.yml`](../.github/workflows/monthly.yml) runs on GitHub's servers, so the live record
+doesn't depend on a PC being on. Each weekday at 12:00 UTC:
+
+1. `predict due` downloads only the running record (`data/processed/live_picks.csv`) from the
+   private snapshot and prints `due=true` if last month's picks aren't in it.
+2. If due: `predict run --from-file` pulls the private snapshot, downloads fresh data (Wikipedia,
+   Yahoo with paced retries, FRED with retries), rebuilds, checks, makes the picks, posts them to
+   Telegram and pushes both Hugging Face datasets. Nothing is committed to the repository.
+3. The month's picks are kept as a run artifact for 90 days; a failed scheduled run alerts the
+   private Telegram chat.
+
+**Secrets** (repository → Settings → Secrets and variables → Actions): `HF_USER`, `HF_TOKEN`
+(write), `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHANNEL_ID`, `TELEGRAM_CHAT_ID`. No Alpha Vantage key is
+needed: the delisted companies' prices come with the snapshot.
+
+**By hand** (Actions tab → Monthly run → Run workflow, or the command line). A manual run is a dry
+run by default (messages printed, nothing published); `force` redoes last month's picks:
+
+```bash
+gh workflow run monthly.yml -f dry_run=true -f force=true   # a full test that changes nothing
+gh run watch                                                 # follow it
+```
+
+**GitHub switches scheduled workflows off after 60 days without repository activity** (public
+repositories). If that happens, re-enable it on the Actions tab.
 
 ## Data snapshots on Hugging Face
 
