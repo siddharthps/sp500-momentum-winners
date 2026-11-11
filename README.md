@@ -73,7 +73,7 @@ sectors, or features unlike the model's). The picks are a research output, not a
 | Source | What it gives |
 | --- | --- |
 | **Wikipedia:** the current S&P 500 list and its record of index changes | Who was in the index on each date (819 companies over 202 month-ends), with repairs for renames and missing entries |
-| **Yahoo Finance** (yfinance) | Daily prices from 2000 for current members, the departed companies it still covers, SPY, the sector funds, the Dow, VIX, gold and oil (628 series) |
+| **Yahoo Finance** (yfinance) | Daily prices from 2000 for current members, the departed companies it still covers, SPY, the sector funds, the Dow, VIX, gold and oil (**3.67 M daily rows**, 628 series) |
 | **Alpha Vantage** (free tier) | Monthly prices for departed companies Yahoo no longer has, or whose symbol now belongs to another company (the download is still running) |
 | **FRED** (St. Louis Fed) | Core inflation, the Fed Funds rate, 1/5/10-year Treasury yields and potential GDP, each used only after its publication date |
 
