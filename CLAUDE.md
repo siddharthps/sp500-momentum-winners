@@ -41,7 +41,7 @@ is merged with CI green (both the CI and Docker workflows).
   - New work found along the way gets its own issue, not a silent addition.
 - **Pre-commit** runs ruff and safety checks on every commit. If it changes files, re-add them and
   commit again. Never skip it with `--no-verify`.
-- **"If you change X, rerun from Y"** is in the README ("Rerunning after a change"). Follow it after
+- **"If you change X, rerun from Y"** is in the running guide, `docs/running.md` ("Rerunning after a change"). Follow it after
   changing any earlier step.
 - **Check every claim before writing it.** No finding goes into a chart title, notebook text,
   chapter or summary until it has been checked against the actual output. (A drafted subtitle said
@@ -55,8 +55,11 @@ is merged with CI green (both the CI and Docker workflows).
   `docs/index.md`. Chapter shape: goal → what was done → what came out → decisions and why → caveats.
   - No mention of the course or the grading rubric.
   - No links to `references/`, except in the last appendix.
-  - Explain the why, not the how: no commands, file paths or module names (the README has those).
-- Keep the README's commands current.
+  - Explain the why, not the how: no commands, file paths or module names (`docs/running.md` has
+    those; it's the one page of the site that does).
+- Keep `docs/running.md` current (every command and step), and the README short: what the project
+  is, the result, links, a short "How to run" and a pointer to the guide (split on 11 Nov; it had
+  grown to ~400 lines).
 
 ## Now: the chapter-by-chapter review (temporary, from 7 Nov; remove when it ends)
 
@@ -80,7 +83,10 @@ is merged with CI green (both the CI and Docker workflows).
   - the README's result table and sizes;
   - Appendix A (drop `ta_natr`);
   - Chapter 9's numbers (Results) and Chapter 10's;
-  - the contents page's short version.
+  - **then a last sweep of every page** (chapters, appendices, `docs/running.md`, the README, the
+    dashboard text) for holdovers: "preview" notes and "still running", dated counts ("9 Nov",
+    "4 Nov snapshot"), 186 → 185 columns, numbers that appear on two pages agreeing, and the
+    21st Century Fox caveats (Chapters 3 and 10) if #20 adds it back. Then remove this section.
 
 ## Traps (don't re-learn these)
 
