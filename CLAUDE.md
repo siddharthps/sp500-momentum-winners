@@ -101,7 +101,8 @@ is merged with CI green (both the CI and Docker workflows).
   #39): `predict due` reads only the running record from the private snapshot, and `predict run
   --from-file` runs only when last month's picks are missing. "Done" comes from the record
   (`live_picks.csv`), never a local picks file: a fresh runner has none. **Never run it in two
-  places** (the local task `sp500-momentum-monthly-run` too): both would post the picks. A manual
+  places:** both would post the picks (the local task `sp500-momentum-monthly-run` was
+  unregistered on 11 Nov, after the cloud dry run passed). A manual
   workflow run is a dry run by default. GitHub disables the schedule after 60 days without repo
   activity (re-enable on the Actions tab). The run refits the headline with its
   tuned settings, never re-tunes. It stops on purpose when a newly removed member has no sector:

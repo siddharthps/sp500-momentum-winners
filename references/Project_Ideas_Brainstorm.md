@@ -1611,7 +1611,11 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 ` inside a heredoc Python patch became a real newline and broke an f-string; fixed with the Edit tool.
 - **Tests:** 7 new (the record-based due logic across weekends, month and year boundaries, an empty record; the retry helper's waits and final error).
 - **Docs:** Chapter 8 gains "3.10 Part 7: the run in the cloud" and its schedule paragraph and channel line no longer assume a PC or the repository; the running guide gains "The monthly run in the cloud" (secrets, the dry-run command, the 60-day limit) and says to use one scheduler, never both.
-- **Still to do:** you set the five secrets; merge; a manual dry run end to end; then retire the local monthly task (your OK), before 1 Dec.
+- **Secrets set from `.env`** (your choice): a script piped each value to `gh secret set`, printing only names; `gh secret list` shows all five.
+- **Merged #74** after CI and the Docker build (7m46s, with the new pins) passed.
+- **The dry run on GitHub's servers passed end to end** (`-f dry_run=true -f force=true`): `due=false` as expected (October done); **all 519 Yahoo histories downloaded on the first pass, no retry round, no warnings**; checks passed; messages printed, not sent; ~3½ min in all. **The 6-month rule's picks match the local 5 Nov run exactly; the model's ten are the same stocks in a slightly different order** (the snapshot now has the delisted companies pulled since 5 Nov, so the refit saw a few more rows). The one unknown, Yahoo refusing GitHub's machines, didn't happen.
+- **Retired the local monthly task** (`Unregister-ScheduledTask`, your OK), so 1 Dec isn't posted twice; the Alpha Vantage task stays until Friday's last pull.
+- **Follow-up:** the cloud log showed colour codes as text, because loguru colours output when it detects CI and ignores `NO_COLOR`; checked locally that `LOGURU_COLORIZE=false` turns it off, and set it in the workflow. #39 closed with every box ticked.
 
 ---
 
