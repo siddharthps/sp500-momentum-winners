@@ -19,8 +19,8 @@ this table and train the models on it.
 | 5 | Throw out price data that belongs to a different company (a volume check) |
 | 6 | Work out past returns and future returns, and compare them with SPY |
 
-The table is rebuilt from scratch whenever new data arrives, so the results always reflect
-everything collected so far.
+The table is always rebuilt from the raw downloads, never patched by hand, so every fix is one of
+the repairs listed below.
 
 ---
 
@@ -32,9 +32,10 @@ Start from today's 503 members and walk the list of changes **backwards in time*
 means taking the added company out and putting the removed one back. A change counts from its own
 date, so a stock added on a month-end counts as a member that day.
 
-After the repairs below, every month-end has **498–504 members**. That's right for the S&P 500,
-which has slightly more lines than 500 companies because a few have two share classes (e.g.
-Alphabet's GOOGL and GOOG).
+After the repairs below, the month-ends have **498–504 members**. The index always holds 500
+companies, and a few have two share classes (e.g. Alphabet's GOOGL and GOOG), so it lists slightly
+more than 500 lines. The months below 500, Jan 2010 to Jul 2014, mean the record still misses a line
+or two in those years; one is the old Allergan (Section 5).
 
 ### 3.2 Repairs to the record of changes
 
@@ -85,8 +86,8 @@ For each hold period (1, 3, 6 and 12 months), every row records:
 | --- | --- |
 | Future return | From the next open to the open at the end of the hold |
 | SPY's return | Over exactly the same window |
-| Excess return | The stock's return minus SPY's |
-| **Beat SPY?** | Yes if the excess return is positive. **The model's target, for the 1-month hold** |
+| Excess return | The stock's return minus SPY's. **The chosen model's target, for the 1-month hold** |
+| **Beat SPY?** | Yes if the excess return is positive. The yes/no models' target, for the 1-month hold |
 | Top 10%? | Yes if the stock was among the best tenth of members over the window |
 | Cut short? | Yes if the stock's prices ended during the hold (see below) |
 
@@ -115,7 +116,7 @@ at the end of March, the month it left. Stopping in February would turn its **�
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 86% | 89% | 92% | 96% | 98% | 99% | 99.6% | 100% | 100% |
 
-**Rows without a price: 4,456 (4.4%), and no free source can fill them:**
+**Rows without a price (member-months): 4,456 (4.4%), and no free source can fill them:**
 
 | Why there's no price | Member-months |
 | --- | --- |
@@ -125,8 +126,9 @@ at the end of March, the month it left. Stopping in February would turn its **�
 | The buyer kept the target's ticker (Section 3.2) | 261 |
 | A current member now uses the ticker (the old SanDisk, Dell, Constellation, Qwest) | 161 |
 
-Six in ten are takeovers, and most of the rest were dropped from the index for their size. **82% fall
-in 2010–2015:** the early years, where survivorship bias does its work.
+By the recorded reason (approximate, [Chapter 2](02_data_collection.md)), about six in ten are
+takeovers and one in five were dropped from the index for their size. **82% fall in 2010–2015:**
+the early years, where survivorship bias does its work.
 
 ---
 
@@ -135,21 +137,19 @@ in 2010–2015:** the early years, where survivorship bias does its work.
 | Decision | Why |
 | --- | --- |
 | Walk the changes backwards from today's list | Today's list is accurate. Errors can only come in from the changes, and those can be checked |
-| Renames limited to their own dates | Tickers get reused (Q, UA, SUN). A permanent rule would silently give one company another's prices |
 | A $10M daily trading check | It catches wrong-company data that starts *before* the removal date, which the date check misses |
-| Kept-ticker cases fixed by choosing each row's price series, not by a rename | Both companies were members, so both lines stay. Only the price series each line uses changes. A company with no free history of its own stays unpriced, rather than carrying the buyer's prices |
+| Kept-ticker cases fixed by choosing each row's price series, not by a rename | A rename would merge two members into one line. Both were members, so both lines stay; only the price series each uses changes |
 | Keep a delisted stock's prices to the end of its removal month | Removes the penny prices that follow a failure, without hiding the crash itself |
-| Trade at the next open, not the month-end close | The golden rule: decide on the close, trade the next morning |
 
 ---
 
 ## 5. Caveats
 
 - **4.4% of member-months have no free price at all** (Section 3.6), mostly takeovers and companies
-  dropped for their size, in the early years. Results built on the table are still slightly
-  flattered by survivorship bias.
+  dropped for their size (by recorded reason), in the early years. Results built on the table are
+  still slightly flattered by survivorship bias.
 - **Companies with only monthly prices trade at the month-end close, not the next open.** That's a
-  small timing difference for a minority of rows.
+  small timing difference for about one row in nine (11%), mostly in the early years.
 - **One takeover target is missing as a line, not just as a price.** The record of changes merges the
   old Allergan into its buyer's line (Actavis bought it and took its name in 2015). No free source
   has its history, so adding it back would only add unpriced rows. It's stated here instead.
