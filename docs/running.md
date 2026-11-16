@@ -109,9 +109,15 @@ cd cloudflare
 npm ci                                   # the pinned wrangler
 npm test                                 # the Worker's offline tests
 npx wrangler login                       # once, in a browser
-npx wrangler secret put GITHUB_TOKEN     # paste the fine-grained token
 npx wrangler deploy                      # publishes the Worker and its daily trigger
+npx wrangler secret put GITHUB_TOKEN     # then the token (the Worker must exist first)
 ```
+
+On a new Cloudflare account, the first deploy can't attach the daily trigger ("You need a
+workers.dev subdomain"): open **Workers & Pages** in the Cloudflare dashboard once, then deploy
+again. The Worker itself stays private (`workers_dev = false`). The current token expires on
+16 Nov 2027; GitHub e-mails a reminder before then. If it lapses, GitHub's backup schedule still
+starts the run, only less reliably on time.
 
 **By hand** (Actions tab → Monthly run → Run workflow, or the command line). A manual run is a dry
 run by default (messages printed, nothing published); `force` redoes last month's picks:
