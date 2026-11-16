@@ -94,6 +94,34 @@ def test_ta_features_are_scale_free():
     pd.testing.assert_frame_equal(a, z, rtol=1e-6)
 
 
+def test_no_indicator_is_a_rescaled_copy_of_another():
+    """Two columns that are the same number in different units (x 100, + 1) add nothing and
+    double-count one signal: ROCP/ROCR/ROCR100 (#29) and NATR (#20) were dropped for this."""
+    rng = np.random.default_rng(1)
+    close = 100 * np.cumprod(1 + rng.normal(0.01, 0.05, 120))
+    b = pd.DataFrame(
+        {
+            "open": close * rng.uniform(0.97, 1.0, 120),
+            "high": close * rng.uniform(1.0, 1.05, 120),
+            "low": close * rng.uniform(0.95, 1.0, 120),
+            "close": close,
+            "volume": rng.uniform(1e6, 2e6, 120),
+            "dollar_vol": 1.0,
+        },
+        index=pd.period_range("2010-01", periods=120, freq="M"),
+    )
+    ta = ft.ta_features(b).dropna()
+    ta = ta.loc[:, ta.std() > 0]
+    copies = []
+    cols = list(ta.columns)
+    for i, x in enumerate(cols):
+        for y in cols[i + 1 :]:
+            slope, intercept = np.polyfit(ta[x], ta[y], 1)
+            if np.allclose(ta[y], slope * ta[x] + intercept, rtol=1e-9, atol=1e-9):
+                copies.append((x, y))
+    assert copies == []
+
+
 def test_cross_section_ranks_stay_within_each_date():
     df = pd.DataFrame(
         {

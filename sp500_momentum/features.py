@@ -159,7 +159,7 @@ def ta_features(b: pd.DataFrame) -> pd.DataFrame:
     r["aroonosc"] = talib.AROONOSC(h, lo)
     r["bop"] = talib.BOP(o, h, lo, c)
     r["cci"] = talib.CCI(h, lo, c)
-    r["cmo"] = talib.CMO(c)
+    # CMO dropped (#20): it's RSI rescaled (RSI = 50 + CMO / 2)
     r["dx"] = talib.DX(h, lo, c)
     for name, fn in [("macd", talib.MACD), ("macdext", talib.MACDEXT), ("macdfix", talib.MACDFIX)]:
         m, s, hist = fn(c)
@@ -175,7 +175,7 @@ def ta_features(b: pd.DataFrame) -> pd.DataFrame:
     # number rescaled (decided by the formulas, not by results; decisions.md, 3 Nov).
     r["rsi"] = talib.RSI(c)
     r["stoch_k"], r["stoch_d"] = talib.STOCH(h, lo, c)
-    r["stochf_k"], r["stochf_d"] = talib.STOCHF(h, lo, c)
+    r["stochf_k"] = talib.STOCHF(h, lo, c)[0]  # fast %D dropped (#20): it equals slow %K
     r["stochrsi_k"], r["stochrsi_d"] = talib.STOCHRSI(c)
     r["trix"] = talib.TRIX(c)
     r["ultosc"] = talib.ULTOSC(h, lo, c)
@@ -186,8 +186,7 @@ def ta_features(b: pd.DataFrame) -> pd.DataFrame:
     r["adosc"] = talib.ADOSC(h, lo, c, v) / pd.Series(v).rolling(10).mean().to_numpy()
     r["obv"] = (pd.Series(talib.OBV(c, v)).diff(12).to_numpy()) / vol12
     # volatility
-    r["atr"] = talib.ATR(h, lo, c) / c
-    r["natr"] = talib.NATR(h, lo, c)
+    r["atr"] = talib.ATR(h, lo, c) / c  # NATR is this x 100: dropped as a copy (#20)
     # cycle (Hilbert transform; needs ~5 years of bars)
     r["ht_dcperiod"] = talib.HT_DCPERIOD(c)
     r["ht_dcphase"] = talib.HT_DCPHASE(c)
@@ -198,8 +197,7 @@ def ta_features(b: pd.DataFrame) -> pd.DataFrame:
     # price transforms, relative to the close
     r["avgprice"] = talib.AVGPRICE(o, h, lo, c) / c - 1
     r["medprice"] = talib.MEDPRICE(h, lo) / c - 1
-    r["typprice"] = talib.TYPPRICE(h, lo, c) / c - 1
-    r["wclprice"] = talib.WCLPRICE(h, lo, c) / c - 1
+    # TYPPRICE and WCLPRICE dropped (#20): relative to the close they're 2/3 and 1/2 of MEDPRICE
     ta = pd.DataFrame({f"ta_{k}": val for k, val in r.items()}, index=ok.index)
     ta = ta.replace([np.inf, -np.inf], np.nan)
     return out.join(ta)
