@@ -42,7 +42,7 @@ Walking backwards only works if the record is complete. It isn't quite:
 
 | Problem | Example | Effect if left alone | Fix |
 | --- | --- | --- | --- |
-| **Rename never recorded** | Facebook joined as `FB` in Dec 2013. The rename to `META` has no entry | Meta would count as a member from 2010, two years before it was even listed | Treat the 2013 addition as `META`. The same applies to Aptiv, Capri, Corpay, Everest Group, Under Armour, EchoStar and Alphabet's class C |
+| **Rename never recorded** | Facebook joined as `FB` in Dec 2013. The rename to `META` has no entry | Meta would count as a member from 2010, two years before it was even listed | Treat the 2013 addition as `META`. The same applies to Aptiv, Capri, Corpay, Everest Group, Under Armour, EchoStar, Alphabet's class C and 21st Century Fox's class B |
 | **Ticker reused over time** | `Q` was Qwest (to 2011), then QuintilesIMS (2017), and is Qnity today | A simple "Q means IQVIA" rule would give Qnity the wrong prices | Each rename applies **only within its own dates** |
 | **Addition never recorded** | Smurfit Westrock (`SW`) joined in 2024 with no entry | It would count back to 2010, priced with data from an older, unrelated "SW" | Add the missing entry |
 | **Typos** | One entry reads `ALLE \|` / `JCP \|` | JCPenney was never looked up for prices | Strip stray characters from tickers |
@@ -151,10 +151,9 @@ leaves out. The final count comes once the download is complete.
   Any results built on the table now are previews, still flattered by survivorship bias.
 - **Companies with only monthly prices trade at the month-end close, not the next open.** That's a
   small timing difference for a minority of rows.
-- **A few takeover targets are missing as lines, not just as prices.** The record of changes merges
-  them into their buyer's line: the old Allergan (until Actavis bought it and took its name in 2015),
-  21st Century Fox (2013–2019) and the old News Corp (2010–2013). No free source has their history,
-  so adding them back would only add unpriced rows. They're stated here instead.
+- **One takeover target is missing as a line, not just as a price.** The record of changes merges the
+  old Allergan into its buyer's line (Actavis bought it and took its name in 2015). No free source
+  has its history, so adding it back would only add unpriced rows. It's stated here instead.
 - **Six very large monthly moves are still flagged** (more than +100% or below −75% in a month). Each
   was checked one by one, and all are real:
   - **Apache (APA), March and April 2020:** one day of −54% in the oil crash, then a steady rebound.

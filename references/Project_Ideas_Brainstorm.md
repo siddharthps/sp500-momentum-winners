@@ -1616,6 +1616,7 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 - **The dry run on GitHub's servers passed end to end** (`-f dry_run=true -f force=true`): `due=false` as expected (October done); **all 519 Yahoo histories downloaded on the first pass, no retry round, no warnings**; checks passed; messages printed, not sent; ~3½ min in all. **The 6-month rule's picks match the local 5 Nov run exactly; the model's ten are the same stocks in a slightly different order** (the snapshot now has the delisted companies pulled since 5 Nov, so the refit saw a few more rows). The one unknown, Yahoo refusing GitHub's machines, didn't happen.
 - **Retired the local monthly task** (`Unregister-ScheduledTask`, your OK), so 1 Dec isn't posted twice; the Alpha Vantage task stays until Friday's last pull.
 - **Follow-up:** the cloud log showed colour codes as text, because loguru colours output when it detects CI and ignores `NO_COLOR`; checked locally that `LOGURU_COLORIZE=false` turns it off, and set it in the workflow. #39 closed with every box ticked.
+- **Explained the monthly run** (refit monthly with frozen settings; trained to 31 Aug 2026 for the October picks). **Your question: why the 6-month top 10, not the best rule?** Because the live record isolates one difference (how stocks are chosen), the chosen rule's six-slice portfolio isn't a monthly list, the backtest already used this pairing, and tracking many rules live would be choosing on live data. **Your call:** keep two lists; the chosen rule's live absence becomes a stated limitation in Chapters 9 and 10 during #20's sweep (on CLAUDE.md's list).
 
 ### Session 36 — Monday, 16 Nov 2026 (the AV pull done; #76: starting the monthly run on time)
 
@@ -1632,6 +1633,11 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 - **Secret stored** by piping the token into `wrangler secret put` (a cp1252 decode error on wrangler's emoji came after it was set; `secret list` shows `GITHUB_TOKEN`).
 - **End-to-end test:** the Worker's own code, run from the PC with the same token, made both calls (204, 204); GitHub started the run within seconds; it answered `due=false` and skipped the monthly run, as it should until 1 Dec. **Still unproven:** Cloudflare's scheduler with its stored secret; tonight's 03:17 UTC run will show it.
 - **#76 closed** (the merge's "Closes" closed it), boxes ticked, board Done. You can delete `CF_GITHUB_DISPATCH_TOKEN` from `.env`: Cloudflare holds its own copy.
+- **Merged #78** (the deploy notes).
+- **#72, 21st Century Fox:** rebased its branch onto `main` (a decisions.md conflict: both sides were additions, kept in date order). Added the dated rename `FOX` → `TFCF` on 18 Sep 2015 and a test built from the real change rows; **checked the test fails without the fix** (my first check stashed the test too, so proved nothing; redone stashing only the config).
+- **`monthly build`:** 101,431 → **101,363 rows (−68, exactly class B's Jan 2010–Aug 2015)**; priced 95.6% (92.9% on 9 Nov, before the AV pull finished); `TFCF` 42 rows and `TFCFA` 110, all priced; members per month-end 498–504 (was 499–504); the one-series-per-member check passed.
+- **AV queue still 0 after the build, so the AV task was unregistered** (CLAUDE.md's condition). No project task remains on the PC.
+- **Book corrected:** Chapter 3's caveat and Chapter 10 §4.1 now name only the old Allergan as a missing line; Chapter 3's never-recorded-renames row adds 21st Century Fox's class B; decisions.md's #59 note gets a dated correction.
 
 ---
 

@@ -503,6 +503,7 @@ a stock is the month's top gainer.
   - 258 are now priced from their own history: ACE, Tyco, the old Dow, DowDuPont;
   - Nicor's 23 rows stay unpriced, rather than getting AGL's prices.
 - **Missing lines, documented rather than invented:** the old Allergan, 21st Century Fox (2013–2019) and the old News Corp (2010–2013). A made-up ticker would leak into the download queues, and no free source has their prices.
+- **Corrected 16 Nov (#72):** 21st Century Fox and the old News Corp were never missing lines. They're one company and one line, `TFCFA` (class A), a member from 2010, unpriced only until the 10 Nov Alpha Vantage pull (its 2010 series is News Corp's: ~$12–15, ~475 M shares a month, $0.075 dividends). Class B (`TFCF`) joined on 18 Sep 2015 but counted from 2010; a dated rename (`FOX` → `TFCF` on that day) fixes it (−68 member-months). Only the old Allergan is missing.
 - **Checked and fine:** IR/TT, LIN (Praxair), RTX (United Technologies), TFC, ELV, KDP, AVGO, and the same companies re-added later (ILMN, FSLR, AMD, PCG, EQT, TER, JBL).
 - **Corrects 6 Nov:** I'd said JCI's series continues the old Johnson Controls' history. It's Tyco's.
 
@@ -526,6 +527,12 @@ a stock is the month's top gainer.
 - **A manual run is a dry run by default** (messages printed, nothing published), so testing can't post by accident.
 - **Known limit (GitHub docs, checked 11 Nov):** scheduled workflows in public repositories are disabled after 60 days without repository activity; re-enable on the Actions tab. Stated in Chapter 8's caveats.
 - **The remaining third-party actions are pinned to commit SHAs,** each looked up: `astral-sh/setup-uv` v6.8.0, `docker/setup-buildx-action` v3.12.0, `docker/build-push-action` v6.19.2, `docker/login-action` v3.7.0.
+
+**What the live record tracks (11 Nov)**
+
+- **Two lists only: the headline model and its plain twin, the 6-month top 10 held one month.** They differ only in how stocks are chosen (same N, same members, same next open, same one-month hold, equal weights), so a live difference can only come from the model's choices. This continues the backtest's own pairing (Chapters 6–7).
+- **The rule chosen on 2010–2022 (top 5, held 6 months) is not tracked live** (your call, as recommended). It differs from the model in three ways at once; its monthly "picks" are one sixth of a 30-stock staggered portfolio, so a one-month score wouldn't describe it; and live slice accounting is new code before the deadline. It could have been declared without bias (no live month existed yet), so its absence is a stated limitation: its result rests on the backtest alone.
+- **No live comparison of many rules:** picking the best of several live would be choosing on the live data.
 
 **A Cloudflare Worker starts the monthly run (16 Nov, #76)**
 

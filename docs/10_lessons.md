@@ -87,8 +87,7 @@ Two things wouldn't change:
   which adds to the gap above.
 - **Takeover targets whose buyer kept the ticker.** The sources file the buyer's history under the
   shared ticker, so each company is priced from its own history, or left unpriced where no free source
-  has it. A few targets are missing even as members (the old Allergan, 21st Century Fox, the old News
-  Corp).
+  has it. One target, the old Allergan, is missing even as a member.
 - **No company accounts.** No earnings, valuations or analyst data, as above.
 
 ### 4.2 The test
