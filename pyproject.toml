@@ -52,6 +52,7 @@ include = [
     "notebooks/**/*.ipynb",
     "dashboard/**/*.py",
     "scripts/**/*.py",
+    ".claude/hooks/**/*.py",
 ]
 
 [tool.ruff.lint]

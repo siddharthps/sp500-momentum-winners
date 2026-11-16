@@ -284,6 +284,14 @@ Actions: ruff check, ruff format --check, pytest, the book build) runs on every 
 request. `main` is protected: changes arrive only through pull requests, CI must pass, merges are
 squashed, and force-pushes or deleting `main` are blocked.
 
+**The docs agent.** A Claude Code subagent, `docs-editor` (`.claude/agents/docs-editor.md`),
+maintains this book and the README, one page per run: in *edit mode* it makes a given change, and
+in *review mode* it returns ranked suggestions and changes nothing. A guard hook
+(`.claude/hooks/docs_guard.py`, tested in `tests/test_docs_guard.py`) lets it write only `docs/`,
+`README.md` and `code_issues.local.md`, and run only read-only git and the book build. It reads the
+code but can't change it: clear code defects it finds go to `code_issues.local.md` at the repo
+root, a git-ignored local file, to become issues. It leaves its changes uncommitted.
+
 ## Project organization
 
 ```text

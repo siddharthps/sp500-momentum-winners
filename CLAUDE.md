@@ -215,6 +215,12 @@ is merged with CI green (both the CI and Docker workflows).
   script or use Edit. Never name a scratch script after a standard module (`numbers.py` broke numpy's
   import).
 - Raw data in `data/raw/` is never edited by hand.
+- **The docs agent** (`docs-editor`, #81): one page per run, edit or review mode (review proposes
+  only). Its guard hook (`.claude/hooks/docs_guard.py`) limits writes to `docs/`, `README.md` and
+  `code_issues.local.md`, and the shell to read-only git and `mkdocs build`. It **fails closed**:
+  a hook that crashes exits 1, which Claude Code lets through, so every error must exit 2. Paste
+  its drafted journal entry in only once the user approves. Its code notes (`code_issues.local.md`,
+  git-ignored) become issues, never silent fixes.
 
 ## Commands
 
