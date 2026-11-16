@@ -19,22 +19,22 @@ Most chapters have the same shape:
 
 | # | Chapter | Status |
 | --- | --- | --- |
-| 1 | [The problem and the idea](01_problem.md) | Draft |
-| 2 | [Data collection](02_data_collection.md) | Draft |
-| 3 | [Building the monthly table](03_monthly_table.md) | Draft |
-| 4 | [Features](04_features.md) | Draft |
-| 5 | [Exploratory analysis](05_eda.md) | Draft |
-| 6 | [Modelling](06_modelling.md) | Draft (setup and results; preview numbers) |
-| 7 | [Trading simulation](07_simulation.md) | Draft (Parts 1–4: the baseline rule, the models traded, paths and the trend filter, why the model loses) |
-| 8 | [Automation](08_automation.md) | Draft (Parts 1–5: the monthly run, notifications, snapshots, the dashboard, the whole workflow) |
-| 9 | [Results](09_results.md) | Draft (the two questions answered, with the key numbers; refreshed after the final run) |
-| 10 | [Limitations, lessons and next steps](10_lessons.md) | Draft (why the models lost, what a professional fund would do differently, limitations, next steps) |
+| 1 | [The problem and the idea](01_problem.md) | Final |
+| 2 | [Data collection](02_data_collection.md) | Final |
+| 3 | [Building the monthly table](03_monthly_table.md) | Final |
+| 4 | [Features](04_features.md) | Final |
+| 5 | [Exploratory analysis](05_eda.md) | Final |
+| 6 | [Modelling](06_modelling.md) | Final (setup and results) |
+| 7 | [Trading simulation](07_simulation.md) | Final (Parts 1–4: the baseline rule, the models traded, paths and the trend filter, why the model loses) |
+| 8 | [Automation](08_automation.md) | Final (the monthly run, notifications, snapshots, the dashboard, the whole workflow, the run in the cloud) |
+| 9 | [Results](09_results.md) | Final (the two questions answered, with the key numbers) |
+| 10 | [Limitations, lessons and next steps](10_lessons.md) | Final (why the models lost, what a professional fund would do differently, limitations, next steps) |
 
 ## Appendices
 
 | | Appendix | Status |
 | --- | --- | --- |
-| A | [Data dictionary](appendix_a_data_dictionary.md): every column of the final table | Draft (column list refreshed after the final run) |
+| A | [Data dictionary](appendix_a_data_dictionary.md): every column of the final table | Final |
 | B | [The full working record](appendix_b_working_record.md): for readers who want the whole process | Live |
 
 ## Running the project
@@ -43,5 +43,5 @@ Most chapters have the same shape:
 | --- | --- | --- |
 | [Running the project](running.md) | Setup, every pipeline step and command, the data snapshots, Docker, the dashboard, notifications, what to rerun after a change, the notebooks and the development workflow | Live |
 
-> **The numbers are previews.** The download of delisted companies is still running (until about
-> 13 Nov). Every count and result is refreshed once it's done.
+> **The numbers are final:** the whole project was rebuilt on 16 Nov 2026, once every delisted
+> company's prices had been collected.

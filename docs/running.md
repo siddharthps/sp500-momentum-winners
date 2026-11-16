@@ -36,7 +36,7 @@ ALPHAVANTAGE_API_KEY=your_key_here
 | 3b. Macro | `uv run python -m sp500_momentum.dataset fred` | FRED: core CPI, Fed Funds, 1/5/10-year yields, potential GDP (from 2005) | `data/raw/fred/` |
 | 4. Delisted prices | `uv run python -m sp500_momentum.dataset av-pull` | Alpha Vantage (free tier, ~23 tickers/day, resumable) | `data/raw/alphavantage/` |
 | 5. Monthly table | `uv run python -m sp500_momentum.monthly build` | Steps 1–4 | `data/processed/monthly_panel.parquet`, plus every price series in `data/interim/monthly_prices.parquet` (for backtests) |
-| 6. Features | `uv run python -m sp500_momentum.features build` | Step 5 + monthly bars, FRED, `references/removed_sectors.csv` | `data/processed/features.parquet` (152 features in named sets) |
+| 6. Features | `uv run python -m sp500_momentum.features build` | Step 5 + monthly bars, FRED, `references/removed_sectors.csv` | `data/processed/features.parquet` (147 features in named sets) |
 | 7. Models | `uv run python -m sp500_momentum.modeling.train run` | Step 6 | `reports/model_cv_results.csv`, `reports/model_comparison.csv`, `data/processed/model_scores.parquet`, `models/` (~1¾ h; `--n-iter 1` for a quick smoke run) |
 | 8. Monthly run | `uv run python -m sp500_momentum.modeling.predict run` | Steps 1–3 (current members only), 5–6, the step 7 settings | `reports/picks/picks_<YYYY-MM>.csv` (the headline model's and the 6-month rule's top 10), `data/processed/live_picks.csv` (every pick so far), `models/live_headline.joblib` (~2 min; `--no-download` rebuilds from the files on disk; `--force` redoes a month) |
 | Everything (5–7, notebooks, snapshots) | `uv run python -m sp500_momentum.pipeline rebuild-all --tag <name>` | The data on disk | The final rebuild, timed and stopping at the first failure; `--dry-run` lists the steps and the checks to do by hand before and after (~2 h with retraining; `--no-retrain`, `--no-notebooks`, `--no-publish`) |
@@ -46,8 +46,8 @@ ALPHAVANTAGE_API_KEY=your_key_here
 close, volume, dividends, splits), ending at the previous close. Reruns skip tickers already saved,
 and `--refresh` downloads everything again.
 
-**Step 4** is rerun once a day (and step 5 after it) until the queue is empty (started 2 Nov 2026,
-expected to finish ~13 Nov). It skips tickers already pulled and stops cleanly when the daily quota
+**Step 4** was run once a day (and step 5 after it) until the queue was empty (2–13 Nov 2026;
+216 tickers). The task was then retired; if a ticker ever joins the queue, run `av-pull` by hand. It skips tickers already pulled and stops cleanly when the daily quota
 runs out. Removed members whose yfinance data fails step 5's volume check (another security reused
 the ticker) are added to its queue automatically. On Windows, `scripts/register_av_task.ps1`
 schedules it daily at 21:00 (PC local time) with Task Scheduler, and each run appends to
@@ -222,7 +222,7 @@ If something earlier changes, rerun from the first affected step, then everythin
 | Wikipedia refreshed, or a membership repair in `config.py` (`RENAMES`, `MISSING_ADDS`, `REASON_OVERRIDES`) | `coverage` → `yahoo-daily` → `monthly build` → `features build` → models |
 | A price override for a takeover where the buyer kept the ticker (`PRICE_OVERRIDES`) | `monthly build` → … |
 | `PRICE_START`, or price data re-downloaded | `yahoo-daily --refresh` → `monthly build` → … |
-| New Alpha Vantage data (every night until ~13 Nov) | `monthly build` → `features build` → … |
+| New Alpha Vantage data (`av-pull`) | `monthly build` → `features build` → … |
 | Volume threshold (`MIN_MEMBER_DOLLAR_VOLUME`) | `monthly build` (rewrites the suspect list, which changes the AV queue) → … |
 | Hold periods, the delisting cutoff or the targets (`monthly.py`) | `monthly build` → … |
 | A FRED series or its publication lag (`FRED_SERIES`) | `fred` → `features build` → … |

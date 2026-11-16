@@ -543,6 +543,13 @@ a stock is the month's top gainer.
 - **Daily, not weekdays:** Cloudflare numbers days of the week differently from standard cron; the `due` check already skips weekends.
 - **Security:** a fine-grained token, this repository only, Actions read/write, stored as a Worker secret; it expires within a year. wrangler pinned to 4.156.1 (the latest release at least two weeks old, not the one published that morning); `npm audit` clean. `cloudflare/` is in `.dockerignore`: `COPY . .` would otherwise put ~100 MB of node_modules in the public image.
 
+**The final rebuild (16 Nov, #20)**
+
+- **Five indicator copies dropped, not one** (your call, as recommended). #20 planned `ta_natr` (100 × `ta_atr`). A new test for the general property (no technical indicator is a linear function of another) found four more, each an identity: CMO = 2 × RSI − 100; fast %D = slow %K; and relative to the close, typical price = ⅔ × median price and weighted close = ½ × median price. Checked on all ~94k real rows (largest error 7 × 10⁻¹⁴). Kept `ta_rsi`, `ta_stoch_k`, `ta_medprice`. 152 → 147 features (47 indicators), 186 → 181 columns. Decided by formula before retraining, the #29 rule.
+- **The vector cross-check (#47) goes into notebook 04 as section 9;** its interpretation is written from the rerun's output, not before.
+- **`DATA_STATUS` final.** The "preview" notes leave the book; each "previews only" caveat becomes the one limitation that survives the final data: some early takeovers have no free price at all (Chapter 3 carries the count).
+- **The live-record limitation** (11 Nov) is in Chapters 9 and 10: the chosen rule isn't tracked live.
+
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 

@@ -191,8 +191,6 @@ February 2024. [Chapter 6](06_modelling.md) has the details.
 
 ## 9. Caveats
 
-- **The counts here are previews,** like every number in the book until the download of delisted
-  companies is complete. They're refreshed in the final run.
 - **Free data only.** Prices for some delisted companies can't be found anywhere free. That gap is
   measured and reported ([Chapter 3](03_monthly_table.md)), not hidden.
 - **2010–2026 was mostly a rising market.** Any strategy that holds stocks looks good in it. That's why

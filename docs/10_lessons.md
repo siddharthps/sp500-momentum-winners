@@ -6,9 +6,6 @@
 to a plain rule, what a professional fund would do differently, what limits the conclusions, and
 what would be worth trying next.
 
-> **All numbers here are previews.** The download of delisted companies is still running; the
-> reasoning doesn't depend on the final numbers.
-
 ---
 
 ## 2. Why the models lost to the plain rule
@@ -17,13 +14,14 @@ Several reasons add up. The features are only one of them, and probably not the 
 
 **1. Next month's result is mostly noise.** Research on US stocks finds that even the best
 machine-learning methods explain well under 1% of the month-to-month variation in individual returns.
-A flexible model with 152 inputs will find patterns that held in its training years by accident. The
-tuning showed exactly this: each model's best setting looked promising, its typical setting no better
-than chance ([Chapter 6](06_modelling.md)).
+A flexible model with 147 inputs will find patterns that held in its training years by accident. The
+results show exactly this: four models picked winners more often than chance on 2020–2022, and every
+one of them fell back on the untouched test years ([Chapter 6](06_modelling.md)).
 
-**2. The model learned a different, weaker bet.** It bet on rebounds, not on winners
-([Chapter 9, §3.5](09_results.md#35-why-the-model-lost-it-bet-on-rebounds-not-on-winners)), and that
-bet loses most when the market falls.
+**2. The model never bet on winners.** It leaned mostly on the market's mood, so what it bought changed
+with the market: beaten-down stocks in one period, defensive ones in the next
+([Chapter 9, §3.5](09_results.md#35-why-the-model-lost-it-never-bet-on-winners)). Neither bet is
+momentum, and neither held up.
 
 **3. The inputs are mostly the same information, repackaged.** Nearly every feature comes from each
 stock's own prices and volume, plus sector and economic data. Momentum is the strongest known signal
@@ -31,7 +29,7 @@ in that family and one of the model's inputs, so when the model loses to it used
 inputs added more noise than signal.
 
 **4. The models trade fast; momentum works slowly.** Predicting one month ahead, the models turn over
-about 18 times the portfolio a year at the top 10, against 11 for the 6-month rule held the same way,
+about 19 times the portfolio a year at the top 10, against 11 for the 6-month rule held the same way,
 while momentum shows up over 3–12 months. That's only part of the gap: the models also lost to the
 6-month rule held one month.
 
@@ -94,6 +92,8 @@ Two things wouldn't change:
 
 - **One test window of 45 months,** dominated by one market theme, in a mostly rising market. A
   different four years could tell a different story.
+- **The live record doesn't follow the chosen rule.** It tracks the model and its plain twin, so the
+  best rule's result rests on the backtest alone.
 
 ### 4.3 The trading assumptions
 
@@ -106,9 +106,11 @@ Two things wouldn't change:
 
 ## 5. Lessons
 
-- **Most of the work is in the data, not the model.** Rebuilding who was in the index on each date,
-  and finding prices for the companies that left, took most of the effort. Without it, every result
-  would be flattered by survivorship bias.
+- **Most of the work is in the data, not the model, and it changes the answer.** Rebuilding who was
+  in the index on each date, and finding prices for the companies that left, took most of the effort.
+  Completing those prices (and fixing a few that belonged to the wrong company) moved the results:
+  the plain rules that beat SPY per unit of risk fell from 7 of 60 to 3, and last month's winners went
+  from edging SPY to trailing it. Survivorship bias, measured.
 - **A simple benchmark is hard to beat.** "Buy what went up over six months" is decades old and
   public, and it still beat every model built here.
 - **A negative result is a result.** The honest answer, "the models add nothing here", is worth more

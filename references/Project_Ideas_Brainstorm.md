@@ -1639,6 +1639,28 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 - **AV queue still 0 after the build, so the AV task was unregistered** (CLAUDE.md's condition). No project task remains on the PC.
 - **Book corrected:** Chapter 3's caveat and Chapter 10 §4.1 now name only the old Allergan as a missing line; Chapter 3's never-recorded-renames row adds 21st Century Fox's class B; decisions.md's #59 note gets a dated correction.
 
+### Session 37 — Monday, 16 Nov 2026, late morning (#20: the final rebuild)
+
+- **Merged #79 (#72).** #20 In Progress; its AV box ticked.
+- **The planned `ta_natr` drop grew to five.** I wrote the test for the general rule (no indicator a linear copy of another) rather than for `ta_natr` alone, and it found CMO (RSI rescaled), fast %D (= slow %K), and typical and weighted-close prices (⅔ and ½ of the median price once divided by the close). The last two are a trap of our own making: dividing price levels by the close, to make them scale-free, collapsed three indicators into one ratio. All five identities hold on every real row. **Your call: drop all five.** Features build: 147 features (47 TA), 181 columns, every column in a named set; Appendix A matches exactly.
+- **`FRED_START`'s comment** fixed (it said "a year before PRICE_START"; prices start in 2000).
+- **Notebook 04 gains section 9, the vector cross-check;** "What Part 2 means" becomes section 10. The interpretation waits for the output.
+- **`DATA_STATUS` = final.** `rebuild-all --dry-run`: all four "before" items done. **The rebuild started at 10:35 Central** (`logs/rebuild_final.log`, ~2 h).
+- **While it ran, the number-free part of the sweep** (an inventory of 53 holdovers first): every "preview" banner removed; each "previews only" caveat rewritten as the one surviving limitation (some early takeovers have no free price; Chapter 3 has the count); 152 → 147 features and 52 → 47 indicators everywhere; Chapter 4 explains the eight copies dropped in all; the guide and README no longer say the download is running; Chapter 8's snapshot row; Chapters 9 and 10 state that the chosen rule isn't tracked live; the contents page says the numbers are final. CLAUDE.md: the "data/ is newer than the notebooks" and "label every result a preview" items replaced; the no-copies rule added to the features trap.
+
+- **The rebuild finished at 12:41 in 126 min, every step passing** (all 7 notebooks' output checks; both datasets pushed and tagged `final-2026-11`). The headline is again XGBoost "by how much", chosen by the fixed rule.
+- **What changed with the complete data, and is now in the book:**
+  - **Survivorship bias, measured.** The plain rules don't use the model's features, so their change is the data's: rules beating SPY's Sharpe 7 → 3 of 60 (t > 2: 9 → 4); the first-look top 10 of last month's winners went from beating SPY (15.6% a year) to trailing it (12.6% against 14.3%); last month's winners' spread +0.01% → −0.23% a month. Chapter 10's first lesson now says so.
+  - **The models looked promising, then didn't hold.** On 2020–2022 four models beat the 49.9% base rate (tree 53.6%, the headline 52.8%), where before none did; on the test all four fell back (headline 45.1% vs 45.1%). The test years' rules and SPY are unchanged to the dollar (every test-year member already had a price): a consistency check.
+  - **The trend filter isn't "worse everywhere":** it helped ~70% of strategies on 2020–2022 (the long 2022 decline) and the headline a lot (worst fall −56% → −23%), and hurt nearly everything on the test and over 2010–26. The book now frames it as declared (a reported test, never a candidate; decisions.md, 4 Nov: "no filtered strategy is picked"), not as "not adopted because it lowered returns", a result-based reason that would no longer even hold.
+  - **The model's portrait changed:** volatile beaten-down stocks on 2020–2022 (vol 73rd pct, 6-month return 29th), but calm, low-beta, utility-tilted ones on the test years (46th, 44th; utilities 15% vs 6%), better in down months and worse in up months. The old "loses most when SPY falls, 3 SE" was a 2020–22 pattern; no model slice is now beyond 1.6 SE. Chapter 9's §3.5 became "it never bet on winners"; its importance chart is now mostly market-wide inputs.
+  - Only 3 of 121 strategies edge SPY's test Sharpe (12 before); no model does.
+- **Charts looked at, as the rule says:** the plain-rule chart's built-in subtitle still said "early years still miss most acquired companies", and its title "Preview"; three IC labels and most of the importance chart's labels were raw column names. Fixed in `plots.py` (pattern labels for market windows, months, sectors, macro series, with a test) and notebooks 02 and 03 rerun.
+- **Trap:** `grep` treated the en dash in "2020–2022" as binary and silently dropped those rows from a table; `grep -a` restored them.
+- **Unpriced rows: 4,456 (4.4%), all beyond free sources;** six in ten takeovers, 21% dropped for size, 82% in 2010–2015. The "almost all takeovers" line was no longer true and was fixed in Chapter 3 and its caveat.
+- **The cross-check (#47):** the same ranking under both methods (vector 7.1%, 24.5%, 42.1% vs exact 6.3%, 33.0%, 60.7%); in notebook 04 §9 and Chapter 7.
+- **Notebook conclusions** in 02–06 rewritten from the outputs, "preview" lines removed; the contents page marks every chapter final. The README is left for you.
+
 ---
 
 ## 9. Decisions and Parking Lot

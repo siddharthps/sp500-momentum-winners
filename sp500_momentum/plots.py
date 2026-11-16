@@ -57,8 +57,6 @@ FEATURE_LABELS = {
     "ma3_ratio": "Price vs its 3-month average",
     "ma10_ratio": "Price vs its 10-month average",
     "ta_medprice": "Mid-price of the month vs close",
-    "ta_wclprice": "Weighted close vs close",
-    "ta_typprice": "Typical price vs close",
     "ta_avgprice": "Average price vs close",
     "ta_bop": "Balance of power",
     "ta_macd_hist": "MACD histogram",
@@ -82,7 +80,6 @@ FEATURE_LABELS = {
     "ta_willr": "Williams %R",
     "ta_mfi": "Money flow index",
     "ta_obv": "On-balance volume, 12-month change",
-    "ta_natr": "Average true range ÷ price (%)",
     "vol_3m": "Volatility (3 months)",
     "downside_vol_12m": "Downside volatility (12 months)",
     "drawdown_12m": "Drawdown from 12-month peak",
@@ -103,6 +100,9 @@ FEATURE_LABELS = {
     "ta_minus_dm": "Downward directional movement ÷ price",
     "ta_macd": "MACD ÷ price",
     "ta_macdfix": "MACD, fixed periods ÷ price",
+    "ta_macd_signal": "MACD signal line ÷ price",
+    "ta_macdfix_signal": "MACD signal line, fixed periods ÷ price",
+    "ta_apo": "Absolute price oscillator ÷ price",
     "ta_stochrsi_d": "Stochastic RSI (smoothed)",
     "mkt_spy_ret_1m": "SPY, last month's return",
     "mkt_dji_ret_1m": "Dow, last month's return",
@@ -110,9 +110,53 @@ FEATURE_LABELS = {
 }
 
 
+MACRO_LABELS = {
+    "dgs1": "1-year Treasury yield",
+    "dgs5": "5-year Treasury yield",
+    "dgs10": "10-year Treasury yield",
+    "fedfunds": "Fed Funds rate",
+    "cpi_yoy": "Core inflation, 12 months",
+    "cpi_mom": "Core inflation, 1 month",
+    "yield_slope_10_1": "Yield-curve slope (10-year − 1-year)",
+    "gdppot_yoy": "Potential GDP growth, 1 year",
+    "gdppot_qoq": "Potential GDP growth, 1 quarter",
+    "vix_pct_60m": "VIX within its 5-year range",
+    "winners_excess_1m": "Last month's top 10 vs SPY",
+    "winners_excess_12m": "Last month's top 10 vs SPY, past 12 months",
+    "dispersion_1m": "Spread between the best and worst members",
+    "breadth_above_ma10": "Share of members in an uptrend",
+}
+MARKETS = {"spy": "SPY", "dji": "Dow", "gold": "Gold", "wti": "Oil"}
+MONTHS = "January February March April May June July August September October November December"
+
+
+def _pattern_label(feature: str) -> str | None:
+    """Readable names for whole families of columns (market windows, months, sectors)."""
+    parts = feature.split("_")
+    window = parts[-1].removesuffix("m") if parts[-1].endswith("m") else ""
+    span = "last month's" if window == "1" else f"{window}-month"
+    if feature.startswith("mkt_dgs10_chg_"):
+        return f"10-year yield, {window}-month change"
+    if feature.startswith("mkt_") and parts[1] in MARKETS and "ret" in parts:
+        return f"{MARKETS[parts[1]]}, {span} return"
+    if feature.startswith("sector_etf_ret_"):
+        return f"Sector fund, {span} return"
+    if feature.startswith("month_of_year_"):
+        return f"Month: {MONTHS.split()[int(parts[-1]) - 1]}"
+    if feature.startswith("sector_is_"):
+        return "Sector: " + feature.removeprefix("sector_is_").replace("_", " ")
+    return None
+
+
 def label(feature: str, same_as=()) -> str:
-    """Readable name; unlisted features get their column name with the prefix tidied."""
-    name = FEATURE_LABELS.get(feature) or feature.removeprefix("ta_").replace("_", " ")
+    """Readable name: listed features, then whole families (market windows, months, sectors);
+    anything else gets its column name with the prefix tidied."""
+    name = (
+        FEATURE_LABELS.get(feature)
+        or MACRO_LABELS.get(feature)
+        or _pattern_label(feature)
+        or feature.removeprefix("ta_").replace("_", " ")
+    )
     return f"{name}  (+{len(same_as)} identical)" if len(same_as) else name
 
 
@@ -308,8 +352,8 @@ def growth_chart(
     monthly: pd.DataFrame,
     rule_col: str = "top_10",
     rule_label: str = "Top 10 last-month winners",
-    title: str = "Preview: buying last month's top 10 vs SPY",
-    subtitle: str = "No costs, monthly rebalance; early years still miss most acquired companies",
+    title: str = "A first look: buying last month's top 10 vs SPY",
+    subtitle: str = "No costs, rebalanced monthly, one-month hold (the full test is in notebook 04)",
 ):
     """Growth of $1: the plain rule vs SPY vs equal-weight members (log scale, direct end labels)."""
     series = {

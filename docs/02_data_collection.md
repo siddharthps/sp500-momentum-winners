@@ -76,14 +76,14 @@ monthly returns, which is what the strategy trades on.
   2026. The last prices of Warner Bros. Discovery, AvalonBay and Electronic Arts matched Yahoo exactly.
 - **It has the hard cases:** Twitter, Pioneer Natural Resources, Hologic and Silicon Valley Bank,
   including the March 2023 crash (288.11 → 0.905).
-- **It's collected a little every day.** Each evening an automatic run fetches the next ~23 companies,
-  most important first: failed banks, then acquisitions, then the rest. It stops when the daily limit
-  is reached. At that pace the full list of 216 takes about ten days.
-- **Status on 8 Nov:** 138 of the 216 tried. 94 have prices, 29 return a different company that
-  now uses the old ticker, and 15 have no data at all. 78 are left, finishing around 12 Nov. Every
-  one that failed is a takeover, a buy-out or a bankruptcy. The success rate has fallen as the
-  queue reaches older acquisitions (2011–2013), which have less free data. So the gap that remains
-  is concentrated in the **early years**, among exactly the companies survivorship bias leaves out.
+- **It was collected a little every day.** Each evening from 2 to 13 Nov 2026 an automatic run
+  fetched the next ~23 companies, most important first: failed banks, then acquisitions, then the
+  rest, stopping at the daily limit.
+- **The result: all 216 tried.** 140 have prices, 43 return a different company that now uses the
+  old ticker, and 33 have no data at all. Most of the 76 failures are takeovers (47); the rest are
+  mostly companies dropped for their size (17) and spin-offs (9). The gap is concentrated in the
+  **early years**: 59% of the companies removed in 2010–2013 have no free history, against 13%
+  of those removed since 2022. Those are exactly the companies survivorship bias leaves out.
 
 ### 3.4 Daily prices (Yahoo Finance)
 
@@ -137,8 +137,6 @@ before anyone could. Here, a figure is only used once it would have been public.
 ---
 
 ## 5. Caveats and traps found
-
-**The counts here are previews,** refreshed once the download of delisted companies is complete.
 
 These are the problems found while collecting the data, and how each was handled:
 

@@ -52,7 +52,7 @@ BEFORE_REBUILD = [
         "The AV queue is empty (av-status) and the task is unregistered: "
         "Unregister-ScheduledTask -TaskName sp500-momentum-av-pull -Confirm:$false"
     ),
-    "ta_natr dropped from features.py (100 x ta_atr), with its test",
+    "The five indicator copies dropped (ta_natr, ta_cmo, ta_stochf_d, ta_typprice, ta_wclprice)",
     "The vector-simulation section (#47) added to notebook 04",
     "config.DATA_STATUS changed from 'preview' to final (the last step publishes it)",
 ]

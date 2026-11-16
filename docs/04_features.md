@@ -25,7 +25,7 @@ close**, the golden rule from [Chapter 1](01_problem.md#7-the-rules-of-the-test)
 
 ### 3.1 Why everything is built from monthly bars
 
-Many of the companies that later left the index only have monthly prices: 97 so far, of the 216 on
+Many of the companies that later left the index only have monthly prices: 139 in the table, from the 216 on
 the Alpha Vantage list (Chapter 2). Daily measures, like a 14-day RSI or the share of up days, can't
 be worked out for them.
 
@@ -39,12 +39,12 @@ single-day jump in a month, is replaced by monthly versions.
 
 ### 3.2 The feature sets
 
-**152 features in 7 groups**, plus the targets and identifiers:
+**147 features in 7 groups**, plus the targets and identifiers:
 
 | Group | Count | Examples | Why it's there |
 | --- | --- | --- | --- |
 | **Past returns** | 5 | Return over 1, 3, 6 and 12 months; 12 months skipping the latest one | The idea itself: these define a "winner" |
-| **Technical indicators** | 52 | RSI, MACD, ADX, CCI, Stochastics, Aroon, money flow, on-balance volume, ATR, cycle indicators | Standard summaries of trend, momentum, volume and volatility, computed on monthly bars |
+| **Technical indicators** | 47 | RSI, MACD, ADX, CCI, Stochastics, Aroon, money flow, on-balance volume, ATR, cycle indicators | Standard summaries of trend, momentum, volume and volatility, computed on monthly bars |
 | **Stock risk and position** | 22 | Volatility, downside volatility, beta to SPY, drawdown from the 12-month and all-time high, distance to the 12-month high and low, price vs its 3- and 10-month average, share of up months, a volume spike measure, plus the seven added in Section 3.5 | Separates steady climbers from erratic jumps. Stocks near their highs, and sudden volume spikes (often takeover news), are known to behave differently |
 | **Compared with other members** | 17 | Rank of each past return among all members, rank within the sector, return vs SPY and vs the sector fund, share of members in an uptrend, spread between the best and worst stocks, how last month's top 10 just did, months in the index | "Winner" is relative. Ranks stay comparable in bull and bear markets. How last month's winners just did shows whether momentum is "working" right now |
 | **Market** | 24 | Return of SPY, the Dow, gold and oil over 1, 3, 6 and 12 months; change in the 10-year yield; the stock's sector fund over 1, 3 and 12 months; VIX level and where it sits in its 5-year range | The market's mood. Momentum strategies are known to crash in sharp rebounds after a fall |
@@ -85,10 +85,10 @@ are differences between the two sector schemes.
 | Inflation used for the August 2026 decision | **July's** figure. August's wasn't published until mid-September |
 | 10-year yield used on 30 Oct 2026 | **29 Oct's** value. A day's yield is published the next day |
 | Fed Funds rate used on 30 Oct 2026 | **September's** figure. October's comes out in November |
-| Share of features filled: Yahoo stocks vs monthly-only stocks | **99.6% vs 99.0%**. The gap is in the slowest indicators (TRIX, the cycle measures, the 36-month risk measures), which need years of history. Monthly-only companies more often have a short history or rows in the early years, and both are known at the decision. Leaving out each stock's first five years in the table and the table's first year, both sources are 99.99% filled. So a blank says how long a stock has traded, not whether it later leaves |
-| Strongest link between any single feature and next month's result (2010–2022) | An average rank correlation of **0.021**. A leaked feature typically shows 0.1 or more |
+| Share of features filled: Yahoo stocks vs monthly-only stocks | **99.6% vs 98.9%**. The gap is in the slowest indicators (TRIX, the cycle measures, the 36-month risk measures), which need years of history. Monthly-only companies more often have a short history or rows in the early years, and both are known at the decision. Leaving out each stock's first five years in the table and the table's first year, both sources are at least 99.97% filled. So a blank says how long a stock has traded, not whether it later leaves |
+| Strongest link between any single feature and next month's result (2010–2022) | An average rank correlation of **0.023**. A leaked feature typically shows 0.1 or more |
 
-That last check is also a first, sober preview. **No single feature predicts next month's winners
+That last check is also a first, sober look at the results. **No single feature predicts next month's winners
 strongly**, which is normal for stock picking. Last month's return, the plain rule's signal, is among
 the strongest, but it points the wrong way: last month's winners did slightly worse the next month
 (Chapter 5). Whether the features add up to something useful *together* is the question for the
@@ -117,8 +117,12 @@ three to five years of history (residual momentum, idiosyncratic volatility and 
 average) are blank a little more often for monthly-only stocks (95–97% filled against 98–99%), for the
 warm-up reason in Section 3.4.
 
-Three rescalings of the rate of change (divided by 100, plus 1, and plus 100) were **dropped**: the
-same number in different units, removed for their formulas, not their performance.
+Eight columns were **dropped** as copies: three rescalings of the rate of change (divided by 100,
+plus 1, and plus 100), and five indicators that are exact functions of others. The Chande Momentum
+Oscillator is the RSI rescaled; fast stochastics' %D *is* slow %K; the ATR in percent is the ATR ÷
+price times 100; and once divided by the close, the typical and weighted-close prices are fixed
+fractions of the median price. All were removed for their formulas, not their performance, and a
+check now fails if any indicator becomes a rescaled copy of another.
 
 Two common features were **not** added:
 
@@ -162,7 +166,5 @@ the modelling step limits extreme values in a consistent way.
   alike, but it can't tell a 12-year member from a 40-year one.
 - **Potential GDP is a projection that gets revised,** and only the latest version is available. It's
   the one economic figure with a mild, accepted look-ahead.
-- **Some indicators need long warm-ups.** The slowest one (TRIX) is missing for about 5% of rows,
+- **Some indicators need long warm-ups.** The slowest one (TRIX) is missing for about 6% of rows,
   mostly stocks that listed during the study.
-- **The numbers are a preview.** The download of delisted companies is still running, so the early years
-  are still missing most acquired companies.

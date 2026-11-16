@@ -126,3 +126,14 @@ def test_the_app_runs_end_to_end_offline(data_dir, monkeypatch):
     assert any("not investment advice" in w.value for w in at.warning)
     at.radio[0].set_value("2020–2022 (where the model was chosen)").run()
     assert not at.exception, at.exception
+
+
+def test_feature_labels_are_readable_for_whole_families():
+    from sp500_momentum import plots
+
+    assert plots.label("mkt_dji_ret_12m") == "Dow, 12-month return"
+    assert plots.label("mkt_spy_ret_1m") == "SPY, last month's return"
+    assert plots.label("mkt_dgs10_chg_3m") == "10-year yield, 3-month change"
+    assert plots.label("month_of_year_01") == "Month: January"
+    assert plots.label("sector_is_utilities") == "Sector: utilities"
+    assert plots.label("dgs10") == "10-year Treasury yield"

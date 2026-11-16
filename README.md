@@ -19,16 +19,13 @@ strategy against SPY, after trading costs:
 
 - **The plain rule:** buy the members that rose the most over the past 1–12 months (60 versions, all
   reported).
-- **The model:** buy the members a machine-learning model, trained on 152 features, rates most likely
+- **The model:** buy the members a machine-learning model, trained on 147 features, rates most likely
   to beat SPY next month.
 
 Every choice is made on 2010–2022, and every strategy is then judged once on the decisions from
 January 2023.
 
-## The result so far (preview)
-
-> **Preview numbers:** the download of delisted companies is still running (until ~13 Nov 2026), and
-> everything is rerun once it's complete.
+## The result
 
 What $10,000 became over the test years (decisions Jan 2023 – Sept 2026, 45 months, after costs):
 
@@ -75,10 +72,10 @@ sectors, or features unlike the model's). The picks are a research output, not a
 | --- | --- |
 | **Wikipedia:** the current S&P 500 list and its record of index changes | Who was in the index on each date (819 companies over 202 month-ends), with repairs for renames and missing entries |
 | **Yahoo Finance** (yfinance) | Daily prices from 2000 for current members, the departed companies it still covers, SPY, the sector funds, the Dow, VIX, gold and oil (**3.67 M daily rows**, 628 series) |
-| **Alpha Vantage** (free tier) | Monthly prices for departed companies Yahoo no longer has, or whose symbol now belongs to another company (the download is still running) |
+| **Alpha Vantage** (free tier) | Monthly prices for departed companies Yahoo no longer has, or whose symbol now belongs to another company |
 | **FRED** (St. Louis Fed) | Core inflation, the Fed Funds rate, 1/5/10-year Treasury yields and potential GDP, each used only after its publication date |
 
-The result is **one row per member per month-end: 101,431 rows** from January 2010, each with 152
+The result is **one row per member per month-end: 101,431 rows** from January 2010, each with 147
 features and the targets. [Appendix A](docs/appendix_a_data_dictionary.md) defines every column.
 
 ## How to run

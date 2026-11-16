@@ -51,7 +51,7 @@ FRED_SERIES = {
     "DGS10": {"name": "10-year Treasury yield (daily)", "lag_months": 0},
     "GDPPOT": {"name": "Real potential GDP, CBO (quarterly)", "lag_months": 0},
 }
-FRED_START = "2005-01-01"  # a year before PRICE_START, so yearly changes exist from 2007
+FRED_START = "2005-01-01"  # five years before the first decision (2010): yearly changes from 2006
 
 MONTHLY_PANEL = PROCESSED_DATA_DIR / "monthly_panel.parquet"
 MODEL_SCORES = PROCESSED_DATA_DIR / "model_scores.parquet"  # out-of-sample model scores, 2014 on
@@ -64,7 +64,7 @@ LIVE_TOP_N = 10
 LIVE_RULE_SIGNAL = "ret_6m"  # the plain rule published next to the model (decisions.md, 5 Nov)
 LIVE_MIN_PRICED = 0.95  # share of the month's members that must have a month-end price
 # Shown on the public dataset card and the dashboard; changes to "final" in #20.
-DATA_STATUS = "preview: the download of delisted companies is still running"
+DATA_STATUS = "final: every delisted company's prices collected (rebuilt 16 Nov 2026)"
 FEATURES_TABLE = PROCESSED_DATA_DIR / "features.parquet"  # the monthly panel + every feature
 
 # GICS sectors for members removed since 2010 (Wikipedia's changes table has none). Written by hand

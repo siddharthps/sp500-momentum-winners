@@ -1,7 +1,7 @@
 # Appendix A: Data dictionary
 
 Every column of the final table: **one row per S&P 500 member per month-end**, from January 2010.
-The table has 186 columns: 10 identifiers and prices, 24 targets, and the 152 features a model can
+The table has 181 columns: 10 identifiers and prices, 24 targets, and the 147 features a model can
 use. [Chapter 4](04_features.md) explains why each group of features exists. This appendix says
 exactly what each column holds.
 
@@ -63,7 +63,7 @@ The plain rule's signals: how much the stock rose.
 
 ---
 
-## 4. Technical indicators (52 columns)
+## 4. Technical indicators (47 columns)
 
 Standard technical indicators with their usual settings, applied to monthly bars. Indicators that
 come out in dollars or shares are made comparable between a $20 and a $500 stock: price-like values
@@ -91,10 +91,9 @@ months of volume.
 | Column | What it holds |
 | --- | --- |
 | `ta_rsi` | Relative Strength Index over 14 months (0–100) |
-| `ta_cmo` | Chande Momentum Oscillator over 14 months (−100 to 100) |
 | `ta_cci` | Commodity Channel Index over 14 months: distance from the average typical price |
 | `ta_stoch_k`, `ta_stoch_d` | Slow stochastics: where the close sits in its recent range, smoothed |
-| `ta_stochf_k`, `ta_stochf_d` | Fast stochastics: the same, less smoothed |
+| `ta_stochf_k` | Fast stochastics: the same, less smoothed |
 | `ta_stochrsi_k`, `ta_stochrsi_d` | Stochastics applied to the RSI |
 | `ta_willr` | Williams %R over 14 months: the close relative to the high–low range (−100 to 0) |
 | `ta_ultosc` | Ultimate Oscillator: buying pressure over 7, 14 and 28 months combined |
@@ -113,7 +112,6 @@ months of volume.
 | Column | What it holds |
 | --- | --- |
 | `ta_atr` | Average true range over 14 months ÷ price: the typical monthly range |
-| `ta_natr` | The same in percent. A rescaled copy of `ta_atr`, removed in the final run |
 
 **Cycles** (Hilbert transform; these need about five years of history)
 
@@ -130,8 +128,6 @@ months of volume.
 | --- | --- |
 | `ta_avgprice` | The average of open, high, low and close, relative to the close |
 | `ta_medprice` | The midpoint of high and low, relative to the close |
-| `ta_typprice` | The average of high, low and close, relative to the close |
-| `ta_wclprice` | The weighted close (close counted twice), relative to the close |
 
 ---
 

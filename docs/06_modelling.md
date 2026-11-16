@@ -9,8 +9,6 @@ Build models that rank each month's members by their chance of beating SPY next 
 the top few beats the plain rule ([Chapter 1](01_problem.md)) and SPY. Every result depends on one
 guarantee: **a model only learns from what was knowable before the period it's judged on.**
 
-> **All numbers here are previews.** The download of delisted companies is still running.
-
 ---
 
 ## 2. What was done
@@ -29,9 +27,8 @@ guarantee: **a model only learns from what was knowable before the period it's j
 
 ### 3.1 The rows and the three questions
 
-Of the monthly table's 101,431 rows, **88,137 can be used** (in the 4 Nov snapshot the models were
-trained on): members with a price and a known next-month result. That's about 440 a month over 201
-months, each with **152 features**. The same rows are asked three questions:
+Of the monthly table's 101,363 rows, **96,404 can be used**: members with a price and a known
+next-month result. That's about 480 a month over 201 months, each with **147 features**. The same rows are asked three questions:
 
 | Framing | Question | Used by |
 | --- | --- | --- |
@@ -46,9 +43,9 @@ by how much, each month's top picks beat SPY.
 
 | Period | Years | Rows | Months | Share beating SPY | Used for |
 | --- | --- | --- | --- | --- | --- |
-| Train | 2010–2019 | 48,137 | 120 | 50.6% | Learning and tuning |
-| Validation | 2020–2022 | 17,443 | 36 | 50.0% | Comparing the tuned models |
-| Test | 2023 – Sept 2026 | 22,557 | 45 | 45.2% | One final check, never used for any choice |
+| Train | 2010–2019 | 55,809 | 120 | 50.3% | Learning and tuning |
+| Validation | 2020–2022 | 17,981 | 36 | 49.9% | Comparing the tuned models |
+| Test | 2023 – Sept 2026 | 22,614 | 45 | 45.1% | One final check, never used for any choice |
 
 The cut is by time, never random: a random split would let a model learn from March 2024 and be
 tested on February 2024. Every strategy, including the plain rule in Chapter 7, is judged on the same
@@ -66,12 +63,12 @@ training only on the years before:
 
 | Fold | Trains on decisions | Scored on | Training rows | Scored rows |
 | --- | --- | --- | --- | --- |
-| 1 | Jan 2010 – Nov 2013 | 2014 | 16,991 | 4,672 |
-| 2 | Jan 2010 – Nov 2014 | 2015 | 21,656 | 4,810 |
-| 3 | Jan 2010 – Nov 2015 | 2016 | 26,449 | 5,060 |
-| 4 | Jan 2010 – Nov 2016 | 2017 | 31,490 | 5,251 |
-| 5 | Jan 2010 – Nov 2017 | 2018 | 36,726 | 5,404 |
-| 6 | Jan 2010 – Nov 2018 | 2019 | 42,115 | 5,564 |
+| 1 | Jan 2010 – Nov 2013 | 2014 | 20,680 | 5,536 |
+| 2 | Jan 2010 – Nov 2014 | 2015 | 26,211 | 5,590 |
+| 3 | Jan 2010 – Nov 2015 | 2016 | 31,795 | 5,788 |
+| 4 | Jan 2010 – Nov 2016 | 2017 | 37,566 | 5,885 |
+| 5 | Jan 2010 – Nov 2017 | 2018 | 43,444 | 5,927 |
+| 6 | Jan 2010 – Nov 2018 | 2019 | 49,369 | 5,945 |
 
 Each model tries **30 random settings** (20 for the slower neural network). The winner has the best
 **average across the six years minus half its spread**, so steady beats brilliant-then-poor. The tuned
@@ -115,71 +112,76 @@ A model's **precision** is the share of its top 10 that beat SPY the next month.
 
 ### 3.6 Tuning: promising, but mostly by selection
 
-On 2014–2019, six of the seven models' best settings beat the 50.0% base rate; logistic regression
-only matched it.
+On 2014–2019, six of the seven models' best settings beat the 49.7% base rate; logistic regression
+fell just below it.
 
 | Model | Best setting's precision | Worst year | Median of its tries |
 | --- | --- | --- | --- |
-| Decision tree | 55.7% | 45.8% | 51.0% |
-| Gradient boosting, beat or not | 55.6% | 47.5% | 48.8% |
-| Random forest | 53.9% | 49.2% | 50.1% |
-| Neural network | 53.1% | 46.7% | 51.0% |
-| Gradient boosting, ranking | 52.5% | 50.0% | 50.3% |
-| Gradient boosting, by how much | 52.2% | 45.8% | 49.9% |
-| Logistic regression | 50.0% | 46.7% | 48.8% |
+| Random forest | 57.1% | 45.8% | 52.5% |
+| Decision tree | 55.1% | 53.3% | 53.2% |
+| Gradient boosting, ranking | 54.9% | 51.7% | 49.4% |
+| Gradient boosting, beat or not | 54.0% | 43.3% | 49.4% |
+| Gradient boosting, by how much | 51.0% | 43.3% | 49.6% |
+| Neural network | 50.8% | 46.7% | 49.6% |
+| Logistic regression | 49.0% | 45.8% | 48.3% |
 
-The last column is the warning: **the typical setting of every model scored about the base rate.** The
-best of 20–30 tries is a few points higher, partly by luck of the draw; only untouched years can tell
-how much is real.
+The last column is the warning: **for most models, the typical setting scored about the base rate**,
+and the best of 20–30 tries is a few points higher, partly by luck of the draw. The two tree models
+stood out: even their typical settings scored 52–53%. Only untouched years can tell how much is real.
 
-### 3.7 The comparison on 2020–2022: no model beat a random pick
+### 3.7 The comparison on 2020–2022: four models beat a random pick
 
 | | Precision | Average return vs SPY, per month |
 | --- | --- | --- |
-| Plain rule: 6-month top 10 | **53.1%** | +0.74% |
-| Plain rule: last month's top 10 | 52.5% | +0.85% |
-| Gradient boosting, by how much (**headline**) | 49.2% | +1.20% |
-| Random forest | 48.6% | +0.15% |
-| Neural network | 48.3% | 0.00% |
-| Gradient boosting, beat or not | 47.8% | −0.69% |
-| Decision tree | 47.8% | +0.42% |
-| Gradient boosting, ranking | 47.5% | +1.28% |
-| Average of the models | 47.2% | +0.07% |
-| Logistic regression | 45.6% | +0.06% |
+| Decision tree | **53.6%** | +0.90% |
+| Plain rule: 6-month top 10 | 53.1% | +0.56% |
+| Gradient boosting, by how much (**headline**) | 52.8% | +1.29% |
+| Gradient boosting, beat or not | 51.9% | **+1.65%** |
+| Random forest | 51.7% | +0.42% |
+| Plain rule: last month's top 10 | 51.1% | +0.70% |
+| Neural network | 49.4% | −0.74% |
+| Gradient boosting, ranking | 46.9% | +0.73% |
+| Logistic regression | 46.4% | +0.19% |
+| Average of the models | 45.0% | −0.04% |
 | *Base rate* | *49.9%* | |
 
-**Every model's top 10 beat SPY less often than the base rate; both plain rules beat it.** The
+**Four models' top 10 beat SPY more often than the base rate, and so did both plain rules.** The
 headline was chosen by the same rule as the tuning (average across the years minus half the spread),
-and the by-how-much model scored best: closest to the base rate and the steadiest. Fewer than half its
-picks won, but the winners won by more, so it gained the second-most. Averaging the models didn't
-help.
+and the by-how-much model scored best on it: the third-best hit rate, and by far the steadiest, with
+its worst year at 51.7%. Its picks gained 1.29% a month over SPY, the second-most. Averaging the
+models did worst of all.
 
-### 3.8 The test (2023 onwards): the same picture
+### 3.8 The test (2023 onwards): the promise didn't hold
 
 Every model was retrained to November 2022 and scored once on 45 months nothing had been chosen on.
 
 | | Precision | Average return vs SPY, per month |
 | --- | --- | --- |
-| Decision tree | 54.0% | +0.04% |
-| Plain rule: 6-month top 10 | 52.9% | **+1.47%** |
-| Average of the models | 50.7% | +0.05% |
-| Logistic regression | 49.6% | +0.27% |
-| Neural network | 47.1% | +0.59% |
-| Plain rule: last month's top 10 | 46.4% | +0.45% |
-| Gradient boosting, beat or not | 45.6% | −0.66% |
-| Random forest | 45.6% | −0.12% |
-| Gradient boosting, by how much (**headline**) | 45.1% | −0.83% |
-| Gradient boosting, ranking | 42.9% | −1.92% |
-| *Base rate* | *45.2%* | |
+| Plain rule: 6-month top 10 | **52.9%** | **+1.47%** |
+| Random forest | 50.4% | +0.16% |
+| Logistic regression | 48.9% | +0.24% |
+| Neural network | 47.3% | −0.32% |
+| Decision tree | 47.1% | −0.30% |
+| Plain rule: last month's top 10 | 46.4% | +0.43% |
+| Average of the models | 46.2% | −0.72% |
+| Gradient boosting, by how much (**headline**) | 45.1% | −0.72% |
+| Gradient boosting, beat or not | 44.0% | −1.15% |
+| Gradient boosting, ranking | 42.0% | −1.93% |
+| *Base rate* | *45.1%* | |
 
 **The headline did no better than a random pick, and trailed SPY;** the 6-month rule did better on
-both. The decision tree topped precision but gained almost nothing over SPY (often, by little). It had
-been below the base rate on 2020–2022, so picking it now would be choosing on the test.
+both. All four models that beat the base rate on 2020–2022 fell back: the decision tree from 53.6% to
+47.1%, the headline from 52.8% to 45.1%. Only the random forest stayed a little above the base rate,
+with almost no gain over SPY (+0.16% a month). It came third on 2020–2022, so nothing seen before the
+test would have chosen it; choosing it now would be choosing on the test.
 
 ### 3.9 What the headline looks at
 
-The by-how-much model spreads its attention thinly: its 15 most important inputs, of 152, carry about
-a quarter of the total, mostly short-term technical indicators and the market's last month. As in
+The by-how-much model spreads its attention thinly: its 15 most important inputs, of 147, carry 20% of
+the total. **Most describe the market, not the stock:** SPY's, the Dow's and gold's recent returns,
+VIX, the 10-year yield, how momentum has been doing, and January. Those have the same value for every
+stock in a month, so on their own they can't tell stocks apart; they change how the model weighs the
+rest. Two sector flags (utilities, energy) and one stock measure (beta) complete the list. As in
 Chapter 5, no feature has a strong, steady signal, and the models found nothing stronger combined.
 
 ---
@@ -210,7 +212,7 @@ Chapter 5, no feature has a strong, steady signal, and the models found nothing 
   average of each month's picks before costs and without holding periods. Chapter 7 trades the
   models with both.
 - **36 and 45 months are short.** A gap of three or four points in precision between two models can be
-  chance. The conclusion rests on the pattern (every model below its base rate on 2020–2022; the
-  headline at it on the test), not on any single gap.
-- **Previews only.** The early years still miss many acquired companies
-  ([Chapter 3](03_monthly_table.md)), and every model is retrained once the download finishes.
+  chance. The conclusion rests on the pattern (four models above their base rate on 2020–2022, every one
+  of them falling back on the test; the headline at it), not on any single gap.
+- **Some early takeovers have no free price at all ([Chapter 3](03_monthly_table.md)),** so the
+  training years are slightly survivor-biased.
