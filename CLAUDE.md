@@ -82,12 +82,12 @@ is merged with CI green (both the CI and Docker workflows).
 - **For #20's refresh, beyond rerunning the notebooks:**
   - the README's result table and sizes;
   - Appendix A (drop `ta_natr`);
-  - #72 first: the `FOX` → `TFCF` class-B rename (Sep 2015), so the rebuild prices 21st Century Fox;
+  - (#72 done 16 Nov: the class-B rename; 21st Century Fox priced; Chapters 3 and 10 corrected.)
   - Chapter 9's numbers (Results) and Chapter 10's;
   - **then a last sweep of every page** (chapters, appendices, `docs/running.md`, the README, the
     dashboard text) for holdovers: "preview" notes and "still running", dated counts ("9 Nov",
-    "4 Nov snapshot"), 186 → 185 columns, numbers that appear on two pages agreeing, and the
-    21st Century Fox caveats (Chapters 3 and 10; #72 shows it was never a missing line), and one
+    "4 Nov snapshot"), 186 → 185 columns, members per month-end now 498–504 (Chapter 3 says
+    499–504), numbers that appear on two pages agreeing, and one
     new limitation in Chapters 9 and 10: the rule chosen on 2010–22 isn't tracked live (11 Nov). Then
     remove this section.
 
@@ -95,8 +95,8 @@ is merged with CI green (both the CI and Docker workflows).
 
 - **Never spend Alpha Vantage calls ad hoc** (free tier: 25 per rolling ~24 h). The Task Scheduler job
   `sp500-momentum-av-pull` pulls daily at 21:00 PC time; its log is `logs/av_pull.log`. The queue emptied
-  on 13 Nov (216 tried); unregister the task after #20's `monthly build`, once it shows no new
-  suspects joining the queue. Each ticker is recorded in the manifest as soon as it's
+  on 13 Nov (216 tried), and the task was unregistered on 16 Nov after a `monthly build` added no
+  new suspects. If one ever joins the queue, run `av-pull` by hand (it stays within the budget). Each ticker is recorded in the manifest as soon as it's
   fetched. If a run is killed (log stops after the header, task result `0xC000013A`), the next run,
   or `av-pull --max-calls 0` now, records the saved files without any calls.
 - **The monthly run** runs in GitHub Actions (`.github/workflows/monthly.yml`; #39). Triggers (#76):

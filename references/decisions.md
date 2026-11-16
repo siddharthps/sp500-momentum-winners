@@ -503,6 +503,7 @@ a stock is the month's top gainer.
   - 258 are now priced from their own history: ACE, Tyco, the old Dow, DowDuPont;
   - Nicor's 23 rows stay unpriced, rather than getting AGL's prices.
 - **Missing lines, documented rather than invented:** the old Allergan, 21st Century Fox (2013–2019) and the old News Corp (2010–2013). A made-up ticker would leak into the download queues, and no free source has their prices.
+- **Corrected 16 Nov (#72):** 21st Century Fox and the old News Corp were never missing lines. They're one company and one line, `TFCFA` (class A), a member from 2010, unpriced only until the 10 Nov Alpha Vantage pull (its 2010 series is News Corp's: ~$12–15, ~475 M shares a month, $0.075 dividends). Class B (`TFCF`) joined on 18 Sep 2015 but counted from 2010; a dated rename (`FOX` → `TFCF` on that day) fixes it (−68 member-months). Only the old Allergan is missing.
 - **Checked and fine:** IR/TT, LIN (Praxair), RTX (United Technologies), TFC, ELV, KDP, AVGO, and the same companies re-added later (ILMN, FSLR, AMD, PCG, EQT, TER, JBL).
 - **Corrects 6 Nov:** I'd said JCI's series continues the old Johnson Controls' history. It's Tyco's.
 

@@ -226,6 +226,33 @@ def test_discovery_becomes_one_continuous_member_as_wbd():
     assert by[pd.Timestamp("2026-11-30")] == {"TWLO", "KO"}
 
 
+def test_fox_class_b_joins_in_2015_not_2010():
+    """#72: 21st Century Fox's class B joined on 18 Sep 2015 (recorded as FOX added) and left as
+    TFCF on 20 Mar 2019. After the repair it's a member only in between; class A (TFCFA, the old
+    News Corp) is a member throughout, and Fox Corporation's 2019 FOX/FOXA are untouched."""
+    from sp500_momentum.config import RENAMES
+    from sp500_momentum.membership import point_in_time, repair_changes
+
+    changes = pd.DataFrame(
+        {
+            "date": pd.to_datetime(
+                ["2015-09-18", "2019-03-19", "2019-03-19", "2019-03-20", "2019-03-20"]
+            ),
+            "added_ticker": ["FOX", "FOXA", "FOX", None, None],
+            "removed_ticker": [None, None, None, "TFCFA", "TFCF"],
+            "reason": ["", "", "", "", ""],
+        }
+    )
+    fixed = repair_changes(changes, RENAMES, {})
+    current = pd.DataFrame({"ticker": ["FOXA", "FOX", "KO"]})
+    dates = pd.Series(pd.to_datetime(["2014-12-31", "2016-12-30", "2019-02-28", "2019-12-31"]))
+    by = point_in_time(current, fixed, dates).groupby("date")["ticker"].apply(set)
+    assert by[pd.Timestamp("2014-12-31")] == {"TFCFA", "KO"}  # class B not yet in the index
+    assert by[pd.Timestamp("2016-12-30")] == {"TFCFA", "TFCF", "KO"}
+    assert by[pd.Timestamp("2019-02-28")] == {"TFCFA", "TFCF", "KO"}
+    assert by[pd.Timestamp("2019-12-31")] == {"FOXA", "FOX", "KO"}  # Fox Corporation
+
+
 def test_clean_ticker():
     from sp500_momentum.membership import clean_ticker
 

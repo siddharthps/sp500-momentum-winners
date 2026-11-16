@@ -1633,6 +1633,11 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 - **Secret stored** by piping the token into `wrangler secret put` (a cp1252 decode error on wrangler's emoji came after it was set; `secret list` shows `GITHUB_TOKEN`).
 - **End-to-end test:** the Worker's own code, run from the PC with the same token, made both calls (204, 204); GitHub started the run within seconds; it answered `due=false` and skipped the monthly run, as it should until 1 Dec. **Still unproven:** Cloudflare's scheduler with its stored secret; tonight's 03:17 UTC run will show it.
 - **#76 closed** (the merge's "Closes" closed it), boxes ticked, board Done. You can delete `CF_GITHUB_DISPATCH_TOKEN` from `.env`: Cloudflare holds its own copy.
+- **Merged #78** (the deploy notes).
+- **#72, 21st Century Fox:** rebased its branch onto `main` (a decisions.md conflict: both sides were additions, kept in date order). Added the dated rename `FOX` → `TFCF` on 18 Sep 2015 and a test built from the real change rows; **checked the test fails without the fix** (my first check stashed the test too, so proved nothing; redone stashing only the config).
+- **`monthly build`:** 101,431 → **101,363 rows (−68, exactly class B's Jan 2010–Aug 2015)**; priced 95.6% (92.9% on 9 Nov, before the AV pull finished); `TFCF` 42 rows and `TFCFA` 110, all priced; members per month-end 498–504 (was 499–504); the one-series-per-member check passed.
+- **AV queue still 0 after the build, so the AV task was unregistered** (CLAUDE.md's condition). No project task remains on the PC.
+- **Book corrected:** Chapter 3's caveat and Chapter 10 §4.1 now name only the old Allergan as a missing line; Chapter 3's never-recorded-renames row adds 21st Century Fox's class B; decisions.md's #59 note gets a dated correction.
 
 ---
 

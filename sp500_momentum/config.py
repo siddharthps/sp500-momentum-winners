@@ -190,6 +190,11 @@ RENAMES = [
     # WBD series runs from 2005 without a break and tracks Discovery's class C (DISCK) at a 0.98
     # monthly correlation before 2022, while "DISCA" now returns another security (6 Nov).
     ("DISCA", "WBD", "2022-04-11", "2022-04-11"),
+    # 21st Century Fox class B (#72): it joined on 18 Sep 2015 ("share class methodology change",
+    # recorded as FOX added) and its ticker became TFCF on 19 Mar 2019, the day before it left
+    # (recorded as TFCF removed). Unmapped, the walk back never removed TFCF, so it counted as a
+    # member from 2010. Fox Corporation's own FOX addition (19 Mar 2019) is outside this window.
+    ("FOX", "TFCF", "2015-09-18", "2015-09-18"),
 ]
 
 # Price overrides (#59): in some takeovers the buyer kept or took the target's ticker, and the data
