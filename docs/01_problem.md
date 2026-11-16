@@ -33,15 +33,15 @@ Two ways of picking the stocks are compared:
 | Picker | Ranks the members by | Buys | Holds for |
 | --- | --- | --- | --- |
 | **The plain rule** (the baseline) | Return over the look-back window | Top 1, 5 or 10 | 1, 3, 6 or 12 months |
-| **A machine-learning model** | The model's score for next month, from many inputs (past returns among them): how likely the stock is to beat SPY, or by how much (the chosen model predicts how much) | Top 1, 5 or 10 | 1 month, because it predicts one month ahead |
+| **A machine-learning model** | A score for next month from many inputs, past returns among them. Different models predict whether the stock beats SPY, by how much, or where it ranks; the chosen one predicts by how much | Top 1, 5 or 10 | 1 month, because it predicts one month ahead |
 
 The model only earns its place if it beats the **plain rule**, not just SPY. "Buy what went up
 recently" is a well-known and surprisingly hard benchmark, so beating it is the real test.
 
 **Why recent winners might keep winning.** The pattern is called **momentum**: stocks that rose most
-over the past several months have tended to keep beating the market for a while. It has been found
-in decades of data and across many countries since the early 1990s. The usual explanations are about
-how people react to news. Investors adjust to good news gradually rather than all at once, so prices
+over the past several months have tended to keep beating the market for a while. Research since the
+early 1990s has found it in decades of US data and in stock markets across Europe and beyond. The
+usual explanations are about how people react to news. Investors adjust to good news gradually rather than all at once, so prices
 take months to catch up. Then others buy because the price has been rising, which stretches the
 trend. Momentum also has a known weakness: it can **crash** suddenly, mostly in sharp market rebounds
 after a fall, when the beaten-down stocks it avoided jump the most.
@@ -83,7 +83,7 @@ and every month the whole portfolio is split back into equal slots:
 
 | Month | What happens |
 | --- | --- |
-| January | Slot 1 buys December's top 5: all $6,000, so $1,200 each |
+| January | Slot 1 buys the top 5 ranked at the end of December, at January's first open: all $6,000, so $1,200 each |
 | February | Say the portfolio is now worth $6,300. It's split into **two equal slots of $3,150**: slot 1 sells half of each holding, and that cash buys January's top 5 (even if some are already held) |
 | March to June | One more slot each month (three, four, five, then six). The existing slots each sell a little to fund the new one |
 | July onwards | Six slots. The oldest has held its stocks for six months: it sells them and buys June's top 5. All six are reset to equal size every month, so at $7,200 in total each holds $1,200, and slots that grew pass money to slots that shrank |
@@ -120,7 +120,7 @@ measures:
 | --- | --- |
 | **Yearly return** | How fast the money grew, on average per year |
 | **Volatility** | How much the monthly returns swing: the usual measure of risk |
-| **Sharpe ratio** | Return earned above cash (the Fed Funds rate), per unit of volatility. The fairest single score: a riskier strategy should earn more |
+| **Sharpe ratio** | Return earned above cash (the Fed Funds rate, the US central bank's short-term rate), per unit of volatility. The fairest single score: a riskier strategy should earn more |
 | **Worst fall** | The largest drop from a previous high, as an investor would have lived through it |
 
 A strategy that earns more than SPY only by taking more risk hasn't really beaten it. That's why the
@@ -142,7 +142,7 @@ So the years are split, and **every strategy is judged on the same untouched yea
 | --- | --- | --- | --- |
 | **Training** | 2010–2019 | The models learn their patterns here. Their settings are tuned on six successive years, each time training only on the years before | Studying |
 | **Validation** | 2020–2022 | Comparing the tuned models and choosing the headline one | A practice exam |
-| **Test** | January 2023 onwards | One final check, **never used for any choice** | The real exam |
+| **Test** | January 2023 – September 2026 (45 months) | One final check, **never used for any choice** | The real exam |
 
 The plain rule fits nothing, so it needs no training. But choosing the best of many rules is a kind of
 fitting, so its best version is chosen on 2010–2022 alone and then followed through the same test
@@ -165,14 +165,14 @@ February 2024. [Chapter 6](06_modelling.md) has the details.
 | Rule | Choice | Why |
 | --- | --- | --- |
 | **Universe** | S&P 500 members as of each date | Avoids survivorship bias (Section 3) |
-| **Period** | Jan 2010 → Oct 2026 (202 month-ends) | The public record of index changes is thin before ~2008 |
+| **Period** | Jan 2010 → Oct 2026 (202 month-ends; the latest has no result yet, so returns cover 201 months) | The public record of index changes is thin before ~2008 |
 | **Decision time** | The last trading day of each month | One decision a month, matching the idea |
 | **The golden rule** | Everything the strategy uses is known **at the month-end close**; it trades **at the next open** | No peeking at the future |
 | **Model target** | Does the stock beat SPY over the next month, and by how much? | Directly answers "does it beat the index?". About 49% of stocks do in a typical month, so it's a fair coin to start with |
 | **Look-backs (plain rule)** | 1, 3, 6 and 12 months, and 12 months skipping the latest | The skipped month is the standard research version: last month's biggest risers tend to fall back the month after |
 | **Hold periods (plain rule)** | 1, 3, 6 and 12 months | Research on momentum finds the effect over roughly 3–12 months. 1 month tests the idea as first stated |
 | **Benchmarks** | SPY, plus an equal-weight basket of all members | The second shows whether an edge is real stock picking or just a tilt towards smaller members |
-| **Costs** | ~0.1% per buy and per sell | A monthly rule replaces most of its holdings every month |
+| **Costs** | 0.1% on every buy and every sell | Covers the spread and commissions of a liquid large-cap. A monthly rule replaces most of its holdings every month, so costs matter |
 
 ---
 
@@ -181,8 +181,9 @@ February 2024. [Chapter 6](06_modelling.md) has the details.
 - **One row per stock per month-end, not per day.** The decision is monthly. Daily rows would
   overlap heavily, and "last month's winner" would turn into a daily rule.
 - **The model predicts one month ahead only.** Testing a 12-month prediction on a ~4-year test period
-  leaves only about 2 independent periods to judge it on. The plain rule fits nothing to the data, so
-  it can be tested on every hold period over the full 2010–2026 span.
+  leaves only about 2 independent periods to judge it on. The plain rule fits nothing, so every hold
+  period is run over the full 2010–2026 span as a description; its best version is still judged only
+  on the test years (Section 6).
 - **No 24-month holds.** That's past the range where momentum is known to work (over longer spans,
   winners tend to fall back). It would also need long gaps between the training and test periods,
   using up about 4 of the 16 years.
@@ -191,7 +192,8 @@ February 2024. [Chapter 6](06_modelling.md) has the details.
 
 ## 9. Caveats
 
-- **Free data only.** Prices for some delisted companies can't be found anywhere free. That gap is
-  measured and reported ([Chapter 3](03_monthly_table.md)), not hidden.
+- **Free data only.** Some companies that left the index have no free price, mostly takeovers in
+  2010–2015 (4.4% of member-months, [Chapter 3](03_monthly_table.md)). Takeover targets are often
+  recent winners, so the results may still be slightly flattered.
 - **2010–2026 was mostly a rising market.** Any strategy that holds stocks looks good in it. That's why
   the comparison is against SPY and an equal-weight basket, not against zero.
