@@ -102,8 +102,8 @@ The 16 market series are SPY, the 11 sector funds (technology, financials, energ
 Jones, gold and WTI oil.
 
 - **From January 2000.** That's ten years before the first decision in 2010. Every feature is built
-  from monthly bars (Chapter 4), and the slowest monthly indicators need about five years of history
-  before they give a value.
+  from monthly bars (Chapter 4), and the slowest monthly indicator (TRIX) needs about seven years of
+  history before it gives a value.
 - **To the previous day's close**, so a half-finished trading day is never stored.
 - **Prices are kept both raw and dividend-adjusted.** Dividends and splits stay visible, and the
   price at the next morning's open can be adjusted the same way as the close.
