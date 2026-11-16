@@ -10,7 +10,7 @@ site/
 # secrets and personal files
 .env
 .env.*
-CLAUDE.local.md
+*.local.md
 .claude/
 .vscode/
 .idea/

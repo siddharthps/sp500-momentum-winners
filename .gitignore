@@ -200,8 +200,9 @@ cython_debug/
 # Run logs
 /logs/
 
-# Personal Claude Code preferences (not shared)
-CLAUDE.local.md
+# Personal, local-only notes (not shared): CLAUDE.local.md, and the docs agent's code-issue
+# notes, code_issues.local.md (#81)
+*.local.md
 
 # Cloudflare Worker tooling (#76)
 cloudflare/node_modules/

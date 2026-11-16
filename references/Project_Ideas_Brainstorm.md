@@ -1661,6 +1661,28 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 - **The cross-check (#47):** the same ranking under both methods (vector 7.1%, 24.5%, 42.1% vs exact 6.3%, 33.0%, 60.7%); in notebook 04 §9 and Chapter 7.
 - **Notebook conclusions** in 02–06 rewritten from the outputs, "preview" lines removed; the contents page marks every chapter final. The README is left for you.
 
+### Session 38 — Monday, 16 Nov 2026, afternoon (#81: a docs-only subagent)
+
+- **The ask:** a subagent that maintains the book and can read the code but never change it, noting clear code defects in a file instead. Settled one question at a time: both edit and review modes (review proposes only); one page per run; all content and form work (accuracy against outputs, holdovers, new caveats, the running guide, clarity, the detail split, chapter shape, style rules); project sources plus web lookup (against my project-only recommendation; queries kept generic); writes to `docs/`, the README and the notes file (the README against my docs-only recommendation, as it must agree with the book); notes for verifiable defects only, in a git-ignored `code_issues.local.md`; changes left uncommitted; Opus; committed in `.claude/`.
+- **Built:** `.claude/agents/docs-editor.md` (the book's rules, both modes, the report with a drafted journal entry) and a PreToolUse guard, `.claude/hooks/docs_guard.py`, with 57 offline tests. The guard allows only writes inside `docs/` (not the folder itself), the README and the notes file; only read-only git subcommands without writing options (`--output`, `--ext-diff`, `-O`…) and `uv run mkdocs build --strict`; no chaining, pipes, redirection or `$`. It also blocks reading `.env`.
+- **It fails closed.** A hook that crashes exits 1, which Claude Code treats as non-blocking, so the call would go through. Every error becomes exit 2, and the hook command ends `|| exit 2` so a missing interpreter blocks too.
+- **Trap:** Git Bash gives the cwd as `/c/Users/...`, which Python on Windows reads as `C:\c\Users\...`. Simulating the hook's real command line caught it: a `docs/` edit was wrongly blocked (safe, but wrong). The unit tests had passed Windows paths. Fixed with a path conversion and a regression test.
+- **CI portability:** a backslash path is a valid file name on Linux, so that case runs on Windows only; the Docker image leaves `.claude/` out, so the guard's tests skip there.
+- `*.local.md` replaces `CLAUDE.local.md` in `.gitignore` and `.dockerignore`; ruff now covers `.claude/hooks/`.
+- **Trial run** (review mode, on Appendix B, the shortest page). The guard behaved as intended when the agent ran it:
+  - a plain `git status` and `mkdocs build --strict` ran;
+  - a chained command was refused;
+  - a write to `sp500_momentum/` was refused, and no file was created;
+  - two shell writes were refused: a redirection into `docs/` and `git checkout -- docs/index.md`.
+- The review found no errors and five rewordings, all applied in a second, edit-mode run:
+  - the model comparison's tuning years are named as 2014–2019 (the row read as if they were 2020–2022);
+  - the Models notebook now also lists Chapter 9;
+  - "information coefficient" is explained where it appears;
+  - the decision log is described as "in the order it was made", not "by date";
+  - Section 9 also holds parked ideas.
+- **Noted:** Material for MkDocs prints an end-of-life notice (5 May 2027) on every build. It isn't a strict-mode warning, but the theme needs replacing before then.
+- **Drafts need a check before they go in:** the agent read Session 38 and drafted a new "Session 39" for the trial. Session 38 already covers the same issue on the same day, so the draft was merged into it instead.
+
 ---
 
 ## 9. Decisions and Parking Lot
