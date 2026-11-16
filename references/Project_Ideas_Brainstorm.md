@@ -1627,6 +1627,11 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 - **Trap caught:** the Dockerfile's `COPY . .` would have put the Worker's ~100 MB `node_modules` into the public image; `cloudflare/` is now in `.dockerignore`.
 - **wrangler pinned to 4.156.1,** the latest release at least two weeks old (4.163.0 came out that morning); `npm audit` clean. npm held back workerd's install script; that's only the local test runtime, so it stays unapproved.
 - Docs: Chapter 8 (the schedule paragraph, a new bullet on the trigger, and a caveat on the two services and the token's expiry), the running guide (both triggers, the secrets, the deploy commands), CLAUDE.md, decisions.md.
+- **Merged #77** (CI and Docker passed). **You created the fine-grained token** (checked by asking GitHub, not printing it: it works, expires 16 Nov 2027; its scope can't be proven by reads on public repos, so you confirmed it on its settings page) **and logged wrangler in.**
+- **Deploy, two tries:** the first said "This Worker does not exist" (code 10007), a side effect; the retry showed the real cause, "You need a workers.dev subdomain" (code 10063). New Cloudflare accounts get one only when the Workers & Pages page is first opened; you opened it, and the third deploy attached the `17 3 * * *` trigger. **The guide had the steps in the wrong order** (secret before deploy fails on a new Worker); fixed.
+- **Secret stored** by piping the token into `wrangler secret put` (a cp1252 decode error on wrangler's emoji came after it was set; `secret list` shows `GITHUB_TOKEN`).
+- **End-to-end test:** the Worker's own code, run from the PC with the same token, made both calls (204, 204); GitHub started the run within seconds; it answered `due=false` and skipped the monthly run, as it should until 1 Dec. **Still unproven:** Cloudflare's scheduler with its stored secret; tonight's 03:17 UTC run will show it.
+- **#76 closed** (the merge's "Closes" closed it), boxes ticked, board Done. You can delete `CF_GITHUB_DISPATCH_TOKEN` from `.env`: Cloudflare holds its own copy.
 
 ---
 

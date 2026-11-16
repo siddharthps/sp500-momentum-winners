@@ -93,24 +93,34 @@ is merged with CI green (both the CI and Docker workflows).
 ## Traps (don't re-learn these)
 
 - **Never spend Alpha Vantage calls ad hoc** (free tier: 25 per rolling ~24 h). The Task Scheduler job
-  `sp500-momentum-av-pull` pulls daily at 21:00 PC time; its log is `logs/av_pull.log`. Unregister it
-  once the queue is empty (~12–14 Nov). Each ticker is recorded in the manifest as soon as it's
+  `sp500-momentum-av-pull` pulls daily at 21:00 PC time; its log is `logs/av_pull.log`. The queue emptied
+  on 13 Nov (216 tried); unregister the task after #20's `monthly build`, once it shows no new
+  suspects joining the queue. Each ticker is recorded in the manifest as soon as it's
   fetched. If a run is killed (log stops after the header, task result `0xC000013A`), the next run,
   or `av-pull --max-calls 0` now, records the saved files without any calls.
-- **The monthly run** runs in GitHub Actions (`.github/workflows/monthly.yml`; #39), started by a
-  Cloudflare Worker at 03:17 UTC daily (`cloudflare/`, #76; it re-enables the workflow, then
-  dispatches it with `respect_due`), with GitHub's own schedule at 04:17 UTC weekdays as a backup
-  (GitHub ran its schedule ~7 h late on 12–13 Nov, and its docs say runs can be dropped): `predict due` reads only the running record from the private snapshot, and `predict run
-  --from-file` runs only when last month's picks are missing. "Done" comes from the record
-  (`live_picks.csv`), never a local picks file: a fresh runner has none. **Never run it in two
-  places:** both would post the picks (the local task `sp500-momentum-monthly-run` was
-  unregistered on 11 Nov, after the cloud dry run passed). A manual
-  workflow run is a dry run by default. The Worker's GitHub token expires within a year: renew it
-  (`npx wrangler secret put GITHUB_TOKEN`). `cloudflare/` is in `.dockerignore` (its
-  node_modules would bloat the public image). The run refits the headline with its
-  tuned settings, never re-tunes. It stops on purpose when a newly removed member has no sector:
-  add it to `references/removed_sectors.csv` (KVUE, the first time). Its refit must keep matching
-  the backtest (run as of Jan 2023 it reproduces the test fit's scores exactly).
+- **The monthly run** runs in GitHub Actions (`.github/workflows/monthly.yml`; #39). Triggers (#76):
+  - **A Cloudflare Worker** (`cloudflare/`, deployed 16 Nov as `sp500-momentum-monthly-trigger`)
+    at 03:17 UTC daily: it re-enables the workflow (GitHub disables quiet public repos' workflows
+    after 60 days), then dispatches it with `respect_due=true`.
+  - **GitHub's own schedule** at 04:17 UTC weekdays, as a backup (it ran ~7 h late on 12–13 Nov,
+    and its docs say scheduled runs can be dropped).
+  - `predict due` reads only the running record from the private snapshot; `predict run
+    --from-file` runs only when last month's picks are missing. "Done" comes from the record
+    (`live_picks.csv`), never a local picks file: a fresh runner has none.
+  - **Never run it in two places:** both would post the picks (the local task
+    `sp500-momentum-monthly-run` was unregistered on 11 Nov). A manual run is a dry run by default.
+  - **The Worker's token** (fine-grained, this repo only, Actions read/write) is a Worker secret
+    and **expires 16 Nov 2027**: renew with `npx wrangler secret put GITHUB_TOKEN` (pipe it in,
+    never echo it). Wrangler is logged in on this PC (OAuth); `cloudflare/` is in `.dockerignore`.
+  - **Deploying to a new Cloudflare account:** the cron fails ("You need a workers.dev subdomain",
+    code 10063) until the Workers & Pages page is opened once in the dashboard. Deploy before
+    `secret put` (a secret needs the Worker to exist).
+  - **To check (17 Nov):** a `workflow_dispatch` run at ~03:17 UTC on the Actions tab confirms the
+    Cloudflare-side secret (the 16 Nov test ran the Worker's code from the PC).
+  - The run refits the headline with its tuned settings, never re-tunes. It stops on purpose when a
+    newly removed member has no sector: add it to `references/removed_sectors.csv` (KVUE, the
+    first time). Its refit must keep matching the backtest (run as of Jan 2023 it reproduces the
+    test fit's scores exactly).
 - **Tickers get reused.** An old symbol can return a different company (FB, STI, CPWR). Always check a
   series against the removal date and trading volume. Membership repairs live in `config.py`.
   When a buyer keeps the target's ticker (ACE/CB, Tyco/JCI, Dow/DD, AGL/GAS), the source files the
