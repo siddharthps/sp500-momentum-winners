@@ -88,7 +88,7 @@ are differences between the two sector schemes.
 | Share of features filled: Yahoo stocks vs monthly-only stocks | **99.6% vs 98.9%**. The gap is in the slowest indicators (TRIX, the cycle measures, the 36-month risk measures), which need years of history. Monthly-only companies more often have a short history or rows in the early years, and both are known at the decision. Leaving out each stock's first five years in the table and the table's first year, both sources are at least 99.97% filled. So a blank says how long a stock has traded, not whether it later leaves |
 | Strongest link between any single feature and next month's result (2010–2022) | An average rank correlation of **0.023**. A leaked feature typically shows 0.1 or more |
 
-That last check is also a first, sober preview. **No single feature predicts next month's winners
+That last check is also a first, sober look at the results. **No single feature predicts next month's winners
 strongly**, which is normal for stock picking. Last month's return, the plain rule's signal, is among
 the strongest, but it points the wrong way: last month's winners did slightly worse the next month
 (Chapter 5). Whether the features add up to something useful *together* is the question for the

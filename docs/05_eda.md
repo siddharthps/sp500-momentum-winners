@@ -27,7 +27,7 @@ It also takes a first look at the plain rule ("buy last month's winners").
 **One rule applies to steps 2–5.** They use decisions from **2010 to 2022 only**. The last four years
 are kept back as the test period. If the features were chosen by looking at how they did there, the
 final test would only be checking what had already been seen. Describing the target, and the
-plain-rule preview, cover every year: they choose nothing.
+first look at the plain rule, cover every year: they choose nothing.
 
 ---
 
