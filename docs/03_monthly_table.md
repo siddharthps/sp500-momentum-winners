@@ -32,7 +32,7 @@ Start from today's 503 members and walk the list of changes **backwards in time*
 means taking the added company out and putting the removed one back. A change counts from its own
 date, so a stock added on a month-end counts as a member that day.
 
-After the repairs below, every month-end has **499–504 members**. That's right for the S&P 500,
+After the repairs below, every month-end has **498–504 members**. That's right for the S&P 500,
 which has slightly more lines than 500 companies because a few have two share classes (e.g.
 Alphabet's GOOGL and GOOG).
 
@@ -74,8 +74,8 @@ and −75% within a month.
 A real S&P 500 company trades far more than $10 million of shares a day. Any series whose typical daily
 trading, over its months as a member, falls below that has its prices thrown out. Six were caught:
 **Compuware, El Paso, Genzyme, King Pharmaceuticals, Smith International and Sunoco**, and sent to
-Alpha Vantage instead. El Paso and Genzyme were found there, and Sunoco wasn't (its ticker is reused
-there too). The other three are still in the queue.
+Alpha Vantage instead. Compuware, El Paso and Genzyme were found there; King Pharmaceuticals, Smith
+International and Sunoco weren't (their tickers are reused there too).
 
 ### 3.5 What happened next (the targets)
 
@@ -100,34 +100,33 @@ at the end of March, the month it left. Stopping in February would turn its **�
 
 ### 3.6 The result
 
-| Item | Value (9 Nov 2026, preview) |
+| Item | Value |
 | --- | --- |
-| Rows | **101,431** (one per member per month-end) |
+| Rows | **101,363** (one per member per month-end) |
 | Month-ends | 202 (Jan 2010 → Oct 2026) |
 | Distinct tickers | 819 |
-| Members per month-end | 499–504 |
-| Rows with a price | 92.9% |
+| Members per month-end | 498–504 |
+| Rows with a price | 95.6% |
 | Share of rows that beat SPY the next month | 49% |
 
 **Share of members with a price, by year:**
 
 | 2010 | 2012 | 2014 | 2016 | 2018 | 2020 | 2022 | 2024 | 2026 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 80% | 84% | 88% | 92% | 96% | 98% | 99% | 99.7% | 100% |
+| 86% | 89% | 92% | 96% | 98% | 99% | 99.6% | 100% | 100% |
 
-**Rows still without a price:** 7,193 (7%). About 4,150 are companies still on the Alpha Vantage
-list. The other **~3,040 (3%) can't be filled from any free source**:
+**Rows without a price: 4,456 (4.4%), and no free source can fill them:**
 
 | Why there's no price | Member-months |
 | --- | --- |
-| Another company now uses the old ticker on Alpha Vantage | 1,820 |
-| Alpha Vantage has no data | 504 |
-| Alpha Vantage covers only part of the company's time in the index | 296 |
+| Another company now uses the old ticker on Alpha Vantage | 2,397 |
+| Alpha Vantage has no data | 1,340 |
+| Alpha Vantage covers only part of the company's time in the index | 297 |
 | The buyer kept the target's ticker (Section 3.2) | 261 |
 | A current member now uses the ticker (the old SanDisk, Dell, Constellation, Qwest) | 161 |
 
-Almost all are takeovers, buy-outs or failures in the early years: exactly what survivorship bias
-leaves out. The final count comes once the download is complete.
+Six in ten are takeovers, and most of the rest were dropped from the index for their size. **82% fall
+in 2010–2015:** the early years, where survivorship bias does its work.
 
 ---
 
@@ -146,9 +145,9 @@ leaves out. The final count comes once the download is complete.
 
 ## 5. Caveats
 
-- **Some early member-months have no free price at all** (Section 3.6). Almost all are takeovers,
-  buy-outs and failures, so results built on the table are still slightly flattered by
-  survivorship bias.
+- **4.4% of member-months have no free price at all** (Section 3.6), mostly takeovers and companies
+  dropped for their size, in the early years. Results built on the table are still slightly
+  flattered by survivorship bias.
 - **Companies with only monthly prices trade at the month-end close, not the next open.** That's a
   small timing difference for a minority of rows.
 - **One takeover target is missing as a line, not just as a price.** The record of changes merges the

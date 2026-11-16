@@ -25,7 +25,7 @@ close**, the golden rule from [Chapter 1](01_problem.md#7-the-rules-of-the-test)
 
 ### 3.1 Why everything is built from monthly bars
 
-Many of the companies that later left the index only have monthly prices: 97 so far, of the 216 on
+Many of the companies that later left the index only have monthly prices: 139 in the table, from the 216 on
 the Alpha Vantage list (Chapter 2). Daily measures, like a 14-day RSI or the share of up days, can't
 be worked out for them.
 
@@ -85,8 +85,8 @@ are differences between the two sector schemes.
 | Inflation used for the August 2026 decision | **July's** figure. August's wasn't published until mid-September |
 | 10-year yield used on 30 Oct 2026 | **29 Oct's** value. A day's yield is published the next day |
 | Fed Funds rate used on 30 Oct 2026 | **September's** figure. October's comes out in November |
-| Share of features filled: Yahoo stocks vs monthly-only stocks | **99.6% vs 99.0%**. The gap is in the slowest indicators (TRIX, the cycle measures, the 36-month risk measures), which need years of history. Monthly-only companies more often have a short history or rows in the early years, and both are known at the decision. Leaving out each stock's first five years in the table and the table's first year, both sources are 99.99% filled. So a blank says how long a stock has traded, not whether it later leaves |
-| Strongest link between any single feature and next month's result (2010–2022) | An average rank correlation of **0.021**. A leaked feature typically shows 0.1 or more |
+| Share of features filled: Yahoo stocks vs monthly-only stocks | **99.6% vs 98.9%**. The gap is in the slowest indicators (TRIX, the cycle measures, the 36-month risk measures), which need years of history. Monthly-only companies more often have a short history or rows in the early years, and both are known at the decision. Leaving out each stock's first five years in the table and the table's first year, both sources are at least 99.97% filled. So a blank says how long a stock has traded, not whether it later leaves |
+| Strongest link between any single feature and next month's result (2010–2022) | An average rank correlation of **0.023**. A leaked feature typically shows 0.1 or more |
 
 That last check is also a first, sober preview. **No single feature predicts next month's winners
 strongly**, which is normal for stock picking. Last month's return, the plain rule's signal, is among
@@ -166,5 +166,5 @@ the modelling step limits extreme values in a consistent way.
   alike, but it can't tell a 12-year member from a 40-year one.
 - **Potential GDP is a projection that gets revised,** and only the latest version is available. It's
   the one economic figure with a mild, accepted look-ahead.
-- **Some indicators need long warm-ups.** The slowest one (TRIX) is missing for about 5% of rows,
+- **Some indicators need long warm-ups.** The slowest one (TRIX) is missing for about 6% of rows,
   mostly stocks that listed during the study.
