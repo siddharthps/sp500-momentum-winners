@@ -22,3 +22,6 @@ CLAUDE.local.md
 **/*.pyc
 .pytest_cache/
 .ruff_cache/
+
+# The Cloudflare trigger (#76): not part of the pipeline, and its node_modules is large
+cloudflare/

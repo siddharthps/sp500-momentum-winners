@@ -77,19 +77,41 @@ The picks are a research output, not advice.
 ## The monthly run in the cloud
 
 [`monthly.yml`](../.github/workflows/monthly.yml) runs on GitHub's servers, so the live record
-doesn't depend on a PC being on. Each weekday at 12:00 UTC:
+doesn't depend on a PC being on. Two triggers start it, because GitHub's own schedule can run
+hours late or be dropped under load (its docs; ~7 h late on 12–13 Nov 2026):
+
+- **A Cloudflare Worker** ([`cloudflare/`](../cloudflare/wrangler.toml)) at 03:17 UTC every day:
+  it re-enables the workflow (GitHub disables workflows in quiet public repositories after 60 days)
+  and dispatches it with `dry_run=false` and `respect_due=true`.
+- **GitHub's schedule** at 04:17 UTC on weekdays, as a backup. Whichever runs second finds the
+  month done.
+
+Each run:
 
 1. `predict due` downloads only the running record (`data/processed/live_picks.csv`) from the
-   private snapshot and prints `due=true` if last month's picks aren't in it.
+   private snapshot and prints `due=true` if last month's picks aren't in it (weekdays only).
 2. If due: `predict run --from-file` pulls the private snapshot, downloads fresh data (Wikipedia,
    Yahoo with paced retries, FRED with retries), rebuilds, checks, makes the picks, posts them to
    Telegram and pushes both Hugging Face datasets. Nothing is committed to the repository.
-3. The month's picks are kept as a run artifact for 90 days; a failed scheduled run alerts the
-   private Telegram chat.
+3. The month's picks are kept as a run artifact for 90 days; a failed scheduled or
+   Worker-triggered run alerts the private Telegram chat.
 
-**Secrets** (repository → Settings → Secrets and variables → Actions): `HF_USER`, `HF_TOKEN`
-(write), `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHANNEL_ID`, `TELEGRAM_CHAT_ID`. No Alpha Vantage key is
-needed: the delisted companies' prices come with the snapshot.
+**Secrets.** GitHub (repository → Settings → Secrets and variables → Actions): `HF_USER`,
+`HF_TOKEN` (write), `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHANNEL_ID`, `TELEGRAM_CHAT_ID`. Cloudflare
+(the Worker): `GITHUB_TOKEN`, a fine-grained token for this repository only with Actions read and
+write; it expires within a year, so renew it before then. No Alpha Vantage key is needed: the
+delisted companies' prices come with the snapshot.
+
+**The Worker** (Node, with wrangler pinned in `cloudflare/package.json`):
+
+```bash
+cd cloudflare
+npm ci                                   # the pinned wrangler
+npm test                                 # the Worker's offline tests
+npx wrangler login                       # once, in a browser
+npx wrangler secret put GITHUB_TOKEN     # paste the fine-grained token
+npx wrangler deploy                      # publishes the Worker and its daily trigger
+```
 
 **By hand** (Actions tab → Monthly run → Run workflow, or the command line). A manual run is a dry
 run by default (messages printed, nothing published); `force` redoes last month's picks:
@@ -98,9 +120,6 @@ run by default (messages printed, nothing published); `force` redoes last month'
 gh workflow run monthly.yml -f dry_run=true -f force=true   # a full test that changes nothing
 gh run watch                                                 # follow it
 ```
-
-**GitHub switches scheduled workflows off after 60 days without repository activity** (public
-repositories). If that happens, re-enable it on the Actions tab.
 
 ## Data snapshots on Hugging Face
 

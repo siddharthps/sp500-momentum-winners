@@ -1617,6 +1617,17 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 - **Retired the local monthly task** (`Unregister-ScheduledTask`, your OK), so 1 Dec isn't posted twice; the Alpha Vantage task stays until Friday's last pull.
 - **Follow-up:** the cloud log showed colour codes as text, because loguru colours output when it detects CI and ignores `NO_COLOR`; checked locally that `LOGURU_COLORIZE=false` turns it off, and set it in the workflow. #39 closed with every box ticked.
 
+### Session 36 — Monday, 16 Nov 2026 (the AV pull done; #76: starting the monthly run on time)
+
+- **Alpha Vantage: done.** The last 6 went through on Fri 13 Nov; 216 of 216 tried (140 ok, 33 no data, 43 reused tickers), no errors after 9 Nov; the weekend runs had nothing to do. The task stays registered until #20's monthly build shows no new suspects join the queue.
+- **#20 is two days behind the plan** (it was to start Sat 14); still on time for Fri 20 Nov 17:59 Central.
+- **Found: GitHub ran the monthly schedule ~7 h late** (12 and 13 Nov at 19:16 and 18:52 UTC instead of 12:00), and no run had appeared yet on Mon 16 by 15:46 UTC. GitHub's docs, read verbatim through a fetch: scheduled runs "can be delayed… some queued jobs may be dropped". On 1 Dec, picks after the open.
+- **Your idea: Cloudflare Workers.** A Worker can't run the pipeline, but it can ring the bell. **Your call: build it now** (I'd recommended the 03:17 schedule first, Cloudflare after submission). Opened #76.
+- **Built:** the Worker (`cloudflare/`, 3 node tests) re-enables `monthly.yml` and dispatches it nightly at 03:17 UTC with `respect_due`; the workflow acts only when due for such runs and alerts on their failure; GitHub's schedule moves to 04:17 UTC as a backup. **A bonus found while writing the docs:** re-enabling each night beats GitHub's 60-day inactivity rule, tested safely on the live workflow (204, still active).
+- **Trap caught:** the Dockerfile's `COPY . .` would have put the Worker's ~100 MB `node_modules` into the public image; `cloudflare/` is now in `.dockerignore`.
+- **wrangler pinned to 4.156.1,** the latest release at least two weeks old (4.163.0 came out that morning); `npm audit` clean. npm held back workerd's install script; that's only the local test runtime, so it stays unapproved.
+- Docs: Chapter 8 (the schedule paragraph, a new bullet on the trigger, and a caveat on the two services and the token's expiry), the running guide (both triggers, the secrets, the deploy commands), CLAUDE.md, decisions.md.
+
 ---
 
 ## 9. Decisions and Parking Lot

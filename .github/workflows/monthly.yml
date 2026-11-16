@@ -1,17 +1,20 @@
-# The monthly run in the cloud (#39): each weekday at 12:00 UTC, check whether last month's
+# The monthly run in the cloud (#39, #76): each day, check whether last month's
 # picks exist yet; on the first weekday of a month (or the first run after it), rebuild from
 # the private snapshot plus fresh prices, make both strategies' picks, post them to Telegram and
 # publish both Hugging Face datasets. Every other day it stops after the check.
 #
-# Before the open: 12:00 UTC is 06:00 or 07:00 in Chicago, and US markets open at 13:30/14:30 UTC.
+# Triggers: a Cloudflare Worker dispatches this at 03:17 UTC (cloudflare/, #76), because GitHub's
+# schedule can run hours late or be dropped under load (its docs; ~7 h late on 12-13 Nov). The
+# schedule below stays as a backup an hour later; whichever runs second finds the month done.
+# Both are the US evening after the close, long before the 13:30/14:30 UTC open.
 # Secrets live in GitHub Secrets only (HF_USER, HF_TOKEN, TELEGRAM_*); nothing is committed back.
-# GitHub turns scheduled workflows off after 60 days without repository activity (public repos):
-# re-enable it on the Actions tab if that happens.
+# GitHub turns workflows off after 60 days without repository activity (public repos); the
+# Cloudflare Worker re-enables this one before each dispatch.
 name: Monthly run
 
 on:
   schedule:
-    - cron: "0 12 * * 1-5"
+    - cron: "17 4 * * 1-5"
   workflow_dispatch:
     inputs:
       dry_run:
@@ -20,6 +23,10 @@ on:
         default: true
       force:
         description: "Redo last month's picks even if they already exist"
+        type: boolean
+        default: false
+      respect_due:
+        description: "Act only if last month's picks are missing (the Cloudflare trigger sets this)"
         type: boolean
         default: false
 
@@ -57,7 +64,10 @@ jobs:
         run: uv run python -m sp500_momentum.modeling.predict due
 
       - name: The monthly run (snapshot, fresh prices, picks, messages, publish)
-        if: steps.due.outputs.due == 'true' || github.event_name == 'workflow_dispatch'
+        # Scheduled and Cloudflare-triggered runs act only when due; a manual run always runs.
+        if: >-
+          steps.due.outputs.due == 'true' ||
+          (github.event_name == 'workflow_dispatch' && format('{0}', inputs.respect_due) != 'true')
         env:
           DRY_RUN: ${{ inputs.dry_run }}
           FORCE: ${{ inputs.force }}
@@ -77,8 +87,8 @@ jobs:
           retention-days: 90
 
       # The run alerts on its own failures; this covers the steps before it (install, the check).
-      - name: Alert the private chat if a scheduled run failed
-        if: failure() && github.event_name == 'schedule'
+      - name: Alert the private chat if a scheduled or Cloudflare-triggered run failed
+        if: failure() && (github.event_name == 'schedule' || format('{0}', inputs.respect_due) == 'true')
         env:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
