@@ -138,8 +138,6 @@ before anyone could. Here, a figure is only used once it would have been public.
 
 ## 5. Caveats and traps found
 
-**The counts here are previews,** refreshed once the download of delisted companies is complete.
-
 These are the problems found while collecting the data, and how each was handled:
 
 - **Reused tickers.** An old ticker can point to a different company today. On Yahoo, `FB` is no longer

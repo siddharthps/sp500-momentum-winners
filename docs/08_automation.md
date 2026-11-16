@@ -195,7 +195,7 @@ on GitHub's servers runs it.
 | Refit monthly with fixed settings; never re-tune | Fitting uses new data; tuning on live months would quietly turn the live record into another tuning loop |
 | Last month's live result in each message, scored from the next open to the month-end close | That's the honest live record; it's ready on the first weekday of the next month, before the backtest's next-open-to-next-open return could be |
 | A failed message never fails a run | Notifications report on the job; they must never become a reason it fails |
-| A preview snapshot now, the final one tagged after the last rebuild | The dashboard and cloud run can be built on real files now; the book's numbers stay traceable |
+| Every snapshot versioned; the final one tagged `final-2026-11` | The book's numbers stay traceable to the exact data behind them |
 
 ---
 

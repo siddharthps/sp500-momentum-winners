@@ -129,13 +129,13 @@ is merged with CI green (both the CI and Docker workflows).
   whose dividends and price level the series has, then fix it with `PRICE_OVERRIDES` (#59), not a
   rename.
 - **Features come from monthly bars for every stock.** Never add a daily-only feature: it would be
-  blank exactly for the later-delisted (Alpha Vantage) names and leak their fate.
+  blank exactly for the later-delisted (Alpha Vantage) names and leak their fate. Never add an
+  indicator that is a rescaled copy of another (a test fails: #29 dropped three, #20 five).
 - **Look-ahead checks for every feature:**
   - It uses data up to the month-end close only.
   - Macro values go through their `FRED_SERIES` publication lag.
   - Ranks and percentiles are computed within each date, never across dates.
 - **Results:**
-  - Label every result a *preview* until the AV pull is finished.
   - Never choose settings by looking at the test period (2023–26). Tune with time-series CV inside 2010–22.
   - **One test window for every strategy.** Rules and models are chosen on 2010–22 only and scored on
     `SPLIT["test"]` (2023 on). Any cut-off or check window comes from `SPLIT`, never a new date.
@@ -156,10 +156,9 @@ is merged with CI green (both the CI and Docker workflows).
   the main version only (its best 2020–22 version was its worst on the test).
 - **Rebuild order:** after new raw data (the AV pull, any download), rerun `monthly build` before
   anything downstream.
-- **Until #20, `data/` is newer than the notebooks.** The monthly run (5 Nov) rebuilt `data/` with
-  more delisted names and Kenvue's sector, while notebooks 01–06 and the chapters show the 4 Nov
-  snapshot (agreed). Don't rerun notebooks or retrain before #20: the numbers would drift from the
-  book. #20 reruns everything once on the complete data.
+- **The final data** (#20, 16 Nov, tagged `final-2026-11` on Hugging Face) is what the book reports.
+  After any later change to data, features or models, rerun the notebooks and refresh every
+  chapter's numbers together, so the book and the notebooks never drift apart.
 - **Secrets:** never print, log or commit the Alpha Vantage key, the Telegram or Hugging Face
   tokens, or `.env`. Verify a token by asking its service who it belongs to, never by printing it.
   Request errors can carry the token in their URL: report them by type only.

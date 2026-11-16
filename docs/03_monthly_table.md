@@ -146,9 +146,9 @@ leaves out. The final count comes once the download is complete.
 
 ## 5. Caveats
 
-- **Until the Alpha Vantage list is finished, the early years are still missing many acquired
-  companies.**
-  Any results built on the table now are previews, still flattered by survivorship bias.
+- **Some early member-months have no free price at all** (Section 3.6). Almost all are takeovers,
+  buy-outs and failures, so results built on the table are still slightly flattered by
+  survivorship bias.
 - **Companies with only monthly prices trade at the month-end close, not the next open.** That's a
   small timing difference for a minority of rows.
 - **One takeover target is missing as a line, not just as a price.** The record of changes merges the

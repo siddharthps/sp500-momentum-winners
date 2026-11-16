@@ -43,5 +43,5 @@ Most chapters have the same shape:
 | --- | --- | --- |
 | [Running the project](running.md) | Setup, every pipeline step and command, the data snapshots, Docker, the dashboard, notifications, what to rerun after a change, the notebooks and the development workflow | Live |
 
-> **The numbers are previews.** The download of delisted companies is still running (until about
-> 13 Nov). Every count and result is refreshed once it's done.
+> **The numbers are final:** the whole project was rebuilt on 16 Nov 2026, once every delisted
+> company's prices had been collected.

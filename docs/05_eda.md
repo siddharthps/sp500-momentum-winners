@@ -6,13 +6,10 @@ Before building any model, understand the two sides of the problem:
 
 1. **The target.** How often does an S&P 500 member beat SPY over the next month, and how spread out
    are the results?
-2. **The features.** Which of the 152 carry any signal about next month, is that signal steady, and
+2. **The features.** Which of the 147 carry any signal about next month, is that signal steady, and
    does it depend on market conditions?
 
 It also takes a first look at the plain rule ("buy last month's winners"), as a preview.
-
-> **All numbers here are previews.** The download of delisted companies is still running, so the early
-> years still miss many acquired companies. Everything gets rerun once it's complete.
 
 ---
 
@@ -137,8 +134,8 @@ was.
 
 ## 5. Caveats
 
-- **Previews only.** The early years still miss many acquired companies. Takeover targets are often
-  last month's winners, so the plain-rule numbers are likely to change.
+- **Some early takeovers have no free price at all ([Chapter 3](03_monthly_table.md)).** Takeover
+  targets are often last month's winners, so the plain-rule numbers may still be slightly flattered.
 - **The plain rule here has no trading costs** and uses one hold period. The full test of look-backs,
   hold periods, costs and benchmarks comes in [Chapter 7](07_simulation.md).
 - **The Sharpe ratio here ignores the risk-free rate,** which flatters all strategies equally. The final

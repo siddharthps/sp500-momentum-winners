@@ -6,9 +6,6 @@
 to a plain rule, what a professional fund would do differently, what limits the conclusions, and
 what would be worth trying next.
 
-> **All numbers here are previews.** The download of delisted companies is still running; the
-> reasoning doesn't depend on the final numbers.
-
 ---
 
 ## 2. Why the models lost to the plain rule
@@ -17,7 +14,7 @@ Several reasons add up. The features are only one of them, and probably not the 
 
 **1. Next month's result is mostly noise.** Research on US stocks finds that even the best
 machine-learning methods explain well under 1% of the month-to-month variation in individual returns.
-A flexible model with 152 inputs will find patterns that held in its training years by accident. The
+A flexible model with 147 inputs will find patterns that held in its training years by accident. The
 tuning showed exactly this: each model's best setting looked promising, its typical setting no better
 than chance ([Chapter 6](06_modelling.md)).
 
@@ -94,6 +91,8 @@ Two things wouldn't change:
 
 - **One test window of 45 months,** dominated by one market theme, in a mostly rising market. A
   different four years could tell a different story.
+- **The live record doesn't follow the chosen rule.** It tracks the model and its plain twin, so the
+  best rule's result rests on the backtest alone.
 
 ### 4.3 The trading assumptions
 

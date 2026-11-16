@@ -18,9 +18,6 @@ The answer is the **bar the models have to clear**. A model that can't beat the 
 nothing. The models are then traded the same way, a market-trend filter is tested on everything, and
 the last part asks why the model loses.
 
-> **All numbers here are previews.** The download of delisted companies is still running, so the early
-> years still miss many acquired companies. Everything gets rerun once it's complete.
-
 ---
 
 ## 2. What was done
@@ -325,8 +322,9 @@ so each would need new months or a separate earlier period.
 
 ## 5. Caveats
 
-- **Previews only.** The early years still miss many acquired companies, and takeover targets are
-  often among the recent winners. The numbers will change once the download finishes.
+- **Some early takeovers have no free price at all ([Chapter 3](03_monthly_table.md)),** and
+  takeover targets are often among the recent winners, so the rules' results may still be slightly
+  flattered.
 - **The test years are few:** under four, dominated by one market theme. A single bad year for SPY
   would change the comparison; with the cut a year earlier, SPY's poor 2022 makes the rule win on
   Sharpe too, which is why the cut was fixed in advance.

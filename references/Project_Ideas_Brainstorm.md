@@ -1639,6 +1639,15 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 - **AV queue still 0 after the build, so the AV task was unregistered** (CLAUDE.md's condition). No project task remains on the PC.
 - **Book corrected:** Chapter 3's caveat and Chapter 10 §4.1 now name only the old Allergan as a missing line; Chapter 3's never-recorded-renames row adds 21st Century Fox's class B; decisions.md's #59 note gets a dated correction.
 
+### Session 37 — Monday, 16 Nov 2026, late morning (#20: the final rebuild)
+
+- **Merged #79 (#72).** #20 In Progress; its AV box ticked.
+- **The planned `ta_natr` drop grew to five.** I wrote the test for the general rule (no indicator a linear copy of another) rather than for `ta_natr` alone, and it found CMO (RSI rescaled), fast %D (= slow %K), and typical and weighted-close prices (⅔ and ½ of the median price once divided by the close). The last two are a trap of our own making: dividing price levels by the close, to make them scale-free, collapsed three indicators into one ratio. All five identities hold on every real row. **Your call: drop all five.** Features build: 147 features (47 TA), 181 columns, every column in a named set; Appendix A matches exactly.
+- **`FRED_START`'s comment** fixed (it said "a year before PRICE_START"; prices start in 2000).
+- **Notebook 04 gains section 9, the vector cross-check;** "What Part 2 means" becomes section 10. The interpretation waits for the output.
+- **`DATA_STATUS` = final.** `rebuild-all --dry-run`: all four "before" items done. **The rebuild started at 10:35 Central** (`logs/rebuild_final.log`, ~2 h).
+- **While it ran, the number-free part of the sweep** (an inventory of 53 holdovers first): every "preview" banner removed; each "previews only" caveat rewritten as the one surviving limitation (some early takeovers have no free price; Chapter 3 has the count); 152 → 147 features and 52 → 47 indicators everywhere; Chapter 4 explains the eight copies dropped in all; the guide and README no longer say the download is running; Chapter 8's snapshot row; Chapters 9 and 10 state that the chosen rule isn't tracked live; the contents page says the numbers are final. CLAUDE.md: the "data/ is newer than the notebooks" and "label every result a preview" items replaced; the no-copies rule added to the features trap.
+
 ---
 
 ## 9. Decisions and Parking Lot

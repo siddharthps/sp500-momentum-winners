@@ -12,9 +12,6 @@ Two kinds of strategy are compared throughout:
 - **The model:** each month-end, buy the members a machine-learning model rates most likely to beat
   SPY next month ([Chapter 6](06_modelling.md)).
 
-> **All numbers here are previews.** The download of delisted companies is still running, so the early
-> years still miss many acquired companies. Everything gets rerun once it's complete.
-
 ---
 
 ## 2. How every strategy was judged
@@ -125,9 +122,12 @@ means.
 
 ## 4. Caveats
 
-- **Previews only.** Takeover targets are often recent winners, so the rules' numbers are likely to
-  change once the missing acquired companies are in.
+- **Some early takeovers have no free price at all ([Chapter 3](03_monthly_table.md)).** Takeover
+  targets are often recent winners, so the rules' numbers may still be slightly flattered.
 - **The test years are few:** 45 months, dominated by one market theme. A different four years could
   tell a different story.
 - **Costs are a flat 0.1% a side;** taxes and the price impact of large orders aren't modelled
   ([Chapter 7](07_simulation.md)).
+- **The chosen rule isn't tracked live.** The live record follows the model and its plain twin (the
+  6-month top 10, held one month), which differ only in how stocks are picked
+  ([Chapter 8](08_automation.md)). So the chosen rule's result rests on the backtest alone.

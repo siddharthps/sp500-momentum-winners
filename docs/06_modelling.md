@@ -9,8 +9,6 @@ Build models that rank each month's members by their chance of beating SPY next 
 the top few beats the plain rule ([Chapter 1](01_problem.md)) and SPY. Every result depends on one
 guarantee: **a model only learns from what was knowable before the period it's judged on.**
 
-> **All numbers here are previews.** The download of delisted companies is still running.
-
 ---
 
 ## 2. What was done
@@ -31,7 +29,7 @@ guarantee: **a model only learns from what was knowable before the period it's j
 
 Of the monthly table's 101,431 rows, **88,137 can be used** (in the 4 Nov snapshot the models were
 trained on): members with a price and a known next-month result. That's about 440 a month over 201
-months, each with **152 features**. The same rows are asked three questions:
+months, each with **147 features**. The same rows are asked three questions:
 
 | Framing | Question | Used by |
 | --- | --- | --- |
@@ -178,7 +176,7 @@ been below the base rate on 2020–2022, so picking it now would be choosing on 
 
 ### 3.9 What the headline looks at
 
-The by-how-much model spreads its attention thinly: its 15 most important inputs, of 152, carry about
+The by-how-much model spreads its attention thinly: its 15 most important inputs, of 147, carry about
 a quarter of the total, mostly short-term technical indicators and the market's last month. As in
 Chapter 5, no feature has a strong, steady signal, and the models found nothing stronger combined.
 
@@ -212,5 +210,5 @@ Chapter 5, no feature has a strong, steady signal, and the models found nothing 
 - **36 and 45 months are short.** A gap of three or four points in precision between two models can be
   chance. The conclusion rests on the pattern (every model below its base rate on 2020–2022; the
   headline at it on the test), not on any single gap.
-- **Previews only.** The early years still miss many acquired companies
-  ([Chapter 3](03_monthly_table.md)), and every model is retrained once the download finishes.
+- **Some early takeovers have no free price at all ([Chapter 3](03_monthly_table.md)),** so the
+  training years are slightly survivor-biased.
