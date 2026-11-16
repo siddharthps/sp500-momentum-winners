@@ -24,8 +24,7 @@ touched.
 | 4. Pick | The headline model's top 10 and the 6-month rule's top 10 | Both published, labelled |
 | 5. Save | One file of picks per month, and a running record of every pick | The record is what later monitoring reads |
 
-**It runs on the first weekday of each month, early in the morning (US time),** after the month's
-last close and before the next open, so the golden rule still holds: features at the month-end
+**It runs overnight after each month's last close,** before the next open, so the golden rule still holds: features at the month-end
 close, the trade at the next open. It runs on GitHub's servers (Section 3.10), so it doesn't depend
 on any one computer being on. A missed day is caught up on the next weekday, and a month that's
 already done is never redone by accident.
@@ -167,10 +166,16 @@ The live record is only worth something if no month is missed, and the first tru
 after this project ends. So the monthly run doesn't depend on one computer being on: a scheduled job
 on GitHub's servers runs it.
 
-- **Each weekday morning it asks one question first:** are last month's picks in the running
-  record? Usually they are, and it stops within a minute. On the first weekday of a month they
-  aren't, so it starts from the private snapshot, downloads fresh prices, and runs the same five
+- **Each night it asks one question first:** are last month's picks in the running
+  record? Usually they are, and it stops within a minute. The first weekday night after a month-end
+  they aren't, so it starts from the private snapshot, downloads fresh prices, and runs the same five
   steps, with the same code and the model's settings frozen.
+- **It's started on time by a separate alarm clock.** GitHub's own scheduler runs jobs late when
+  it's busy (about seven hours late in its first week here), and its documentation warns that some
+  runs may be dropped: on the first of a month that could mean picks after the open. So a small
+  scheduled script on another service (a Cloudflare Worker) starts the job each night after the
+  close, and GitHub's own schedule stays as a backup an hour later. Whichever runs second finds the
+  month done.
 - **"Done" is read from the running record, which travels with the snapshot,** not from a file on
   the machine. A fresh machine therefore knows what's been done, a missed day is caught up on the
   next weekday, and a month is never picked twice.
@@ -203,8 +208,9 @@ on GitHub's servers runs it.
 - **The live result is measured slightly differently from the backtest:** from the next open to the
   following month-end close, rather than to the open after it. The difference is one overnight
   move, the price of reporting on the first weekday of the month.
-- **GitHub switches scheduled jobs off in public repositories after 60 days without any change to
-  the repository.** If the project goes quiet, the monthly job has to be switched back on by hand,
-  and it may stop without any alert.
+- **The job relies on two outside services staying up:** GitHub, which runs it, and Cloudflare,
+  which starts it. GitHub switches jobs off in quiet public repositories after 60 days; the
+  trigger switches this one back on each night, but the trigger's access token expires within a
+  year and has to be renewed.
 - **New companies need their price history and sector.** Additions to the index are picked up from
   the current list automatically. Removals need their sector filled in by hand, and the run says so.

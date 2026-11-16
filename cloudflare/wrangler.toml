@@ -1,0 +1,20 @@
+# A Cloudflare Worker that starts the monthly run on time (#76). GitHub's own schedule can run
+# hours late or be dropped under load (its docs); a dispatched run isn't in that queue. The Worker
+# only rings the bell: GitHub Actions still does all the work (.github/workflows/monthly.yml).
+# It also re-enables the workflow each night, so GitHub's 60-day inactivity rule can't stop it.
+name = "sp500-momentum-monthly-trigger"
+main = "src/index.js"
+compatibility_date = "2026-11-01"
+workers_dev = false # no public URL: it only runs on its schedule
+
+[triggers]
+# Every day at 03:17 UTC, the US evening after the close (off the hour). The workflow's `due`
+# check skips weekends and months already done, so a daily trigger is safe and avoids
+# Cloudflare's day-of-week numbering.
+crons = ["17 3 * * *"]
+
+[vars]
+REPO = "siddharthps/sp500-momentum-winners"
+WORKFLOW = "monthly.yml"
+# GITHUB_TOKEN is a secret (wrangler secret put): a fine-grained token for this repository only,
+# with Actions read and write. Never in this file.

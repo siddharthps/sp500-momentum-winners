@@ -527,6 +527,15 @@ a stock is the month's top gainer.
 - **Known limit (GitHub docs, checked 11 Nov):** scheduled workflows in public repositories are disabled after 60 days without repository activity; re-enable on the Actions tab. Stated in Chapter 8's caveats.
 - **The remaining third-party actions are pinned to commit SHAs,** each looked up: `astral-sh/setup-uv` v6.8.0, `docker/setup-buildx-action` v3.12.0, `docker/build-push-action` v6.19.2, `docker/login-action` v3.7.0.
 
+**A Cloudflare Worker starts the monthly run (16 Nov, #76)**
+
+- **Why:** GitHub ran the schedule ~7 h late on 12 and 13 Nov (19:16 and 18:52 UTC vs 12:00), and its docs (read verbatim) say the `schedule` event "can be delayed during periods of high loads… some queued jobs may be dropped". On 1 Dec that would post the picks after the 14:30 UTC open.
+- **Your call: build it now** (I'd recommended moving the GitHub schedule to 03:17 UTC first and adding Cloudflare after submission).
+- **Design:** a Worker can't run the pipeline (CPU and memory limits), so it only rings the bell. At 03:17 UTC daily it re-enables `monthly.yml` (GitHub disables workflows in quiet public repos after 60 days; tested: `PUT …/enable` on an enabled workflow returns 204 and changes nothing) and dispatches it with `dry_run=false`, `respect_due=true`. The workflow treats that like the schedule: it acts only when due and alerts on failure. Manual dispatches keep the dry-run default.
+- **GitHub's schedule stays as a backup at 04:17 UTC** (off the hour, as its docs advise). Two triggers are safe because the second run finds the month done.
+- **Daily, not weekdays:** Cloudflare numbers days of the week differently from standard cron; the `due` check already skips weekends.
+- **Security:** a fine-grained token, this repository only, Actions read/write, stored as a Worker secret; it expires within a year. wrangler pinned to 4.156.1 (the latest release at least two weeks old, not the one published that morning); `npm audit` clean. `cloudflare/` is in `.dockerignore`: `COPY . .` would otherwise put ~100 MB of node_modules in the public image.
+
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 

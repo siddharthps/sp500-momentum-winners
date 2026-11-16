@@ -97,14 +97,17 @@ is merged with CI green (both the CI and Docker workflows).
   once the queue is empty (~12–14 Nov). Each ticker is recorded in the manifest as soon as it's
   fetched. If a run is killed (log stops after the header, task result `0xC000013A`), the next run,
   or `av-pull --max-calls 0` now, records the saved files without any calls.
-- **The monthly run** runs in GitHub Actions (`.github/workflows/monthly.yml`, weekdays 12:00 UTC;
-  #39): `predict due` reads only the running record from the private snapshot, and `predict run
+- **The monthly run** runs in GitHub Actions (`.github/workflows/monthly.yml`; #39), started by a
+  Cloudflare Worker at 03:17 UTC daily (`cloudflare/`, #76; it re-enables the workflow, then
+  dispatches it with `respect_due`), with GitHub's own schedule at 04:17 UTC weekdays as a backup
+  (GitHub ran its schedule ~7 h late on 12–13 Nov, and its docs say runs can be dropped): `predict due` reads only the running record from the private snapshot, and `predict run
   --from-file` runs only when last month's picks are missing. "Done" comes from the record
   (`live_picks.csv`), never a local picks file: a fresh runner has none. **Never run it in two
   places:** both would post the picks (the local task `sp500-momentum-monthly-run` was
   unregistered on 11 Nov, after the cloud dry run passed). A manual
-  workflow run is a dry run by default. GitHub disables the schedule after 60 days without repo
-  activity (re-enable on the Actions tab). The run refits the headline with its
+  workflow run is a dry run by default. The Worker's GitHub token expires within a year: renew it
+  (`npx wrangler secret put GITHUB_TOKEN`). `cloudflare/` is in `.dockerignore` (its
+  node_modules would bloat the public image). The run refits the headline with its
   tuned settings, never re-tunes. It stops on purpose when a newly removed member has no sector:
   add it to `references/removed_sectors.csv` (KVUE, the first time). Its refit must keep matching
   the backtest (run as of Jan 2023 it reproduces the test fit's scores exactly).
