@@ -130,7 +130,7 @@ None of these was built or tested. The test years have been used, so each would 
 3. **A slower target,** such as beating SPY over 3, 6 or 12 months, which fits momentum's horizon.
 4. **A broader portfolio, bought and sold short,** to see whether a small hit-rate edge shows up once
    the bet on the market is removed.
-5. The ideas from [Chapter 7](07_simulation.md#315-ideas-for-future-work): take the market's
+5. The ideas from [Chapter 7](07_simulation.md#314-ideas-for-future-work): take the market's
    direction out of the model, give it a risk-adjusted target, use it to filter the rule rather than
    replace it, and cap the rule's sector weights.
 

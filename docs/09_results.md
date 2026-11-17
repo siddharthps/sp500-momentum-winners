@@ -83,7 +83,7 @@ than a random pick.
 
 Of 121 simulated strategies, only 3 edged SPY's Sharpe ratio on the test years: the 6-month rule's
 single best stock and the chosen rule, which ties. No model did.
-([Chapter 6](06_modelling.md), [Chapter 7, §3.5–3.7](07_simulation.md#35-the-headline-model-loses-to-the-plain-rules-and-on-the-test-to-spy))
+([Chapter 6](06_modelling.md), [Chapter 7, §3.5–3.7](07_simulation.md#35-the-headline-model-loses-to-the-plain-rules-and-to-spy))
 
 ### 3.4 A market-trend filter helped once, and hurt overall
 
@@ -111,7 +111,7 @@ The rule bought the recent winners. The model never did, and its bet changed wit
 years it leaned towards calmer stocks (utilities were 15% of its picks, against 6% of members), a
 defensive tilt that lagged a mostly rising market. A model that reads mostly the market's mood
 (Chapter 6) chooses a different kind of stock as the mood changes.
-([Chapter 7, §3.12–3.13](07_simulation.md#312-part-4-why-the-model-loses))
+([Chapter 7, §3.11–3.12](07_simulation.md#311-part-4-why-the-model-loses))
 
 ### 3.6 The bottom line
 
