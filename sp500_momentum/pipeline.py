@@ -38,7 +38,9 @@ from sp500_momentum.config import (
 
 REGIMES = ("local", "hub", "download")
 
-app = typer.Typer(help="The whole pipeline: the final rebuild (#20).")
+app = typer.Typer(
+    help="The whole pipeline: a full rebuild, from the monthly table to the snapshots."
+)
 
 
 @app.callback()
@@ -46,24 +48,32 @@ def _main():
     """The whole pipeline (keeps `rebuild-all` a named subcommand)."""
 
 
-# What can't be automated (the #20 checklist's manual parts), before and after the rebuild.
-BEFORE_REBUILD = [
-    (
-        "The AV queue is empty (av-status) and the task is unregistered: "
-        "Unregister-ScheduledTask -TaskName sp500-momentum-av-pull -Confirm:$false"
-    ),
-    "The five indicator copies dropped (ta_natr, ta_cmo, ta_stochf_d, ta_typprice, ta_wclprice)",
-    "The vector-simulation section (#47) added to notebook 04",
-    "config.DATA_STATUS changed from 'preview' to final (the last step publishes it)",
-]
-AFTER_REBUILD = [
-    (
-        "Every chapter's and the README's numbers refreshed from the rerun notebooks; 'preview' "
-        "labels removed"
-    ),
-    "The book builds: uv run mkdocs build --strict",
-    "The dashboard shows the final status (it rereads the public dataset within 6 hours)",
-]
+def checklists(retrain_models: bool = True, publish: bool = True) -> tuple[list[str], list[str]]:
+    """What a rebuild needs by hand, before and after it (#91: generic, for any future rebuild,
+    not #20's one-off list). The publishing items appear only when publishing is on."""
+    before = [
+        (
+            "The raw data is in place: run the download steps, or `hub pull` to start from the "
+            "private snapshot (the running guide, docs/running.md)"
+        ),
+        "About 2 hours with retraining (the model search takes ~1 3/4 h); --no-retrain skips it"
+        if retrain_models
+        else "About 10 minutes without retraining: the models keep their tuned settings",
+    ]
+    if publish:
+        before.append(
+            "HF_USER and HF_TOKEN in .env, and a NEW --tag name: an existing tag never moves"
+        )
+    after = [
+        (
+            "If any number changed: refresh every chapter's and the README's numbers from the "
+            "rerun notebooks (the README's chart comes from notebook 05)"
+        ),
+        "The book builds: uv run mkdocs build --strict",
+    ]
+    if publish:
+        after.append("The dashboard rereads the public dataset within 6 hours")
+    return before, after
 
 
 def get_data(regime: str = "local") -> str:
@@ -105,7 +115,7 @@ def transform() -> dict:
 def rebuild_steps(
     tag: str = "", retrain_models: bool = True, notebooks: bool = True, publish: bool = True
 ) -> list[tuple[str, object]]:
-    """The final rebuild, in order: (name, function) pairs. Each step reads only what the steps
+    """A full rebuild, in order: (name, function) pairs. Each step reads only what the steps
     before it wrote, so the order is the running guide's "Rerunning after a change" chain
     (docs/running.md)."""
     from sp500_momentum import features, hub, monthly, run_notebooks
@@ -149,18 +159,19 @@ def run_steps(steps: list[tuple[str, object]]) -> list[tuple[str, float]]:
 
 @app.command("rebuild-all")
 def rebuild_all(
-    tag: str = typer.Option("", help="Tag the published snapshots (e.g. final-2026-11)"),
+    tag: str = typer.Option("", help="Tag the published snapshots (a new name: tags never move)"),
     retrain_models: bool = typer.Option(True, "--retrain/--no-retrain", help="Rerun the search"),
     notebooks: bool = typer.Option(True, help="Rerun every notebook (with their output checks)"),
     publish: bool = typer.Option(True, help="Push both Hugging Face datasets at the end"),
     dry_run: bool = typer.Option(False, help="List the steps and the manual checks only"),
 ):
-    """The final rebuild after the Alpha Vantage pull (#20): monthly table -> features -> models
-    -> notebooks -> snapshots, timed, stopping at the first failure; then the manual checks."""
+    """A full rebuild: monthly table -> features -> models -> notebooks -> snapshots, timed,
+    stopping at the first failure; then the checks to do by hand."""
     steps = rebuild_steps(tag, retrain_models, notebooks, publish)
+    before, after = checklists(retrain_models, publish)
     if dry_run:
         print("Before running it:")
-        for item in BEFORE_REBUILD:
+        for item in before:
             print(f"- {item}")
         print("\nThe steps:")
         for i, (name, _) in enumerate(steps, 1):
@@ -172,7 +183,7 @@ def rebuild_all(
             + "; ".join(f"{n} {m:.1f}" for n, m in done)
         )
     print("\nAfter it, by hand:")
-    for item in AFTER_REBUILD:
+    for item in after:
         print(f"- {item}")
 
 
