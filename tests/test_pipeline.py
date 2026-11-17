@@ -48,3 +48,20 @@ def test_hub_and_download_regimes_call_the_real_steps(monkeypatch):
     pipeline.get_data("hub")
     pipeline.get_data("download")
     assert called == ["hub", "download"]
+
+
+def test_dry_run_checklist_is_generic_not_one_off():
+    """#91: the dry run (the Docker image's default command) lists what any rebuild needs, not
+    #20's one-off steps; publishing items appear only when publishing is on."""
+    from typer.testing import CliRunner
+
+    out = CliRunner().invoke(pipeline.app, ["rebuild-all", "--dry-run"]).output
+    for stale in ["preview", "DATA_STATUS", "Unregister", "ta_natr", "#47"]:
+        assert stale not in out
+    assert "The steps:" in out and "1. monthly table" in out
+    assert "NEW --tag name" in out and "HF_TOKEN" in out
+
+    before, after = pipeline.checklists(retrain_models=False, publish=False)
+    text = " ".join(before + after)
+    assert "HF_TOKEN" not in text and "dashboard" not in text
+    assert "without retraining" in text
