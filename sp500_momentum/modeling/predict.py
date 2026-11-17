@@ -232,6 +232,61 @@ def append_record(record: pd.DataFrame | None, picks: pd.DataFrame) -> pd.DataFr
     return out.reindex(columns=PICK_COLUMNS)
 
 
+def _push(target: str) -> None:
+    from sp500_momentum import hub
+
+    hub.push(target=target, tag="", status=DATA_STATUS)
+
+
+def record_then_post(
+    message: str,
+    publish: bool,
+    dry_run_notify: bool,
+    push=_push,
+    post=notify.public,
+    alert=notify.private,
+) -> bool:
+    """Post the picks publicly at most once a month (#90).
+
+    "Done" is read from the running record in the PRIVATE snapshot, so it's uploaded first, and
+    the picks are posted only once it's there. If that upload fails, nothing is posted and the
+    private chat is told; the next run finds the month not done and posts it then, once. The
+    public dataset (the dashboard's) goes last: if only it fails, the month is already recorded
+    and posted, and the dashboard just lags. Without publishing (a local or dry run), it posts as
+    told. Returns whether the picks were posted. A failure never stops the run: the picks are
+    saved either way (locally, and as the workflow's artifact)."""
+    if not publish:
+        post(message, dry_run_notify)
+        return True
+    # Deliberately broad: nothing in publishing may crash the run (the picks are saved).
+    # Reported by type only, since an HTTP error's text can carry the token.
+    try:
+        push("private")
+    except Exception as e:  # noqa: BLE001
+        logger.warning(f"Private snapshot upload failed: {type(e).__name__}; picks NOT posted")
+        alert(
+            notify.alert_message(
+                "Hugging Face push",
+                [f"{type(e).__name__}: picks saved, not posted; the next run retries"],
+            ),
+            dry_run_notify,
+        )
+        return False
+    post(message, dry_run_notify)
+    try:
+        push("public")
+    except Exception as e:  # noqa: BLE001
+        logger.warning(f"Public dataset upload failed: {type(e).__name__}")
+        alert(
+            notify.alert_message(
+                "Hugging Face push",
+                [f"{type(e).__name__}: picks recorded and posted; the dashboard lags"],
+            ),
+            dry_run_notify,
+        )
+    return True
+
+
 def stamp_now() -> str:
     """When the picks were made: UTC with its zone (ISO 8601), so a PC and a cloud runner write
     the same thing (#88). `notify.tradeable` reads it against the 09:30 New York open."""
@@ -365,22 +420,7 @@ def _run(download: bool, force: bool, dry_run_notify: bool, publish: bool = True
         notify.index_changes(changes, previous, decision),
         latest["has_price"].astype(bool).mean(),
     )
-    notify.public(message, dry_run_notify)
-
-    # Both datasets: the dashboard reads the public one. A failed push alerts, never fails the run.
-    if publish:
-        try:
-            from sp500_momentum import hub
-
-            hub.push(target="both", tag="", status=DATA_STATUS)
-        # Deliberately broad: nothing in publishing may fail the run (the picks are saved).
-        # Reported, not hidden: by type only, since an HTTP error's text can carry the token.
-        except Exception as e:  # noqa: BLE001
-            logger.warning(f"Hugging Face push failed: {type(e).__name__}")
-            notify.private(
-                notify.alert_message("Hugging Face push", [f"{type(e).__name__}: picks saved"]),
-                dry_run_notify,
-            )
+    record_then_post(message, publish, dry_run_notify)
 
     summary = "\n".join(
         f"  {STRATEGY_LABELS[s]}: {', '.join(picks.loc[picks['strategy'] == s, 'ticker'])}"

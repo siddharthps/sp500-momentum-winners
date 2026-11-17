@@ -88,6 +88,9 @@ is merged with CI green (both the CI and Docker workflows).
   - **`made_at` is UTC with its zone** (`predict.stamp_now`); `notify.tradeable` compares it with
     the 09:30 New York open (DST included) and reads a zoneless stamp as US Central (the Oct 2026
     PC row). Never write a naive local time again (#88).
+  - **Record before posting** (`predict.record_then_post`, #90): private upload first (it holds
+    the running record that decides "done"), then the public post, then the public dataset. A
+    failed private upload means no post; never post before the record is safely uploaded.
   - **Never run it in two places:** both would post the picks (the local task
     `sp500-momentum-monthly-run` was unregistered on 11 Nov). A manual run is a dry run by default.
   - **The Worker's token** (fine-grained, this repo only, Actions read/write) is a Worker secret
