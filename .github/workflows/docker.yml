@@ -86,7 +86,7 @@ jobs:
           image-ref: sp500-momentum:runtime
           severity: HIGH,CRITICAL
           format: table
-          exit-code: "0" # report, don't fail: most findings have no fix yet (see the README)
+          exit-code: "0" # report, don't fail: most findings have no fix yet (see docs/running.md)
 
       - name: Log in to GitHub Container Registry
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
