@@ -1,101 +1,94 @@
-# sp500-momentum-winners
+# S&P 500 Momentum Winners
 
-<a target="_blank" href="https://cookiecutter-data-science.drivendata.org/">
-    <img src="https://img.shields.io/badge/CCDS-Project%20template-328F97?logo=cookiecutter" alt="Cookiecutter Data Science template" />
-</a>
-<a href="https://github.com/siddharthps/sp500-momentum-winners/actions/workflows/ci.yml">
-    <img src="https://github.com/siddharthps/sp500-momentum-winners/actions/workflows/ci.yml/badge.svg" alt="CI" />
-</a>
+### Does buying the stock market's recent winners beat simply holding the index? And can machine learning pick them better?
 
-**At the end of each month, if you buy the S&P 500 stocks that rose the most and hold them for a
-while, do you beat the S&P 500 itself? And can a machine-learning model pick better than "buy what
-went up"?**
+[![The project book](https://img.shields.io/badge/book-read%20it-2a78d6)](https://siddharthps.github.io/sp500-momentum-winners/)
+[![Live dashboard](https://img.shields.io/badge/dashboard-live-ff4b4b?logo=streamlit&logoColor=white)](https://sp500-momentum-winners.streamlit.app/)
+[![Dataset on Hugging Face](https://img.shields.io/badge/dataset-Hugging%20Face-ffcc4d?logo=huggingface&logoColor=black)](https://huggingface.co/datasets/siddharthps/sp500-momentum-winners)
+[![Monthly picks on Telegram](https://img.shields.io/badge/picks-Telegram-26a5e4?logo=telegram&logoColor=white)](https://t.me/s/sp500_momentum_picks)
+[![CI](https://github.com/siddharthps/sp500-momentum-winners/actions/workflows/ci.yml/badge.svg)](https://github.com/siddharthps/sp500-momentum-winners/actions/workflows/ci.yml)
+[![Docker](https://github.com/siddharthps/sp500-momentum-winners/actions/workflows/docker.yml/badge.svg)](https://github.com/siddharthps/sp500-momentum-winners/actions/workflows/docker.yml)
 
-"Momentum" (recent winners keep winning for a while) is one of the best-documented patterns in stock
-returns, and it's easy to test badly: looking back with today's index members leaves out every
-company that was acquired, went bust or was dropped. So this project rebuilds **who was in the index
-on each date** since 2010, finds prices for the companies that later left, and tests two kinds of
-strategy against SPY, after trading costs:
+![What $10,000 became over 2023–2026: the simple rule, SPY and the machine-learning model](reports/figures/readme_hero.png)
 
-- **The plain rule:** buy the members that rose the most over the past 1–12 months (60 versions, all
-  reported).
-- **The model:** buy the members a machine-learning model, trained on 147 features, rates most likely
-  to beat SPY next month.
+## The project
 
-Every choice is made on 2010–2022, and every strategy is then judged once on the decisions from
-January 2023.
+Momentum, the idea that rising stocks keep rising for a while, is easy to test badly: today's
+S&P 500 holds only the survivors. This project rebuilds who was *actually* in the index each month
+since 2010, then tests a simple "buy what went up" rule against a machine-learning model, chosen on
+2010–2022 and judged once on 2023–2026.
 
-## The result
-
-What $10,000 became over the test years (decisions Jan 2023 – Sept 2026, 45 months, after costs):
-
-| Strategy | Value | Sharpe ratio | Worst fall |
-| --- | --- | --- | --- |
-| SPY | $19,650 | 1.21 | −8% |
-| **The rule chosen on 2010–2022:** top 5 by 6-month return, each held 6 months | **$59,209** | 1.21 | −27% |
-| **The headline model:** top 10 by predicted return above SPY, held 1 month | $11,640 | 0.12 | −31% |
-
-**The models add nothing that a plain 6-month momentum rule doesn't do better, and no strategy chosen
-in advance clearly beats SPY per unit of risk.** The rule tripled SPY's return, but through far more
-risk and a handful of AI and chip stocks; per unit of risk it tied.
-[Chapter 9](docs/09_results.md) has the results and [Chapter 10](docs/10_lessons.md) explains why.
-
-## The decision rule, in plain terms
-
-At each month-end close, using only what was known then:
-
-1. Take every company in the S&P 500 on that date that has a month-end price.
-2. **The model:** score each one with the headline model, a gradient-boosting model that predicts
-   its return above SPY over the next month, and take the **10 highest scores**. **The plain rule,
-   published next to it:** the 10 highest 6-month returns.
-3. Buy them in equal amounts at the next trading day's open, and hold for one month. Then repeat.
-
-**Nothing is bought** when the month's data can't be trusted (an incomplete month, missing prices or
-sectors, or features unlike the model's). The picks are a research output, not advice.
-
-## Links
-
-| | |
-| --- | --- |
-| **The project book** | [siddharthps.github.io/sp500-momentum-winners](https://siddharthps.github.io/sp500-momentum-winners/): each step as a chapter, in plain words |
-| **Running the project** | [The full guide](docs/running.md): setup, every pipeline step, snapshots, Docker, notebooks, development |
-| **Live dashboard** | [sp500-momentum-winners.streamlit.app](https://sp500-momentum-winners.streamlit.app/): this month's picks, the live record, the backtest, model monitoring |
-| **The monthly run** | [GitHub Actions](https://github.com/siddharthps/sp500-momentum-winners/actions/workflows/monthly.yml): the picks are made in the cloud on the first weekday of each month, before the open |
-| **Monthly picks on Telegram** | [t.me/s/sp500_momentum_picks](https://t.me/s/sp500_momentum_picks) (readable in a browser) |
-| **Public dataset** | [huggingface.co/datasets/siddharthps/sp500-momentum-winners](https://huggingface.co/datasets/siddharthps/sp500-momentum-winners): the features and results, without the vendors' raw prices |
-| **Docker image** | `ghcr.io/siddharthps/sp500-momentum-winners` |
-| **Progress** | [issues](https://github.com/siddharthps/sp500-momentum-winners/issues), [milestones](https://github.com/siddharthps/sp500-momentum-winners/milestones), the [project board](https://github.com/users/siddharthps/projects/1); decisions in [references/decisions.md](references/decisions.md) |
-
-## Data sources
-
-| Source | What it gives |
-| --- | --- |
-| **Wikipedia:** the current S&P 500 list and its record of index changes | Who was in the index on each date (819 companies over 202 month-ends), with repairs for renames and missing entries |
-| **Yahoo Finance** (yfinance) | Daily prices from 2000 for current members, the departed companies it still covers, SPY, the sector funds, the Dow, VIX, gold and oil (**3.67 M daily rows**, 628 series) |
-| **Alpha Vantage** (free tier) | Monthly prices for departed companies Yahoo no longer has, or whose symbol now belongs to another company |
-| **FRED** (St. Louis Fed) | Core inflation, the Fed Funds rate, 1/5/10-year Treasury yields and potential GDP, each used only after its publication date |
-
-The result is **one row per member per month-end: 101,431 rows** from January 2010, each with 147
-features and the targets. [Appendix A](docs/appendix_a_data_dictionary.md) defines every column.
-
-## How to run
-
-Requires [uv](https://docs.astral.sh/uv/) and Python 3.12. To read the results without running
-anything, use the book, or the [notebooks](notebooks/), which are committed with their outputs.
-
-```bash
-uv sync                                                    # Python 3.12 and every dependency, from the lock file
-uv run pytest                                              # the tests (offline, no data needed)
-uv run python -m sp500_momentum.pipeline rebuild-all --dry-run   # the whole workflow's steps, in order
-docker run --rm ghcr.io/siddharthps/sp500-momentum-winners # or the same, in Docker
+```mermaid
+flowchart LR
+    A["Who was in the index<br/>each month since 2010"] --> B["Prices, including<br/>companies that left"]
+    B --> C["Signals for<br/>every stock"]
+    C --> D["Simple rule vs<br/>ML model"]
+    D --> E["Tested once<br/>on 2023–2026"]
+    E --> F["Live picks<br/>every month"]
 ```
 
-To rebuild everything from the sources, add an Alpha Vantage key to `.env` and follow the pipeline:
-membership → coverage → daily prices → FRED → delisted prices → monthly table → features → models →
-notebooks. With access to the private data snapshot, one download replaces the first five steps.
-**[The full guide](docs/running.md)** has every command, what to rerun after a change, the snapshots,
-Docker, the dashboard, notifications and the development workflow.
+## The findings
+
+- **The simple rule won on money:** $10,000 became **$59,209**, against $19,650 in SPY.
+- **Not on risk:** it swung almost four times as much; per unit of risk it only tied SPY.
+- **The machine-learning model lost to both:** $10,000 became **$12,107**.
+
+| $10,000 over the test years (2023–2026, 45 months, after costs) | Became | Sharpe ratio* | Worst fall |
+| --- | --- | --- | --- |
+| SPY, the index | $19,650 | 1.21 | −8% |
+| **Simple rule:** top 5 by 6-month return, each held 6 months | **$59,209** | 1.21 | −27% |
+| **ML model:** top 10 by predicted return above SPY, each held 1 month | $12,107 | 0.12 | −22% |
+
+\*Return per unit of risk: higher is better.
+
+[Chapter 9](docs/09_results.md) has the full results; [Chapter 10](docs/10_lessons.md) explains why.
+
+## Explore
+
+### Read
+
+- **[The project book](https://siddharthps.github.io/sp500-momentum-winners/)**: every step as a short
+  chapter, in plain words. Start with [Chapter 1](docs/01_problem.md), or go straight to
+  [the results](docs/09_results.md).
+
+### See it live
+
+- **[Live dashboard](https://sp500-momentum-winners.streamlit.app/)** (may take a minute to wake
+  up): this month's picks from both strategies, the live record (from January 2027), the backtest
+  and model monitoring.
+- **[Monthly picks on Telegram](https://t.me/s/sp500_momentum_picks)**: posted the night after each
+  month's last close; readable in a browser, no account needed.
+
+![The live dashboard: this month's picks from the model and the simple rule](reports/figures/readme_dashboard.png)
+
+### Use the data
+
+- **[Public dataset on Hugging Face](https://huggingface.co/datasets/siddharthps/sp500-momentum-winners)**:
+  the features, model scores, picks and results (without the vendors' raw prices).
+- **Docker image** `ghcr.io/siddharthps/sp500-momentum-winners`: the tested environment, ready to
+  run.
+
+### Follow the work
+
+- [Issues](https://github.com/siddharthps/sp500-momentum-winners/issues),
+  [milestones](https://github.com/siddharthps/sp500-momentum-winners/milestones) and the
+  [project board](https://github.com/users/siddharthps/projects/1); every decision and its reason in
+  the [decision log](references/decisions.md).
+
+## Run it yourself
+
+Needs [uv](https://docs.astral.sh/uv/) and Python 3.12. `uv sync` installs everything; the
+**[running guide](docs/running.md)** has every step, from the raw data to the monthly run.
 
 ## Acknowledgements
 
-Built as the final project for the Stock Markets Analytics Zoomcamp 2026 (DataTalksClub).
+This project was built as the final project for the
+[Stock Markets Analytics Zoomcamp 2026](https://github.com/DataTalksClub/stock-markets-analytics-zoomcamp),
+run by [DataTalks.Club](https://datatalks.club/).
+
+Special thanks to **Ivan Brigida**, who hosted the course. Its step-by-step path from raw market data
+to features, models and trading simulations gave this project its shape, and much of the workflow
+here (named feature sets, prediction rules, the simulation) follows the one the course taught.
+
+Thanks also to **Alexey Grigorev** for running DataTalks.Club, and to its community, which makes
+courses like this one possible.

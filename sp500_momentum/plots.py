@@ -637,6 +637,46 @@ def paths_chart(
     return fig
 
 
+def hero_chart(frame: pd.DataFrame, lines: dict[str, tuple[str, str]], title: str, subtitle: str):
+    """The README's headline chart: what $10,000 became, one line per strategy, on a linear
+    dollar scale (what a non-specialist expects). Each line ends in its final value, labelled
+    beside it; a legend below repeats the names, so identity never rests on colour alone.
+
+    `frame`: monthly values, Period index, one column per line; `lines`: {column: (label,
+    colour)}, in legend order."""
+    fig, ax = plt.subplots(figsize=(9, 4.8))
+    x = frame.index.to_timestamp(how="end").normalize()
+    for col, (label, color) in lines.items():
+        y = frame[col].to_numpy()
+        ax.plot(x, y, color=color, linewidth=2, label=label)
+        ax.annotate(
+            f"${y[-1]:,.0f}",
+            xy=(x[-1], y[-1]),
+            xytext=(6, 0),
+            textcoords="offset points",
+            va="center",
+            fontsize=10,
+            fontweight="bold",
+            color=INK,
+        )
+    ax.axhline(START_DOLLARS, color=AXIS, linewidth=1, zorder=0)
+    ax.set_ylim(bottom=0)
+    ax.yaxis.set_major_formatter(
+        mpl.ticker.FuncFormatter(lambda v, _: f"${v / 1000:,.0f}k" if v else "$0")
+    )
+    ax.xaxis.set_major_locator(mpl.dates.MonthLocator(bymonth=(1, 7)))
+    ax.xaxis.set_major_formatter(mpl.dates.DateFormatter("%b %Y"))
+    ax.margins(x=0.01)
+    ax.spines["left"].set_visible(False)
+    ax.tick_params(axis="y", length=0)
+    fig.legend(loc="lower center", ncol=len(lines), fontsize=9, frameon=False)
+    fig.suptitle(title, x=0.01, y=0.98, ha="left", fontsize=13, fontweight="bold")
+    fig.text(0.01, 0.92, subtitle, ha="left", color=INK_2, fontsize=9.5)
+    # room on the right for the end labels, at the bottom for the legend
+    fig.tight_layout(rect=(0, 0.07, 0.93, 0.92))
+    return fig
+
+
 def exposure_chart(table: pd.DataFrame, names: dict[str, str], title: str, subtitle: str):
     """Average within-month percentile of each exposure among each strategy's picks, one panel
     per period (rows: exposures; one bar per strategy). 50 = the average member (line)."""
