@@ -550,6 +550,28 @@ a stock is the month's top gainer.
 - **`DATA_STATUS` final.** The "preview" notes leave the book; each "previews only" caveat becomes the one limitation that survives the final data: some early takeovers have no free price at all (Chapter 3 carries the count).
 - **The live-record limitation** (11 Nov) is in Chapters 9 and 10: the chosen rule isn't tracked live.
 
+**Wrong-security Alpha Vantage series, and potential GDP point-in-time (16 Nov, #85)**
+
+- **The defect.** Alpha Vantage series got only the date check, never the liquidity check Yahoo's get. Four series priced early members from other securities:
+
+  | Series | Median daily $ traded (member months) | Trades on after leaving | Rows |
+  |---|---|---|---|
+  | El Paso | $762 | 174 months | 14 |
+  | Genzyme | $0.5M | 188 months | 15 |
+  | Millipore | $3.9M | 67 months, with dividends | 6 |
+  | LSI | $8.2M | 110 months, 97 dividends | 52 |
+
+- **The rule needs both tests.** Liquidity alone would drop Titanium Metals ($9.4M a day, genuine, ends at its deal). Trading on alone would flag liquid series spliced to a later company; those are cut at the removal month anyway.
+- **Measured before deciding, pre-2023 only** (side rebuild in a separate worktree; test rows dropped before printing). Only the 87 rows changed. 5 of 7 models picked different settings on the 2014–19 folds, and the headline changed from `xgb_reg` to `xgb` (that run had the Alpha Vantage fix only).
+- **Noise ruled out.** `tree` and `xgb_reg`, retrained on the original data, reproduced the final run exactly (30/30 tries, score difference 0.0).
+- **Adopted on the reasoning,** not the results: a known pricing error isn't kept because the fix is inconvenient. The headline is still chosen on 2020–22 by the same rule. How easily it flips (selection scores close together) is a finding to report, not hide.
+- **In the same rebuild (your calls):**
+  - Potential GDP point-in-time: each decision uses the version in force the day before (51 versions via the FRED API, so a `FRED_API_KEY` in `.env` and as a repo secret). Core CPI's revised seasonal factors stay a stated look-ahead.
+  - `eda.regime_correlations` refuses columns that vary across stocks on a date (the sector fund's return had been read as a market condition).
+  - #84: the notebooks' "preview" banners removed.
+- **Outcome (real rebuild, both fixes).** The table changed only through the 87 rows (and the top-decile flags they shift, all before May 2014). The headline chosen on 2020–22 is `xgb_reg` again, so the side run's flip came from the Alpha Vantage fix alone. On the test, read once, the conclusion stands: the 6-month rule is still best (52.9% precision vs a 45.1% base rate), and the headline still doesn't beat the base rate (43.6%).
+- **Process breach, recorded.** The side run's test tables were seen once, by accident (the Read tool shows notebook outputs). The adopt decision came before, and no choice used them.
+
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
 

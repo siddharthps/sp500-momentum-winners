@@ -26,7 +26,7 @@ from nbconvert.preprocessors import (
 import nbformat
 import typer
 
-from sp500_momentum.config import PROJ_ROOT
+from sp500_momentum.config import PROJ_ROOT, SECRET_KEYS
 
 NOTEBOOKS_DIR = PROJ_ROOT / "notebooks"
 MAX_OUTPUT_LINES = 50
@@ -95,9 +95,7 @@ def run(prefix: str = typer.Argument("", help="Only notebooks whose name starts 
     paths = sorted(p for p in NOTEBOOKS_DIR.glob("*.ipynb") if p.name.startswith(prefix))
     if not paths:
         raise typer.BadParameter(f"no notebook in notebooks/ starts with {prefix!r}")
-    secrets = tuple(
-        v for v in [os.getenv("ALPHAVANTAGE_API_KEY"), os.getenv("TELEGRAM_BOT_TOKEN")] if v
-    )
+    secrets = tuple(v for k in SECRET_KEYS if (v := os.getenv(k)))
     failed = False
     for path in paths:
         nb = nbformat.read(path, as_version=4)

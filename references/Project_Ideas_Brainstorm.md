@@ -1683,6 +1683,31 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 - **Noted:** Material for MkDocs prints an end-of-life notice (5 May 2027) on every build. It isn't a strict-mode warning, but the theme needs replacing before then.
 - **Drafts need a check before they go in:** the agent read Session 38 and drafted a new "Session 39" for the trial. Session 38 already covers the same issue on the same day, so the draft was merged into it instead.
 
+### Session 39 — Monday, 16 Nov 2026, evening (the book review with the docs agent; #85: wrong-security Alpha Vantage series)
+
+- **The review restarted, one page at a time, with the docs agent** (review mode first, then edit mode on the approved items; every claim rechecked against the files before it went to you). Chapters 1–5 done on a local branch, one commit each. The agent found real errors on every page:
+  - Chapter 2's early-years gap used the wrong denominator: 59%/13% were shares of the Alpha Vantage queue, not of all removals (33 of 61 vs 5 of 89).
+  - Wikipedia records one reason per change, often the company added, so the reason buckets are approximate (Mattel, Goodyear and others were filed as "acquired").
+  - Chapter 4's potential-GDP caveat was wrong twice: ALFRED archives past versions, and core CPI has the same problem.
+  - Chapter 5's tails were per side, its Sharpe caveat was backwards, and one "market condition" was a per-stock column.
+- **Trap: the agent's report says what it meant to do.** It twice said lines were wrapped at 100 characters when some weren't; every diff is checked by hand.
+- **#85, found in Chapter 3's review:** Alpha Vantage series only got the date check. Four belong to other securities: El Paso (closes at $0.01–0.07), Genzyme, Millipore and LSI, which all trade for years after their takeovers (LSI pays 97 dividends to 2023). That's 87 rows, the last in Apr 2014. Liquidity alone isn't enough (Titanium Metals is thin but genuine and ends at its deal); the rule needs both tests.
+- **Measured first (your call, against my "fix now"):** a side rebuild in a separate worktree, compared on pre-2023 periods only. 5 of 7 models changed their tuned settings and the headline changed (`xgb_reg` → `xgb`; that run had the Alpha Vantage fix only); the plain rules were identical.
+- **A control settled noise vs fix:** `tree` and `xgb_reg` retrained on the *original* data reproduced the final run exactly (30/30 tries, score difference 0.0). Training is deterministic, so the differences come from the 87 rows.
+- **Adopted on its reasoning** (the data is wrong), not on results. In the same rebuild:
+  - potential GDP read point-in-time from its 51 published versions (FRED API; a new `FRED_API_KEY`, also a repo secret for the monthly run);
+  - the regime check refuses per-stock columns;
+  - #84's "preview" banners removed;
+  - one shared `SECRET_KEYS` list (the notebook check had lacked `HF_TOKEN`).
+- **Trap, a process breach:** reading notebook 04 with the Read tool to fix one markdown line showed the side run's test-year tables. The adopt decision had already been made, so nothing depended on it, and nothing was chosen from it. Notebooks are now edited only by scripts that touch `source` cells.
+- **Trap:** `with_retries` re-raises the last error unchanged, and a `requests` error's message holds the URL, so a keyed request would have logged the key. The FRED API fetch re-raises by type and status only, `from None` (tested).
+- **Potential GDP, point-in-time vs today's version:** mean gap 0.29 points of yearly growth, largest 0.92 (2023: 1.80% published at the time vs 2.62% in today's version). 2026 agrees, as it should.
+- **The real rebuild (both fixes; ~2 h) and the one test read:**
+  - The monthly table changed only through the 87 rows: their prices, plus 66 top-decile flags on dates before May 2014 (removing four priced stocks moves the cut-off). 4.48% of member-months now have no free price.
+  - 5 of 7 models picked new settings again; `xgb_rank` is unchanged. Tuning leader: `xgb_rank` (0.536), with `tree`, `rf` and `xgb` within 0.008.
+  - **Headline, chosen on 2020–22: `xgb_reg` again** (selection score 0.501; was 0.523). So the side run's flip to `xgb` came from the Alpha Vantage fix alone, and adding point-in-time GDP flipped it back: another sign of how close the candidates are.
+  - **The test (read once, notebook 03):** the conclusion stands. The 6-month rule is unchanged and still best (precision 52.9% vs a 45.1% base rate). The headline still doesn't beat the base rate (43.6% vs 45.1%; was 45.1%). Every model is still below the 6-month rule.
+
 ---
 
 ## 9. Decisions and Parking Lot
@@ -1719,6 +1744,8 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 | 3 Nov 2026 | **Feature review:** 8 new features, 3 exact copies dropped (#29, before #12); no split flag; sector labels as a caveat; flagged moves reviewed in #20; NaN-aware blanks in #12 | New information, not more columns. A field missing for one source leaks survival. Settled one at a time, all as recommended |
 | 3 Nov 2026 | **AV pull survives a kill (#30):** the manifest is written per ticker, and saved files are recovered from disk | A killed run had left 6 files unrecorded, which would have cost 6 scarce calls to fetch again |
 | 2 Nov 2026 | **Monthly table repairs:** date-windowed `RENAMES`, `MISSING_ADDS`, ticker cleaning, and a $10M median dollar-volume check that drops yfinance series belonging to another security (those go to the AV queue) | Wikipedia misses renames, so stocks counted as members too early (META from 2010). Tickers get reused (Q, UA, SUN), so a flat alias map gives wrong prices |
+| 16 Nov 2026 | **Wrong-security Alpha Vantage series dropped (#85):** illiquid (under $10M a day over member months) **and** an acquired company still trading over 95 days after leaving. Catches EP, GENZ, MIL, LSI (87 rows); spares TIE | The table priced four early members from other companies. Adopted on the reasoning; a deterministic control showed the model changes come from the fix |
+| 16 Nov 2026 | **Potential GDP point-in-time (#85):** each decision uses the version published before it (FRED API, `FRED_API_KEY`) | Today's version carries later revisions (2023: 2.62% vs 1.80% then): a look-ahead that was fixable |
 
 ### Parking lot (ideas to keep but not pursue now)
 

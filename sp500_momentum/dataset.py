@@ -3,11 +3,12 @@
 uv run python -m sp500_momentum.dataset membership   # Wikipedia: current list + changes
 uv run python -m sp500_momentum.dataset coverage     # which removed members yfinance lacks
 uv run python -m sp500_momentum.dataset yahoo-daily  # yfinance daily prices + benchmarks
-uv run python -m sp500_momentum.dataset fred         # FRED macro series
+uv run python -m sp500_momentum.dataset fred         # FRED macro series (+ GDPPOT's versions: FRED_API_KEY)
 uv run python -m sp500_momentum.dataset av-pull      # Alpha Vantage, ~23 tickers a day; rerun daily
 uv run python -m sp500_momentum.dataset av-status    # progress of the pull
 """
 
+import os
 import time
 
 from loguru import logger
@@ -24,6 +25,7 @@ from sp500_momentum.config import (
     FRED_DIR,
     FRED_SERIES,
     FRED_START,
+    FRED_VINTAGES,
     PRICE_START,
     REASON_OVERRIDES,
     REMOVED_COVERAGE,
@@ -181,7 +183,7 @@ def yahoo_daily(
 
 @app.command()
 def fred(start: str = FRED_START):
-    """Download the FRED macro series in FRED_SERIES (full refresh: 6 small requests)."""
+    """Download the FRED macro series in FRED_SERIES (full refresh: 6 small CSV requests, plus one API request per series in FRED_VINTAGES)."""
     FRED_DIR.mkdir(parents=True, exist_ok=True)
     rows = []
     for sid, meta in FRED_SERIES.items():
@@ -199,6 +201,14 @@ def fred(start: str = FRED_START):
         )
     table = pd.DataFrame(rows).to_string(index=False)
     logger.success(f"Saved {len(rows)} FRED series to {FRED_DIR}\n{table}")
+    # The past versions of revised series (one API request each; needs FRED_API_KEY).
+    for sid, path in FRED_VINTAGES.items():
+        v = fred_src.fetch_vintages(sid, start, os.getenv("FRED_API_KEY", ""))
+        v.to_csv(path, index=False)
+        logger.success(
+            f"Saved {sid}'s {v['realtime_start'].nunique()} published versions "
+            f"({len(v):,} rows) to {path.name}"
+        )
 
 
 @app.command("av-pull")
