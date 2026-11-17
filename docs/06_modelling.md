@@ -5,8 +5,8 @@
 
 ## 1. Goal
 
-Build models that rank each month's members by their chance of beating SPY next month, so that
-buying the top few beats the plain rule ([Chapter 1](01_problem.md)) and SPY. Every result depends
+Build models that rank each month's members by their chance of beating SPY next month. Buying the
+top few should then beat the plain rule ([Chapter 1](01_problem.md)) and SPY. Every result depends
 on one guarantee: **a model only learns from what was knowable before the period it's judged on.**
 
 ---
@@ -27,7 +27,7 @@ on one guarantee: **a model only learns from what was knowable before the period
 
 ### 3.1 The rows and the three questions
 
-Of the monthly table's 101,363 rows, **96,317 can be used**: members with a price and a known
+**96,317 of the monthly table's 101,363 rows can be used:** members with a price and a known
 next-month result. That's about 480 a month over 201 months, each with **147 features**. The same
 rows are asked three questions:
 
@@ -37,10 +37,10 @@ rows are asked three questions:
 | By how much | What will its return be, minus SPY's? | One regression model |
 | Better than the others | Where will it rank among this month's members? (graded 0–9 by tenth, 9 = the best tenth) | One ranking model |
 
-The strategy only uses the *order* within each month, so all are judged the same way: how often,
-and by how much, each month's top picks beat SPY. The share of a model's top 10 that beat SPY the
-next month is its **precision**; the share of all members that did is the **base rate**, what a
-random pick scores.
+- **All three are judged the same way.** The strategy only uses the *order* within each month, so
+  what counts is how often, and by how much, each month's top picks beat SPY.
+- **Precision** is the share of a model's top 10 that beat SPY the next month.
+- The **base rate** is the share of all members that did: what a random pick scores.
 
 ### 3.2 Three periods, cut by time
 
@@ -50,19 +50,18 @@ random pick scores.
 | Validation | 2020–2022 | 17,981 | 36 | 49.9% | Comparing the tuned models |
 | Test | 2023 – Sept 2026 | 22,614 | 45 | 45.1% | One final check, never used for any choice |
 
-The cut is by time, never random: a random split would let a model learn from March 2024 and be
-tested on February 2024. Every strategy, including the plain rule in Chapter 7, is judged on the
-same test years.
-
-**A one-month gap sits before every judged period.** A December row is labelled with January's
-result, so a model judged on January mustn't train on it: the model judged on 2020–2022 trains on
-decisions up to November 2019.
+- **The cut is by time, never random.** A random split would let a model learn from March 2024 and
+  be tested on February 2024.
+- **Every strategy is judged on the same test years,** the plain rule in Chapter 7 included.
+- **A one-month gap sits before every judged period.** A December row is labelled with January's
+  result, so a model judged on January mustn't train on it. The model judged on 2020–2022 trains
+  on decisions up to November 2019.
 
 ### 3.3 Tuning across successive years
 
 Each model has settings to choose, such as tree depth or penalty strength. The signal moves between
-periods ([Chapter 5](05_eda.md)), so settings are scored on **six successive years**, each time
-training only on the years before:
+periods ([Chapter 5](05_eda.md)), so settings are scored on **six successive years**, each trained
+only on the years before:
 
 | Fold | Trains on decisions | Scored on | Training rows | Scored rows |
 | --- | --- | --- | --- | --- |
@@ -73,12 +72,12 @@ training only on the years before:
 | 5 | Jan 2010 – Nov 2017 | 2018 | 43,357 | 5,927 |
 | 6 | Jan 2010 – Nov 2018 | 2019 | 49,282 | 5,945 |
 
-Each model tries **30 random settings** (20 for the slower neural network). The winner has the best
-**average precision across the six years minus half their spread** (how much the yearly results
-vary), so steady beats brilliant-then-poor. The tuned models are compared on 2020–2022, which no
-fold touched, and the best model (the plain rules are shown, but aren't candidates) becomes the
-**headline**. Finally every model is retrained up to November 2022 and checked once on 2023
-onwards.
+- **Each model tries 30 random settings** (20 for the slower neural network).
+- **The winning setting has the best score:** the **average precision across the six years minus
+  half their spread** (how much the yearly results vary), so steady beats brilliant-then-poor.
+- **The tuned models are compared on 2020–2022,** which no fold touched. The best model becomes the
+  **headline**; the plain rules are shown, but aren't candidates.
+- **Finally every model is retrained up to November 2022** and checked once on 2023 onwards.
 
 ### 3.4 Preparing the inputs, inside each training period
 
@@ -90,15 +89,15 @@ Different kinds of model need different preparation:
 | Decision tree, random forest | Filled with the training period's median, plus a "was blank" marker | Not a problem for trees | Not needed |
 | Logistic regression, neural network | Median, plus the marker | Limited to the training period's 1st–99th percentile | Standardised |
 
-**Every value used for preparation is learned from the training rows alone**, never from the rows
-being scored. A median computed over all years would let 2022 data shape a model judged on 2016.
-
-Each model can also use the stock-level features as **percentiles among that month's members**
-("top 10% by volatility this month"). They mean the same in calm and wild markets, have no extreme
-values, and use only the same month's rows. The tuning decides, model by model, whether raw values
-or percentiles do better. In the end only the decision tree and the ranking model chose
-percentiles; the headline uses raw values. Market and economic features, the same for every stock
-in a month, stay as they are.
+- **Every value used for preparation is learned from the training rows alone,** never from the
+  rows being scored. A median computed over all years would let 2022 data shape a model judged on
+  2016.
+- **Each model can also use the stock-level features as percentiles among that month's members**
+  ("top 10% by volatility this month"). They mean the same in calm and wild markets, have no
+  extreme values, and use only the same month's rows.
+- **The tuning decides, model by model, whether raw values or percentiles do better.** In the end
+  only the decision tree and the ranking model chose percentiles; the headline uses raw values.
+- **Market and economic features stay as they are:** they're the same for every stock in a month.
 
 ### 3.5 The models
 
@@ -115,7 +114,7 @@ in a month, stay as they are.
 
 ### 3.6 Tuning: promising, but mostly by selection
 
-On 2014–2019, six of the seven models' best settings beat the 49.7% base rate; logistic regression
+On 2014–2019, six of the seven models' best settings beat the 49.7% base rate. Logistic regression
 fell just below it.
 
 | Model | Best setting's precision | Its worst year | Best setting's score | Median try's score |
@@ -128,11 +127,13 @@ fell just below it.
 | Gradient boosting, by how much | 54.0% | 46.7% | 50.4% | 46.4% |
 | Logistic regression | 49.2% | 47.5% | 48.1% | 47.4% |
 
-The score is what picks a setting: the average across the six years minus half their spread. The
-last two columns are the warning: **the best of 20–30 tries scored about 3 to 7 points above the
-typical (median) try**, partly by luck of the draw (logistic regression, under 1 point). The
-ranking model led the tuning by a small margin; the model later chosen as the headline came sixth
-of seven. Only untouched years can tell how much is real.
+- **The score is what picks a setting** (Section 3.3).
+- **The last two columns are the warning.** The best of 20–30 tries scored about 3 to 7 points above
+  the typical (median) try, partly by luck of the draw (logistic regression, under 1 point).
+- **The ranking model led the tuning by a small margin.** The model later chosen as the headline
+  came sixth of seven.
+
+Only untouched years can tell how much is real.
 
 ### 3.7 The comparison on 2020–2022: two models beat a random pick
 
@@ -150,12 +151,14 @@ of seven. Only untouched years can tell how much is real.
 | Random forest | 43.3% | −0.87% |
 | *Base rate* | *49.9%* | |
 
-**Two models' top 10 beat SPY more often than the base rate, the headline and the decision tree,
-and so did both plain rules.** The headline was chosen by the same rule as the tuning (average
-across the years minus half the spread), and the by-how-much model scored best on it among the
-models: the best hit rate of any model, and the best worst year (47.5%). Its picks gained 1.11% a
-month over SPY, the second-most. The 6-month rule scored a little higher on the same measure, but
-the rules are benchmarks, not candidates. The random forest, third in the tuning, did worst.
+- **Two models' top 10 beat SPY more often than the base rate:** the headline and the decision
+  tree. So did both plain rules.
+- **The headline was chosen by the tuning's score** (Section 3.3). The by-how-much model scored
+  best on it among the models: the best hit rate of any model, and the best worst year (47.5%).
+- **Its picks gained 1.11% a month over SPY,** the second-most.
+- **The 6-month rule scored a little higher on the same measure,** but the rules are benchmarks,
+  not candidates.
+- **The random forest, third in the tuning, did worst.**
 
 ### 3.8 The test (2023 onwards): the promise didn't hold
 
@@ -175,30 +178,38 @@ Every model was retrained to November 2022 and scored once on 45 months nothing 
 | Random forest | 40.4% | −0.72% |
 | *Base rate* | *45.1%* | |
 
-**The headline did worse than a random pick (43.6% against 45.1%) and trailed SPY by 0.83% a
-month;** the 6-month rule did better on both. Of the two models that beat the base rate on
-2020–2022, the headline fell from 51.9% to 43.6%, and the decision tree from 51.4% to 48.2%, still
-a little above the test's lower base rate. The 2020–2022 order didn't carry over: the neural
-network and logistic regression, both below the base rate then, led the models on the test, and
-the three gradient-boosting models and the random forest came last. The neural network's 51.6%
-(+0.89% a month) is the best model result, but it came sixth of eight on 2020–2022, so nothing seen
-before the test would have chosen it; choosing it now would be choosing on the test.
+- **The headline did worse than a random pick (43.6% against 45.1%) and trailed SPY by 0.83% a
+  month.** The 6-month rule did better on both.
+- **Of the two models that beat the base rate on 2020–2022,** the headline fell from 51.9% to
+  43.6%, and the decision tree from 51.4% to 48.2%, still a little above the test's lower base
+  rate.
+- **The 2020–2022 order didn't carry over.** The neural network and logistic regression, both below
+  the base rate then, led the models on the test. The three gradient-boosting models and the random
+  forest came last.
+- **The neural network's 51.6% (+0.89% a month) is the best model result,** but it came sixth of
+  eight on 2020–2022. Nothing seen before the test would have chosen it; choosing it now would be
+  choosing on the test.
 
 ### 3.9 What the headline looks at
 
 The by-how-much model spreads its attention thinly: its 15 most important inputs, of 147, carry
-20% of the total. **Most describe the market, not the stock:** 11 of the 15 are SPY's last-month
-and 6-month returns, the Dow's 12-month return, the 5- and 10-year Treasury yields, potential GDP
-growth, the gap between the month's best and worst members, how last month's winners did against
-SPY, and three calendar months (August, May, April). Those have the same value for every stock in a
-month, so on their own they can't tell stocks apart; they change how the model weighs the rest. The
-other four are the utilities flag (the largest single input), beta, and two price indicators.
+20% of the total. **Most describe the market, not the stock:**
+
+| Inputs | They describe | Which |
+| --- | --- | --- |
+| 11 of the 15 | The market | SPY's last-month and 6-month returns, the Dow's 12-month return, the 5- and 10-year Treasury yields, potential GDP growth, the gap between the month's best and worst members, how last month's winners did against SPY, and three calendar months (August, May, April) |
+| The other four | The stock | The utilities flag (the largest single input), beta, and two price indicators |
+
+The market inputs have the same value for every stock in a month. On their own they can't tell
+stocks apart; they change how the model weighs the rest.
 
 Potential GDP growth moves slowly and smoothly, so to a model it may work partly as a clock,
-letting it fit what happened in particular training years; the calendar months may likewise pick
-up seasonal patterns that held by chance in those years. That's a reading of the chart, not a
-measured effect. As in Chapter 5, no feature has a strong, steady signal, and
-the models found nothing stronger combined.
+letting it fit what happened in particular training years. The calendar months may likewise pick
+up seasonal patterns that held by chance in those years. **That's a reading of the importance
+ranking, not a measured effect.**
+
+As in Chapter 5, no feature has a strong, steady signal, and the models found nothing stronger
+combined.
 
 ---
 
@@ -220,12 +231,12 @@ the models found nothing stronger combined.
 ## 5. Caveats
 
 - **The test years have a lower base rate.** Only 45% of member-months beat SPY in 2023–2026,
-  against about 50% before, because a few very large companies carried the index. Precision of the
-  top picks is judged against each period's own base rate for that reason.
+  against about 50% before, because a few very large companies carried the index. That's why the
+  top picks' precision is judged against each period's own base rate.
 - **Six tuning years is still a short history** for an effect that comes and goes. The average
   across folds reduces, but can't remove, the chance of settings that suit 2014–2019 by luck.
-- **Precision is not profit.** It counts winners, not their size, and the "return vs SPY" above is
-  the average of each month's picks before costs and without holding periods. Chapter 7 trades the
+- **Precision is not profit.** It counts winners, not their size. The "return vs SPY" above is the
+  average of each month's picks, before costs and without holding periods. Chapter 7 trades the
   models with both.
 - **36 and 45 months are short.** A gap of three or four points in precision between two models
   can be chance. The conclusion rests on the pattern (the 2020–2022 order not carrying over to the
