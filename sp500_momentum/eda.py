@@ -202,8 +202,21 @@ def winners_spread(df: pd.DataFrame, signal: str = "ret_1m", top_n: int = 10) ->
     return df.dropna(subset=[signal]).groupby("date")[[signal, "fwd_excess_1m"]].apply(one)
 
 
+def market_wide(df: pd.DataFrame, features: list[str]) -> list[str]:
+    """The features that take one value per date (the market, the economy, breadth). A column that
+    varies across stocks on a date (e.g. each stock's sector fund return) is not market-wide."""
+    per_date = df.groupby("date")[features].nunique(dropna=True).max()
+    return [f for f in features if per_date[f] <= 1]
+
+
 def regime_correlations(df: pd.DataFrame, spread: pd.Series, features: list[str]) -> pd.Series:
-    """Correlation of each market-wide feature (one value per month) with the winners' spread."""
+    """Correlation of each market-wide feature (one value per month) with the winners' spread.
+
+    Refuses a feature that varies across stocks on a date: taking its first value would report
+    one arbitrary stock's value as a market condition (#85)."""
+    per_stock = sorted(set(features) - set(market_wide(df, features)))
+    if per_stock:
+        raise ValueError(f"not market-wide (vary across stocks on a date): {per_stock}")
     monthly = df.groupby("date")[features].first().reindex(spread.index)
     return monthly.corrwith(spread, method="spearman").sort_values(key=abs, ascending=False)
 

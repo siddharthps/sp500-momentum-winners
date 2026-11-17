@@ -20,10 +20,13 @@ Requires [uv](https://docs.astral.sh/uv/) and Python 3.12.
 uv sync
 ```
 
-Copy your Alpha Vantage key into `.env` (git-ignored):
+Copy your Alpha Vantage and FRED keys into `.env` (git-ignored). The FRED key (request it at
+<https://fredaccount.stlouisfed.org/apikeys> after logging in) is needed for the past versions of
+potential GDP; the other FRED series use the keyless CSV endpoint.
 
 ```text
 ALPHAVANTAGE_API_KEY=your_key_here
+FRED_API_KEY=your_key_here
 ```
 
 ## Data pipeline
@@ -33,7 +36,7 @@ ALPHAVANTAGE_API_KEY=your_key_here
 | 1. Membership | `uv run python -m sp500_momentum.dataset membership` | Wikipedia: current list + "Historical components of the S&P 500" | `data/raw/wikipedia/` |
 | 2. Coverage | `uv run python -m sp500_momentum.dataset coverage` | yfinance | `data/interim/removed_coverage.csv` |
 | 3. Daily prices | `uv run python -m sp500_momentum.dataset yahoo-daily` | yfinance: current members, removed members it covers, SPY, sector ETFs, VIX, Dow, gold, WTI (from 2000) | `data/raw/yahoo/` |
-| 3b. Macro | `uv run python -m sp500_momentum.dataset fred` | FRED: core CPI, Fed Funds, 1/5/10-year yields, potential GDP (from 2005) | `data/raw/fred/` |
+| 3b. Macro | `uv run python -m sp500_momentum.dataset fred` | FRED: core CPI, Fed Funds, 1/5/10-year yields, potential GDP (from 2005), plus every published version of potential GDP (one API request, `FRED_API_KEY`) | `data/raw/fred/` (`GDPPOT_vintages.csv` for the versions) |
 | 4. Delisted prices | `uv run python -m sp500_momentum.dataset av-pull` | Alpha Vantage (free tier, ~23 tickers/day, resumable) | `data/raw/alphavantage/` |
 | 5. Monthly table | `uv run python -m sp500_momentum.monthly build` | Steps 1–4 | `data/processed/monthly_panel.parquet`, plus every price series in `data/interim/monthly_prices.parquet` (for backtests) |
 | 6. Features | `uv run python -m sp500_momentum.features build` | Step 5 + monthly bars, FRED, `references/removed_sectors.csv` | `data/processed/features.parquet` (147 features in named sets) |
@@ -97,7 +100,9 @@ Each run:
    Worker-triggered run alerts the private Telegram chat.
 
 **Secrets.** GitHub (repository → Settings → Secrets and variables → Actions): `HF_USER`,
-`HF_TOKEN` (write), `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHANNEL_ID`, `TELEGRAM_CHAT_ID`. Cloudflare
+`HF_TOKEN` (write), `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHANNEL_ID`, `TELEGRAM_CHAT_ID`, `FRED_API_KEY`
+(without it the download step fails, so no picks are posted; the failure alert still goes out).
+Cloudflare
 (the Worker): `GITHUB_TOKEN`, a fine-grained token for this repository only with Actions read and
 write; it expires within a year, so renew it before then. No Alpha Vantage key is needed: the
 delisted companies' prices come with the snapshot.

@@ -27,7 +27,9 @@ import typer
 
 from sp500_momentum.config import (
     AV_MANIFEST,
+    AV_MAX_DAYS_AFTER_TAKEOVER,
     AV_MONTHLY_DIR,
+    AV_SUSPECT,
     HOLD_MONTHS,
     MIN_MEMBER_DOLLAR_VOLUME,
     MISSING_ADDS,
@@ -38,6 +40,7 @@ from sp500_momentum.config import (
     PRICE_OVERRIDES,
     RENAMES,
     START_DATE,
+    TRADING_DAYS_PER_MONTH,
     WIKIPEDIA_DIR,
     YAHOO_DAILY_DIR,
     YAHOO_SUSPECT,
@@ -141,6 +144,16 @@ def load_prices() -> pd.DataFrame:
     return pd.concat(parts, ignore_index=True)
 
 
+def load_av_volume() -> pd.DataFrame:
+    """Estimated daily dollar volume of every Alpha Vantage series with status ok."""
+    man = pd.read_csv(AV_MANIFEST)
+    parts = []
+    for t in man.loc[man["status"] == "ok", "ticker"]:
+        v = av_dollar_volume(pd.read_csv(AV_MONTHLY_DIR / f"{t}.csv", parse_dates=["timestamp"]))
+        parts.append(v.assign(price_ticker=t, source="alphavantage"))
+    return pd.concat(parts, ignore_index=True)
+
+
 def apply_price_overrides(members: pd.DataFrame, overrides) -> pd.DataFrame:
     """Add `price_ticker`, the price series each member row uses: its own ticker, except inside an
     override's window of decision dates, where it's the override's series (None: no price)."""
@@ -155,19 +168,52 @@ def apply_price_overrides(members: pd.DataFrame, overrides) -> pd.DataFrame:
 
 
 def suspect_tickers(
-    members: pd.DataFrame, prices: pd.DataFrame, min_dollar_vol: float
+    members: pd.DataFrame, prices: pd.DataFrame, min_dollar_vol: float, source: str = "yahoo"
 ) -> pd.Series:
-    """yfinance series whose median daily dollar volume over their member months is too low
+    """Series from `source` whose median daily dollar volume over their member months is too low
     for an S&P 500 stock: the data belongs to another security that reused the ticker.
 
     Member months are matched on the series each row uses (`price_ticker` if given)."""
-    y = prices[prices["source"] == "yahoo"][["price_ticker", "month", "dollar_vol"]]
+    y = prices[prices["source"] == source][["price_ticker", "month", "dollar_vol"]]
     m = members.assign(month=members["date"].dt.to_period("M"))
     if "price_ticker" not in m:
         m["price_ticker"] = m["ticker"]
     j = m.dropna(subset=["price_ticker"]).merge(y, on=["price_ticker", "month"])
     med = j.groupby("price_ticker")["dollar_vol"].median()
     return med[med.fillna(0) < min_dollar_vol]
+
+
+def av_dollar_volume(av: pd.DataFrame) -> pd.DataFrame:
+    """Alpha Vantage monthly rows -> month, dollar_vol: an estimate of the typical day's dollar
+    volume (the month's volume / TRADING_DAYS_PER_MONTH, at the month-end close), for the
+    liquidity check only. Kept apart from the price rows, so no feature sees it."""
+    a = av.sort_values("timestamp")
+    return pd.DataFrame(
+        {
+            "month": pd.to_datetime(a["timestamp"]).dt.to_period("M").to_numpy(),
+            "dollar_vol": (a["close"] * a["volume"] / TRADING_DAYS_PER_MONTH).to_numpy(),
+        }
+    )
+
+
+def av_wrong_security(
+    members: pd.DataFrame,
+    av_volume: pd.DataFrame,
+    manifest: pd.DataFrame,
+    min_dollar_vol: float,
+    max_days_after: int = AV_MAX_DAYS_AFTER_TAKEOVER,
+) -> pd.Series:
+    """Alpha Vantage series that belong to another security: too illiquid for an S&P 500 member
+    over its member months, **and** an acquired company whose series trades on well after it
+    left the index (a target can't trade after its deal).
+
+    Neither test alone is enough: a genuine but thinly traded target (Titanium Metals, about
+    $9M a day) ends at its deal, and a liquid series can carry on under a later company."""
+    illiquid = suspect_tickers(members, av_volume, min_dollar_vol, source="alphavantage")
+    m = manifest[manifest["status"] == "ok"].set_index("ticker")
+    days_after = (pd.to_datetime(m["av_last"]) - pd.to_datetime(m["removed_date"])).dt.days
+    trades_on = m.index[(m["reason_cat"] == "acquired") & (days_after > max_days_after)]
+    return illiquid[illiquid.index.isin(trades_on)]
 
 
 def check_one_row_per_series(panel: pd.DataFrame):
@@ -240,6 +286,22 @@ def build(start: str = START_DATE):
     pd.DataFrame({"ticker": suspect.index, "median_dollar_vol": suspect.values}).assign(
         is_current=lambda d: d["ticker"].isin(current_set)
     ).to_csv(YAHOO_SUSPECT, index=False)
+    if AV_MANIFEST.exists():
+        av_wrong = av_wrong_security(
+            apply_price_overrides(members, PRICE_OVERRIDES),
+            load_av_volume(),
+            pd.read_csv(AV_MANIFEST),
+            MIN_MEMBER_DOLLAR_VOLUME,
+        )
+        logger.info(
+            f"{len(av_wrong)} Alpha Vantage series belong to another security (illiquid and "
+            f"trading on after a takeover), prices dropped:\n"
+            f"{(av_wrong / 1e6).round(2).to_string()}"
+        )
+        av_wrong.rename("median_dollar_vol").rename_axis("ticker").to_csv(AV_SUSPECT)
+        prices = prices[
+            ~(prices["price_ticker"].isin(av_wrong.index) & (prices["source"] == "alphavantage"))
+        ]
     prices = prefer_alphavantage(prices)
     prices = prices[~(prices["price_ticker"].isin(suspect.index) & (prices["source"] == "yahoo"))]
     panel = build_panel(members, prices, HOLD_MONTHS, PRICE_OVERRIDES)

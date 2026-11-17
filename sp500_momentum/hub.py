@@ -36,6 +36,7 @@ from sp500_momentum.config import (
     PROJ_ROOT,
     RAW_DATA_DIR,
     REPORTS_DIR,
+    SECRET_KEYS,
 )
 
 app = typer.Typer(help="Publish to and pull from the Hugging Face datasets.")
@@ -62,9 +63,6 @@ def _token() -> str:
     if not token:
         raise typer.BadParameter("HF_TOKEN is not set (a write token, in .env)")
     return token
-
-
-SECRET_KEYS = ["ALPHAVANTAGE_API_KEY", "TELEGRAM_BOT_TOKEN", "HF_TOKEN"]
 
 
 def files_with_secrets(folders, secrets: list[str] | None = None) -> list[str]:

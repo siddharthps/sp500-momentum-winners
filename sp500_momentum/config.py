@@ -41,8 +41,11 @@ FRED_DIR = RAW_DATA_DIR / "fred"  # one CSV per series: date, value
 # - FEDFUNDS (monthly average): released on the first days of the next month -> 1.
 # - DGS1/DGS5/DGS10 (daily yields): published the next business day; features use the last
 #   value strictly before the decision date -> 0 months, plus that 1-day rule.
-# - GDPPOT (CBO potential GDP, quarterly): a projection published in advance -> 0. FRED keeps
-#   only the latest projection, not past vintages, so this one is a mild, accepted look-ahead.
+# - GDPPOT (CBO potential GDP, quarterly): a projection published in advance -> 0. CBO revises
+#   it once or twice a year, so features use the version in force before each decision date,
+#   from ALFRED's archive (FRED_VINTAGES, via the API: needs FRED_API_KEY; #85).
+# - CPILFESL's seasonal adjustment is also recalculated each year; that one stays a mild,
+#   accepted look-ahead (today's revised values are used).
 FRED_SERIES = {
     "CPILFESL": {"name": "Core CPI (index, monthly)", "lag_months": 1},
     "FEDFUNDS": {"name": "Fed Funds rate (monthly average)", "lag_months": 1},
@@ -52,6 +55,13 @@ FRED_SERIES = {
     "GDPPOT": {"name": "Real potential GDP, CBO (quarterly)", "lag_months": 0},
 }
 FRED_START = "2005-01-01"  # five years before the first decision (2010): yearly changes from 2006
+# Revised series read point-in-time: every published version, one file each
+# (date, value, realtime_start, realtime_end).
+FRED_VINTAGES = {"GDPPOT": FRED_DIR / "GDPPOT_vintages.csv"}
+
+# Every secret in .env. Nothing pushed (Hugging Face) or committed (notebook outputs) may contain
+# one: hub.files_with_secrets and run_notebooks' output check both read this list.
+SECRET_KEYS = ["ALPHAVANTAGE_API_KEY", "TELEGRAM_BOT_TOKEN", "HF_TOKEN", "FRED_API_KEY"]
 
 MONTHLY_PANEL = PROCESSED_DATA_DIR / "monthly_panel.parquet"
 MODEL_SCORES = PROCESSED_DATA_DIR / "model_scores.parquet"  # out-of-sample model scores, 2014 on
@@ -234,6 +244,16 @@ MISSING_ADDS = {
 # can't be an S&P 500 stock: it's a different security that reused the ticker (e.g. CPWR, EP).
 MIN_MEMBER_DOLLAR_VOLUME = 10e6
 YAHOO_SUSPECT = INTERIM_DATA_DIR / "yahoo_suspect.csv"  # removed members sent to Alpha Vantage
+
+# Alpha Vantage series get the same liquidity test (monthly volume spread over the month's
+# trading days), but only count as another security if the company was acquired and the series
+# still trades this long after it left the index (#85: EP, GENZ, MIL, LSI). A genuine but thin
+# target ends at its deal (TIE).
+TRADING_DAYS_PER_MONTH = 21
+AV_MAX_DAYS_AFTER_TAKEOVER = 95
+AV_SUSPECT = (
+    INTERIM_DATA_DIR / "av_suspect.csv"
+)  # Alpha Vantage series dropped as other securities
 
 # Removal reasons the keyword match gets wrong. Bemis was acquired by Amcor; the text says
 # "changed to AMCR", which reads like a ticker change, so it was kept out of the AV queue.

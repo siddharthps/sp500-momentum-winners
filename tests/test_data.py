@@ -359,6 +359,50 @@ def test_suspect_tickers_only_counts_member_months():
     assert out.index.tolist() == ["JUNK"]
 
 
+def test_av_dollar_volume_spreads_the_month_over_its_trading_days():
+    from sp500_momentum.monthly import av_dollar_volume
+
+    av = pd.DataFrame(
+        {"timestamp": pd.to_datetime(["2011-02-28", "2011-01-31"]), "close": [10.0, 20.0]}
+    ).assign(volume=[21e6, 42e6])
+    out = av_dollar_volume(av)
+    assert out["month"].astype(str).tolist() == ["2011-01", "2011-02"]  # sorted
+    assert out["dollar_vol"].tolist() == [40e6, 10e6]  # 42M shares * $20 / 21 days, ...
+
+
+def test_av_wrong_security_needs_both_illiquid_and_trading_after_a_takeover():
+    """#85: EP-like (thin, trades on after its deal) is dropped; TIE-like (thin, ends at its deal),
+    a liquid series that trades on, and a thin size removal that trades on are all kept."""
+    from sp500_momentum.monthly import av_wrong_security
+
+    months = pd.period_range("2011-01", "2011-02", freq="M")
+    vol = {"EPX": 0.01e6, "TIEX": 9e6, "BIGX": 50e6, "CAPX": 0.01e6}
+    av_volume = pd.DataFrame(
+        [
+            {"price_ticker": t, "month": m, "dollar_vol": v, "source": "alphavantage"}
+            for t, v in vol.items()
+            for m in months
+        ]
+    )
+    members = pd.DataFrame(
+        {
+            "date": pd.to_datetime(["2011-01-31", "2011-02-28"] * 4),
+            "ticker": [t for t in vol for _ in range(2)],
+        }
+    )
+    manifest = pd.DataFrame(
+        {
+            "ticker": ["EPX", "TIEX", "BIGX", "CAPX", "FAILX"],
+            "status": ["ok", "ok", "ok", "ok", "no_data"],
+            "reason_cat": ["acquired", "acquired", "acquired", "market_cap", "acquired"],
+            "removed_date": ["2011-03-01"] * 5,
+            "av_last": ["2026-11-06", "2011-03-15", "2016-01-29", "2026-11-06", None],
+        }
+    )
+    out = av_wrong_security(members, av_volume, manifest, min_dollar_vol=10e6, max_days_after=95)
+    assert out.index.tolist() == ["EPX"]
+
+
 def _two_series_prices():
     """Monthly prices for SPY and CB (the series the buyer, ACE, kept), Dec 2015 to Mar 2016."""
     months = pd.period_range("2015-12", "2016-03", freq="M")

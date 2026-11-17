@@ -31,6 +31,7 @@ from sp500_momentum.config import (
     FEATURES_TABLE,
     FRED_DIR,
     FRED_SERIES,
+    FRED_VINTAGES,
     MARKET_SERIES,
     MISSING_ADDS,
     MONTHLY_PANEL,
@@ -135,7 +136,8 @@ def bars_from_av(av: pd.DataFrame, removed_date) -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------------------------------------
-# 2. TA-Lib indicators on monthly bars (the course's 41 functions -> 55 columns)
+# 2. TA-Lib indicators on monthly bars (the course's set, less rescaled copies: 36 functions
+#    -> 47 columns; #29 and #20 dropped eight copies)
 # ---------------------------------------------------------------------------------------------
 
 
@@ -322,13 +324,42 @@ def macro_features(fred: dict[str, pd.DataFrame], dates: pd.Series) -> pd.DataFr
     for sid in ("DGS1", "DGS5", "DGS10"):
         out[sid.lower()] = yield_before(fred[sid], dates).to_numpy()
     out["yield_slope_10_1"] = out["dgs10"] - out["dgs1"]
-    g = fred["GDPPOT"].set_index("date")["value"].sort_index()
-    yoy, qoq = g.pct_change(4), g.pct_change(1)
-    starts = months.to_timestamp()
-    pos = g.index.searchsorted(starts, side="right") - 1  # latest quarter starting on or before
-    out["gdppot_yoy"] = np.where(pos >= 0, yoy.to_numpy()[np.clip(pos, 0, None)], np.nan)
-    out["gdppot_qoq"] = np.where(pos >= 0, qoq.to_numpy()[np.clip(pos, 0, None)], np.nan)
+    gdp = gdppot_point_in_time(fred["GDPPOT"], dates)
+    out["gdppot_yoy"] = gdp["gdppot_yoy"].to_numpy()
+    out["gdppot_qoq"] = gdp["gdppot_qoq"].to_numpy()
     return out
+
+
+def gdppot_point_in_time(vintages: pd.DataFrame, dates: pd.Series) -> pd.DataFrame:
+    """Potential GDP growth as it was published before each decision date (#85).
+
+    `vintages`: every published version (date, value, realtime_start, realtime_end). For a
+    decision on date d, the version in force on the day before d is used (as with the daily
+    yields: nothing published on the decision day itself). From that version: the growth of
+    the latest quarter starting on or before d's month, over 4 quarters (yoy) and 1 (qoq)."""
+    need = {"date", "value", "realtime_start", "realtime_end"}
+    if not need <= set(vintages.columns):
+        raise ValueError(f"GDPPOT needs its published versions ({sorted(need)}): run dataset fred")
+    v = vintages.assign(
+        date=pd.to_datetime(vintages["date"]),
+        realtime_start=pd.to_datetime(vintages["realtime_start"]),
+        realtime_end=pd.to_datetime(vintages["realtime_end"]),
+    )
+    rows = []
+    for d in pd.DatetimeIndex(dates):
+        day = d - pd.Timedelta(days=1)
+        live = v[(v["realtime_start"] <= day) & (v["realtime_end"] >= day)]
+        g = live.set_index("date")["value"].sort_index()
+        yoy, qoq = g.pct_change(4), g.pct_change(1)
+        pos = g.index.searchsorted(d.to_period("M").to_timestamp(), side="right") - 1
+        ok = pos >= 0 and len(g) > 0
+        rows.append(
+            {
+                "gdppot_yoy": yoy.iloc[pos] if ok else np.nan,
+                "gdppot_qoq": qoq.iloc[pos] if ok else np.nan,
+            }
+        )
+    return pd.DataFrame(rows, index=pd.PeriodIndex(pd.DatetimeIndex(dates).to_period("M")))
 
 
 # ---------------------------------------------------------------------------------------------
@@ -603,6 +634,8 @@ def build():
     panel = pd.read_parquet(MONTHLY_PANEL)
     bars = load_bars(panel)
     fred = {sid: pd.read_csv(FRED_DIR / f"{sid}.csv", parse_dates=["date"]) for sid in FRED_SERIES}
+    # Revised series are read point-in-time, from every published version (#85).
+    fred.update({sid: pd.read_csv(path) for sid, path in FRED_VINTAGES.items()})
     changes = repair_changes(
         pd.read_csv(WIKIPEDIA_DIR / "sp500_changes.csv", parse_dates=["date"]),
         RENAMES,
