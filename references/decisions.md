@@ -445,6 +445,7 @@ a stock is the month's top gainer.
 - **`mkdocs build --strict` runs in CI:** a broken chart or link fails the PR.
 - The `scripts/` folder is added to ruff's include list (the trap from 3 and 5 Nov).
 - Material for MkDocs announces its end of life in May 2027 (successor: Zensical). No effect on this project.
+  - **Staying on Material (17 Nov, #82, closed as not planned; your call, against my recommendation to defer and revisit).** Zensical reads `mkdocs.yml` and has `--strict`, but `hooks` is its one unsupported setting and it runs no MkDocs plugins (a "Module API" is planned, undated), so the chart hook would need a pre-build staging script plus CI, Pages and running-guide changes; it's also on the 0.x line. End of life means no more updates, not a broken build: Material 9.8.0 keeps building the site. Reopen #82 if a future Material or Python release stops the build.
 
 **Preparing the final rebuild (6 Nov, #20 prep)**
 

@@ -1756,6 +1756,9 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 - **#88 merged as #96** (CI and Docker green).
 - **#90, posting the picks at most once.** The run posted to the public channel, then uploaded both datasets, and only alerted on an upload failure. But `predict due` reads "done" from the running record in the PRIVATE snapshot: a failed upload left the month looking undone, so GitHub's backup run an hour later, and every later night, would post the same picks again to the public, permanent channel. Fixed with `predict.record_then_post`: upload the private snapshot first; post only if it succeeded (else alert "picks saved, not posted; the next run retries"); then upload the public dataset (if only that fails, the month is recorded and posted, and the dashboard lags). **The split upload matters:** pushing both as one step could succeed on the private one and fail on the public, which would mark the month done but never posted, swapping a double post for a missing one. A refused upload (the secret scan exits with `typer.Exit`) counts as a failure too. Tests: the order, a failed record then a working run (one post in total), a failed public upload, and no publishing. Chapter 8 and the running guide state the order; CLAUDE.md's monthly-run trap records it.
 
+- **#90 merged as #97** (CI and Docker green). Every issue before submission closed.
+- **#82, Material for MkDocs' end of life (your call: close it, against my recommendation to defer).** Read Zensical's migration guide (17 Nov): it reads `mkdocs.yml` as-is and fails `--strict` on broken links and anchors, but **`hooks` is its one unsupported setting** and it runs no MkDocs plugins (a Module API is planned, undated). Our hook is what adds every chart to the site and rewrites `../` links, so moving now meant a pre-build staging folder plus CI, Pages and running-guide changes (about half a day) on a 0.x tool, three days before the deadline. `validation: anchors: warn` would become `invalid_link_anchors: true`. End of life stops updates, not builds, so the book stays on Material 9.8.0; the reopen condition (a release that breaks the build) is in the issue's closing comment.
+
 ---
 
 ## 9. Decisions and Parking Lot
@@ -1800,6 +1803,7 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 | 16 Nov 2026 | **The final rebuild (#20):** five indicator copies dropped (147 features), the status set to final | The book reports one complete run |
 | 16 Nov 2026 | **The book reports `final-2026-11b` (#85):** both datasets; `final-2026-11` stays in the history as the rebuild before two data fixes | The fixes changed the data, so the reported version needs its own name (a push won't move an existing tag) |
 | 17 Nov 2026 | **Book review pass (#87):** every page refreshed and checked against the files; "the model chosen in advance" as the bottom line; broken section links fail the build; README redesigned | The book and front page must match the final data, and every claim hold on its failure path |
+| 17 Nov 2026 | **The book stays on Material for MkDocs (#82, closed as not planned)** | Zensical can't run the build hook that adds the charts (a staging script would be needed), it's still 0.x, and Material keeps building after its May 2027 end of life |
 
 ### Parking lot (ideas to keep but not pursue now)
 
