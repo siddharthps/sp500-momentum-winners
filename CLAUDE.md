@@ -85,6 +85,9 @@ is merged with CI green (both the CI and Docker workflows).
   - `predict due` reads only the running record from the private snapshot; `predict run
     --from-file` runs only when last month's picks are missing. "Done" comes from the record
     (`live_picks.csv`), never a local picks file: a fresh runner has none.
+  - **`made_at` is UTC with its zone** (`predict.stamp_now`); `notify.tradeable` compares it with
+    the 09:30 New York open (DST included) and reads a zoneless stamp as US Central (the Oct 2026
+    PC row). Never write a naive local time again (#88).
   - **Never run it in two places:** both would post the picks (the local task
     `sp500-momentum-monthly-run` was unregistered on 11 Nov). A manual run is a dry run by default.
   - **The Worker's token** (fine-grained, this repo only, Actions read/write) is a Worker secret

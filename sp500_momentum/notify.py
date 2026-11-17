@@ -28,7 +28,11 @@ import typer
 
 API = "https://api.telegram.org/bot{token}/sendMessage"
 MAX_LENGTH = 4096  # Telegram's limit per message
-OPEN_LOCAL = pd.Timedelta(hours=8, minutes=30)  # the US open in PC time (US Central)
+# The US open, in the market's own time zone (#88). `made_at` stamps are written in UTC with their
+# zone; a stamp without one is the PC era's (Oct 2026), written in US Central.
+MARKET_TZ = "America/New_York"
+OPEN_TIME = pd.Timedelta(hours=9, minutes=30)
+LEGACY_TZ = "America/Chicago"
 FOOTER = (
     "<i>Research output, not advice. In backtests the model didn't beat the plain 6-month rule, "
     "and neither clearly beat SPY per unit of risk.</i>"
@@ -95,8 +99,12 @@ def private(text: str, dry_run: bool = False) -> bool:
 def tradeable(made_at: str, decision_date: str) -> bool:
     """Were the picks made before the next open they trade at? (The first file, for Oct 2026,
     was made days later: nothing leaks, but it couldn't have been traded.)"""
+    made = pd.Timestamp(made_at)
+    if made.tzinfo is None:  # the PC era's stamps carry no zone: they're US Central
+        made = made.tz_localize(LEGACY_TZ)
     trade_day = (pd.Timestamp(decision_date) + pd.offsets.BDay(1)).normalize()
-    return pd.Timestamp(made_at) < trade_day + OPEN_LOCAL
+    open_at = (trade_day + OPEN_TIME).tz_localize(MARKET_TZ)  # 09:30 New York, DST included
+    return made < open_at
 
 
 def live_result(

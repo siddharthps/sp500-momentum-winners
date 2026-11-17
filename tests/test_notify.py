@@ -72,9 +72,35 @@ def test_long_messages_are_cut_to_telegrams_limit(monkeypatch):
 
 
 def test_tradeable_means_made_before_the_next_open():
-    assert nt.tradeable("2026-12-01 07:00", "2026-11-30")  # the scheduled run
+    # Stamps without a zone are the PC era's (US Central)
+    assert nt.tradeable("2026-12-01 07:00", "2026-11-30")  # the PC's scheduled run
     assert not nt.tradeable("2026-11-05 10:20", "2026-10-30")  # the first, late file
-    assert not nt.tradeable("2026-12-01 09:00", "2026-11-30")  # after the 08:30 open
+    assert not nt.tradeable("2026-12-01 09:00", "2026-11-30")  # 10:00 New York: after the open
+
+
+def test_tradeable_reads_utc_stamps_against_the_new_york_open():
+    """#88: cloud runs stamp UTC. The open is 09:30 New York: 14:30 UTC in winter."""
+    assert nt.tradeable("2026-12-01T03:17+00:00", "2026-11-30")  # the Cloudflare trigger
+    assert nt.tradeable("2026-12-01T13:00+00:00", "2026-11-30")  # a late retry, still before
+    assert nt.tradeable("2026-12-01T14:29+00:00", "2026-11-30")  # was wrongly "not tradeable"
+    assert not nt.tradeable("2026-12-01T14:31+00:00", "2026-11-30")  # after the open
+
+
+def test_tradeable_follows_daylight_saving():
+    """In summer the 09:30 New York open is 13:30 UTC (EDT), not 14:30."""
+    assert nt.tradeable("2026-04-01T13:29+00:00", "2026-03-31")
+    assert not nt.tradeable("2026-04-01T13:31+00:00", "2026-03-31")
+    # A Central stamp in summer: 08:29 CDT is 09:29 New York, just before the open
+    assert nt.tradeable("2026-04-01 08:29", "2026-03-31")
+    assert not nt.tradeable("2026-04-01 08:31", "2026-03-31")
+
+
+def test_the_monthly_run_stamps_made_at_in_utc_with_its_zone():
+    from sp500_momentum.modeling import predict
+
+    stamp = predict.stamp_now()
+    assert stamp.endswith("+00:00") and pd.Timestamp(stamp).tzinfo is not None
+    assert nt.tradeable(stamp, "2099-12-30")  # made now, long before that trade day's open
 
 
 def _record(made_at="2026-12-01 07:00"):
