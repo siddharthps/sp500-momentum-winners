@@ -574,6 +574,12 @@ a stock is the month's top gainer.
 - **Published as `final-2026-11b`** (16 Nov, both datasets; checked on Hugging Face: the tag points at each dataset's latest commit). `final-2026-11` stays as the rebuild before these two fixes; the book reports `-11b`. A new name, because `hub push --tag` doesn't move an existing tag.
 - **Process breach, recorded.** The side run's test tables were seen once, by accident (the Read tool shows notebook outputs). The adopt decision came before, and no choice used them.
 
+**The final done-criteria sweep (17 Nov), all as recommended**
+
+- **Done, for the whole project:** CLAUDE.md's per-step list, restated. The rebuild counts as done when no data-building code changed since the reported tag (shown by `git diff`), and the notebooks when their committed outputs pass the runner's checks, so neither is re-run (a re-run rewrites the outputs the book is pinned to). Docker counts as done when the latest Docker run on `main` is green.
+- **Added to the list:** a re-audit of the commits since the last history audit, the public services up (read-only), and counts agreeing across pages.
+- **CLAUDE.md's wording stays:** it's right for a step, and the steps are finished.
+
 **The book review pass and the README (16–17 Nov, #87)**
 
 - **The bottom line names the model chosen in advance.** "The models add nothing" was no longer true per unit of risk: the neural network (Sharpe 0.97) and the decision tree (0.92) beat the 6-month rule (0.84) on the test, but neither was chosen before it. Chapters 7, 9 and 10 and the README say so, with "picking one now would be choosing on the test" beside the names.

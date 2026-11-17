@@ -1759,6 +1759,17 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 - **#90 merged as #97** (CI and Docker green). Every issue before submission closed.
 - **#82, Material for MkDocs' end of life (your call: close it, against my recommendation to defer).** Read Zensical's migration guide (17 Nov): it reads `mkdocs.yml` as-is and fails `--strict` on broken links and anchors, but **`hooks` is its one unsupported setting** and it runs no MkDocs plugins (a Module API is planned, undated). Our hook is what adds every chart to the site and rewrites `../` links, so moving now meant a pre-build staging folder plus CI, Pages and running-guide changes (about half a day) on a 0.x tool, three days before the deadline. `validation: anchors: warn` would become `invalid_link_anchors: true`. End of life stops updates, not builds, so the book stays on Material 9.8.0; the reopen condition (a release that breaks the build) is in the issue's closing comment.
 
+- **The final done-criteria sweep (17 Nov; every definition as recommended).** CLAUDE.md's "Done means" is per step, so each item was restated for the whole project first; CLAUDE.md itself stays as it is. Results:
+    - **Tests, lint, format, book:** 231 tests pass; ruff check and format clean; `mkdocs build --strict` passes (the Material end-of-life notice isn't a failure, #82).
+    - **Docker:** the latest Docker run on `main` is green (21:20 UTC; the 21:11 one was cancelled because a newer push replaced it). No local rebuild needed.
+    - **Rebuild:** proved by `git diff`, not rerun: every data, notebook and chart change since #85's data fix (#86) is in #92, which reran the notebooks on `final-2026-11b`; nothing since touches them.
+    - **Notebooks:** the runner's own `check_notebook` on the committed files, without executing them: all 7 pass (0 problems; largest 211 KB of 300).
+    - **Issues:** #87's six boxes were never ticked when #92 closed it; each was checked against the repo (no 'preview' text; the #85 items in Chapters 3-5 and 10; cross-page counts agree: 4.5% of member-months, 147/87 features, 45 test months, $59,209 / $29,150 / $19,650 / $12,107, the rule's Sharpe 0.84) and ticked, with a note on the issue. #2's "queue empty" box ticked (`av-status`: tried 216, left 0). No completed issue has an unticked box now.
+    - **Repo:** no open PRs; CI, Docker, Book and Monthly run all green and enabled on `main`.
+    - **History re-audit** of the 13 commits since #23's 11 Nov audit: none of the four `.env` secrets, no token pattern or private e-mail, no price column in the 6 report CSVs; every author is the noreply address.
+    - **Services:** the book site 200; the dashboard 200 once Streamlit's cookie handshake is followed (a 303 loop without cookies is that handshake, not an outage); the public dataset has both tags; the monthly workflow's last three runs (Worker and schedule) succeeded.
+    - **Left:** #23 (the submission). Four local branches (#56, #57, #58, #61) are leftovers of merged PRs.
+
 ---
 
 ## 9. Decisions and Parking Lot
