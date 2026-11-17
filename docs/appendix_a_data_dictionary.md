@@ -1,17 +1,27 @@
 # Appendix A: Data dictionary
 
 Every column of the final table: **one row per S&P 500 member per month-end**, from January 2010.
-The table has 181 columns: 10 identifiers and prices, 24 targets, and the 147 features a model can
-use. [Chapter 4](04_features.md) explains why each group of features exists. This appendix says
-exactly what each column holds.
+The table has **181 columns** in nine groups. [Chapter 4](04_features.md) explains why each group of
+features exists; this appendix says exactly what each column holds.
+
+| Group | Columns |
+| --- | --- |
+| Identifiers and prices | 10 |
+| Targets | 24 |
+| Past returns · technical indicators · stock · compared with others · market · economy · flags | 5 · 47 · 22 · 17 · 24 · 9 · 23 (the 147 features) |
+
+The monthly table ([Chapter 3](03_monthly_table.md)) has 38 of these columns: the identifiers
+except `sector`, the past returns and the targets.
 
 > **The golden rule applies to every input.** It uses only what was known at the month-end close of
 > its own row's date. Ranks and percentiles compare members on the same date only. Economic figures
-> are used only once they had been published.
+> are used only once they had been published. Two accepted exceptions, stated in
+> [Chapter 4](04_features.md): sectors are each company's final one, and core inflation is today's
+> revised version.
 
-**How to read the time windows.** All inputs are built from **monthly bars** (each month's open,
-high, low, close and volume), for every stock alike, so "14 periods" means 14 months. Returns are
-adjusted for dividends and splits. "The decision month" is the month that ends on the row's date.
+**Windows are in months.** Every price-based input is built from monthly bars (each month's open,
+high, low, close and volume), the same way for every stock. Returns are adjusted for dividends and
+splits. "The decision month" is the month that ends on the row's date.
 
 ---
 
@@ -21,17 +31,18 @@ adjusted for dividends and splits. "The decision month" is the month that ends o
 | --- | --- |
 | `date` | The decision date: the last trading day of the month |
 | `month` | The same month as text (year-month) |
-| `ticker` | The member's ticker in the index records on that date |
-| `price_ticker` | The ticker whose prices are used. Usually the same as `ticker`. It differs after a repaired rename (a company's history continues under its new symbol), and in takeovers where the buyer kept the target's ticker (each company is priced from its own history). Blank when no usable price exists |
-| `source` | Where the prices come from: daily prices, or monthly-only prices for companies that left the index and have no daily history |
+| `ticker` | The member's ticker on that date. A company whose rename the record missed carries its later ticker throughout (Facebook's rows are `META`), so each company is one line |
+| `price_ticker` | The ticker whose prices are used. Usually the same as `ticker`. It differs in takeovers where the buyer kept the target's ticker: the buyer's rows use the series filed under that ticker (ACE's use `CB`), and the target's rows have no price when no free source has its own history. Blank when no usable price exists |
+| `source` | Where the prices come from: daily prices, or monthly-only prices for companies that left the index with no usable daily history. Blank when there's no price |
 | `has_price` | Whether a price was found for this member and month. Members without one stay in the table, so the gap can be measured |
 | `close_adj` | The month-end close, adjusted for dividends and splits |
 | `entry_px` | The price a decision can actually trade at: the next trading day's adjusted open. For monthly-only stocks, the month-end adjusted close, the closest price they have |
 | `dollar_vol` | The median daily trading value (price × volume) in the month. Used to spot a ticker that now belongs to a much smaller company. Blank for monthly-only stocks |
 | `sector` | The company's sector (11-sector scheme), its final one for companies that left. See [Chapter 4](04_features.md) for how sectors were found |
 
-The public dataset leaves out `close_adj`, `entry_px`, `dollar_vol` and `source`: those are the
-price vendors' own data. Every return and feature derived from them is included.
+The public dataset leaves out `close_adj`, `entry_px`, `dollar_vol` and `source`: the vendors' own
+prices and volumes, and which vendor supplied them. Every return and feature computed from them is
+included.
 
 ---
 
@@ -42,11 +53,11 @@ These are the answers a model is judged on, never its inputs. Each comes in four
 
 | Column | What it holds |
 | --- | --- |
-| `fwd_ret_Xm` | The stock's return over the next X months, from `entry_px` now to `entry_px` X months later. Blank when the end of the hold is beyond the data |
-| `fwd_trunc_Xm` | True when the stock's prices end during the hold (it was delisted). The position is then valued at its last price and held as cash for the rest, as a real holder would have been paid out |
+| `fwd_ret_Xm` | The stock's return over the next X months, from `entry_px` now to `entry_px` X months later. Blank when the row has no price or the hold ends beyond the data |
+| `fwd_trunc_Xm` | True when the stock's prices end during the hold. For a company priced from monthly data only, they end with the month it left the index. The position is then valued at its last price and held as cash for the rest |
 | `spy_fwd_ret_Xm` | SPY's return over the same X months, measured the same way |
-| `fwd_excess_Xm` | The stock's return minus SPY's |
-| `is_beat_spy_Xm` | 1 if the stock beat SPY over the hold, 0 if not. **The models' main target is `is_beat_spy_1m`** |
+| `fwd_excess_Xm` | The stock's return minus SPY's. **The headline model's target, for the 1-month hold** |
+| `is_beat_spy_Xm` | 1 if the stock beat SPY over the hold, 0 if not. The yes/no models' target, for the 1-month hold |
 | `is_top_decile_Xm` | 1 if the stock's return was in the top 10% of that month's members |
 
 ---
@@ -75,11 +86,12 @@ months of volume.
 | Column | What it holds |
 | --- | --- |
 | `ta_adx`, `ta_adxr`, `ta_dx` | Trend strength (Average Directional Index over 14 months, its smoothed version, and the raw directional movement index) |
-| `ta_plus_di`, `ta_plus_dm`, `ta_minus_dm` | The upward and downward parts of that trend measure (the "dm" ones ÷ price) |
+| `ta_plus_di` | The upward directional indicator (0–100) |
+| `ta_plus_dm`, `ta_minus_dm` | The upward and downward directional movement ÷ price |
 | `ta_aroon_up`, `ta_aroon_down`, `ta_aroonosc` | How recently the 14-month high and low were set, and their difference |
 | `ta_apo`, `ta_ppo` | The gap between a 12- and a 26-month average price (÷ price, and in percent) |
 | `ta_macd`, `ta_macd_signal`, `ta_macd_hist` | MACD (12- vs 26-month averages), its 9-month signal line, and the gap between them, all ÷ price |
-| `ta_macdext`, `ta_macdext_signal`, `ta_macdext_hist` | The same, from the configurable version of MACD with its standard settings |
+| `ta_macdext`, `ta_macdext_signal`, `ta_macdext_hist` | The same, with simple averages instead of exponential ones (the configurable version's defaults) |
 | `ta_macdfix`, `ta_macdfix_signal`, `ta_macdfix_hist` | The same, from the fixed 12/26 version |
 | `ta_mom` | The price change over 10 months ÷ price |
 | `ta_roc` | The rate of change over 10 months, in percent |
@@ -105,7 +117,7 @@ months of volume.
 | --- | --- |
 | `ta_obv` | On-balance volume: its change over 12 months ÷ 12 months of volume |
 | `ta_ad` | The accumulation/distribution line: its change over 12 months ÷ 12 months of volume |
-| `ta_adosc` | The accumulation/distribution oscillator (3- vs 10-month) ÷ average monthly volume |
+| `ta_adosc` | The accumulation/distribution oscillator (3- vs 10-month) ÷ the 10-month average volume |
 
 **Volatility**
 
@@ -131,21 +143,21 @@ months of volume.
 
 ---
 
-## 5. Stock risk, position and volume (22 columns)
+## 5. Stock risk and position (22 columns)
 
 | Column | What it holds |
 | --- | --- |
 | `vol_3m`, `vol_12m` | Volatility: the standard deviation of monthly returns over 3 and 12 months |
-| `downside_vol_12m` | Volatility of the losing months only, over 12 months |
+| `downside_vol_12m` | Downside volatility: the standard deviation of the past 12 monthly returns, with gains counted as zero |
 | `beta_36m` | Beta to SPY over 36 months (at least 24): how much the stock moves with the market |
-| `ivol_36m` | Idiosyncratic volatility: how much the stock moves on its own, after its market part is removed |
+| `ivol_36m` | Idiosyncratic volatility: how much the stock moves on its own, after its market part is removed, over 36 months (at least 24) |
 | `drawdown_12m` | How far the close is below its highest close of the past 12 months |
-| `drawdown_ath` | How far the close is below its highest close in the data (from 2000) |
+| `drawdown_ath` | How far the close is below its highest close in the data (since about 2000) |
 | `dist_high_12m`, `dist_low_12m` | The close relative to the 12-month high and low |
 | `ma3_ratio`, `ma10_ratio` | The close relative to its 3- and 10-month average |
 | `above_ma10` | 1 if the close is above its 10-month average (a common trend rule) |
 | `up_months_12m` | The share of the past 12 months that rose |
-| `ret_1m_z` | Last month's return in units of the stock's usual volatility (the 12 months before) |
+| `ret_1m_z` | The decision month's return in units of the stock's usual volatility (the 12 months before) |
 | `range_1m` | The month's high-to-low range ÷ close |
 | `max_ret_12m` | The best single month of the past year: separates one big jump (often takeover news) from a steady climb |
 | `log_dollar_vol` | The month's trading value, on a log scale: a size and liquidity measure |
@@ -169,9 +181,9 @@ Each compares the stock with the other members **on the same date**.
 | `rs_sector_1m`, `rs_sector_12m` | Return over 1 and 12 months minus its sector fund's |
 | `breadth_above_ma10` | The share of members trading above their 10-month average: how broad the market's rise is |
 | `dispersion_1m` | The gap between the 90th and 10th percentile of members' monthly returns: how far apart winners and losers are |
-| `winners_excess_1m` | How last month's top 10 by return did this month, versus SPY: is momentum working right now? |
-| `winners_excess_12m` | The same, averaged over the past 12 months |
-| `new_member_12m` | 1 if the stock joined the index within the past year |
+| `winners_excess_1m` | The previous month's top 10 by 1-month return: their average return over the decision month, minus SPY's. Is momentum working right now? |
+| `winners_excess_12m` | The same, averaged over the past 12 months (at least 6 months) |
+| `new_member_12m` | 1 if the stock first appeared in the table within the past year (members in January 2010 count as 0) |
 | `months_in_index` | Months since its latest addition to the index, capped at 120 (10 years or more) |
 
 ---
@@ -197,15 +209,15 @@ sector.
 ## 8. Economy (9 columns)
 
 Used only once published: a monthly figure is used from the end of the following month, and a daily
-yield from the next day.
+yield from the next day. Core inflation is today's revised version (a mild, accepted look-ahead).
 
 | Column | What it holds |
 | --- | --- |
 | `cpi_yoy`, `cpi_mom` | Core inflation (prices excluding food and energy): change over 12 months and over 1 month |
 | `fedfunds` | The Fed Funds rate (the previous month's average) |
-| `dgs1`, `dgs5`, `dgs10` | The 1-, 5- and 10-year Treasury yields |
+| `dgs1`, `dgs5`, `dgs10` | The 1-, 5- and 10-year Treasury yields (in percent; the last value before the decision date) |
 | `yield_slope_10_1` | The 10-year yield minus the 1-year: the slope of the yield curve |
-| `gdppot_yoy`, `gdppot_qoq` | Growth of potential GDP (the economy's estimated capacity) over a year and a quarter. A projection that gets revised, so each decision uses the version published before it ([Chapter 4](04_features.md)) |
+| `gdppot_yoy`, `gdppot_qoq` | Growth of potential GDP (the economy's estimated capacity) for the quarter the decision falls in: over 4 quarters (`yoy`) and over 1 (`qoq`). A projection that gets revised, so each decision uses the version published by the day before it ([Chapter 4](04_features.md)) |
 
 ---
 
@@ -214,7 +226,7 @@ yield from the next day.
 | Column | What it holds |
 | --- | --- |
 | `month_of_year_01` … `month_of_year_12` | 1 for the decision month's calendar month, else 0: for seasonal effects |
-| `sector_is_communication_services`, `sector_is_consumer_discretionary`, `sector_is_consumer_staples`, `sector_is_energy`, `sector_is_financials`, `sector_is_health_care`, `sector_is_industrials`, `sector_is_information_technology`, `sector_is_materials`, `sector_is_real_estate`, `sector_is_utilities` | 1 for the stock's sector, else 0 |
+| `sector_is_communication_services` … `sector_is_utilities` | 1 for the stock's sector, else 0: one per sector (11), named as in `sector`, in lower case with underscores |
 
 ---
 
@@ -224,7 +236,7 @@ The project also keeps a few smaller tables alongside the main one:
 
 | Table | What it holds |
 | --- | --- |
-| Model scores | Each model's out-of-sample score for every member and month from 2014, from a model that never saw that month |
+| Model scores | Each model's out-of-sample score for every usable row (a priced member with a known next-month result) from 2014, from a model trained only on earlier months |
 | Strategy returns | The monthly returns of every simulated strategy and of SPY, used by the dashboard |
 | The live record | Each month's live picks, and how they did once the month was over |
-| Monitoring | How far this month's inputs have drifted from what the live model was trained on |
+| Monitoring | How far each month's values of the model's ten most important stock inputs have moved from the 2010–22 training years |

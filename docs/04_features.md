@@ -124,7 +124,7 @@ measure something none of the others does; more of the same kind would only add 
 | --- | --- | --- |
 | Dividend yield (12 months) | Dividends paid over the past year ÷ price | Income stocks behave differently from growth stocks, and nothing else here sees dividends |
 | 12-1 month return ÷ volatility | Momentum per unit of risk | A steady climb and a wild one with the same return are different bets |
-| Drawdown from the all-time high | How far below its highest price since 2000 | A longer memory than the 12-month high |
+| Drawdown from the all-time high | How far below its highest price since about 2000 | A longer memory than the 12-month high |
 | Months in the index (capped at 10 years) | Time since the latest addition | New members and long-standing ones are different kinds of company |
 | Residual momentum | The 12-1 month return with the market's part removed | Research finds it more consistent over time than raw momentum, and more profitable after risk |
 | Idiosyncratic volatility | How much the stock moves on its own, not with the market | Stocks that swing a lot on their own tend to do worse |
