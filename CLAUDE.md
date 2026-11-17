@@ -3,7 +3,7 @@
 Course final project (Stock Markets Analytics Zoomcamp 2026). **Deadline: Fri 20 Nov 2026, 23:59 Dublin.**
 **Do things the professional, industry-standard way, not the quickest way.** ~30 h is a soft guide,
 not a cap. The extras (Telegram bot, Docker, dashboard, book site, the cloud monthly run #39) are
-built. None of them may cost the final rebuild (#20) or the write-up (#22).
+built.
 
 ## The project
 
@@ -41,8 +41,8 @@ is merged with CI green (both the CI and Docker workflows).
   - New work found along the way gets its own issue, not a silent addition.
 - **Pre-commit** runs ruff and safety checks on every commit. If it changes files, re-add them and
   commit again. Never skip it with `--no-verify`.
-- **"If you change X, rerun from Y"** is in the running guide, `docs/running.md` ("Rerunning after a change"). Follow it after
-  changing any earlier step.
+- **"If you change X, rerun from Y"** is in the running guide, `docs/running.md` ("Rerunning after a
+  change"). Follow it after changing any earlier step.
 - **Check every claim before writing it.** No finding goes into a chart title, notebook text,
   chapter or summary until it has been checked against the actual output. (A drafted subtitle said
   the opposite of the data once; it was caught in review.) Research cited in the book is looked up
@@ -58,8 +58,8 @@ is merged with CI green (both the CI and Docker workflows).
   - Explain the why, not the how: no commands, file paths or module names (`docs/running.md` has
     those; it's the one page of the site that does).
 - Keep `docs/running.md` current (every command and step), and the README short: what the project
-  is, the result, links, a short "How to run" and a pointer to the guide (split on 11 Nov; it had
-  grown to ~400 lines; redesigned on 17 Nov with a hero chart, a diagram and grouped links).
+  is, the result, links, a short "How to run" and a pointer to the guide (it once grew to ~400
+  lines).
 - **Detail split (agreed 10 Nov):** a chapter says what was done and why. The proof (evidence,
   factors, per-case checks) goes in decisions.md and the journal, which the book reaches through
   Appendix B. Keep chapters tight. **Decisions tables hold only decisions whose *why* isn't already
@@ -73,18 +73,15 @@ is merged with CI green (both the CI and Docker workflows).
 
 ## Traps (don't re-learn these)
 
-- **Never spend Alpha Vantage calls ad hoc** (free tier: 25 per rolling ~24 h). The Task Scheduler job
-  `sp500-momentum-av-pull` pulls daily at 21:00 PC time; its log is `logs/av_pull.log`. The queue emptied
-  on 13 Nov (216 tried), and the task was unregistered on 16 Nov after a `monthly build` added no
-  new suspects. If one ever joins the queue, run `av-pull` by hand (it stays within the budget). Each ticker is recorded in the manifest as soon as it's
-  fetched. If a run is killed (log stops after the header, task result `0xC000013A`), the next run,
-  or `av-pull --max-calls 0` now, records the saved files without any calls.
+- **Never spend Alpha Vantage calls ad hoc** (free tier: 25 per rolling ~24 h). The queue is done
+  (216 tried, 13 Nov) and its daily task is retired. If a ticker ever joins it, run `av-pull` by hand
+  (it stays within the budget); `av-pull --max-calls 0` records saved files without any calls.
 - **The monthly run** runs in GitHub Actions (`.github/workflows/monthly.yml`; #39). Triggers (#76):
   - **A Cloudflare Worker** (`cloudflare/`, deployed 16 Nov as `sp500-momentum-monthly-trigger`)
     at 03:17 UTC daily: it re-enables the workflow (GitHub disables quiet public repos' workflows
     after 60 days), then dispatches it with `respect_due=true`.
-  - **GitHub's own schedule** at 04:17 UTC weekdays, as a backup (it ran ~7 h late on 12–13 Nov,
-    and its docs say scheduled runs can be dropped).
+  - **GitHub's own schedule** at 04:17 UTC weekdays, as a backup (its docs say scheduled runs can
+    be delayed or dropped). On 17 Nov the Worker's run started at 03:17 UTC; GitHub's at 13:35.
   - `predict due` reads only the running record from the private snapshot; `predict run
     --from-file` runs only when last month's picks are missing. "Done" comes from the record
     (`live_picks.csv`), never a local picks file: a fresh runner has none.
@@ -96,8 +93,6 @@ is merged with CI green (both the CI and Docker workflows).
   - **Deploying to a new Cloudflare account:** the cron fails ("You need a workers.dev subdomain",
     code 10063) until the Workers & Pages page is opened once in the dashboard. Deploy before
     `secret put` (a secret needs the Worker to exist).
-  - **To check (17 Nov):** a `workflow_dispatch` run at ~03:17 UTC on the Actions tab confirms the
-    Cloudflare-side secret (the 16 Nov test ran the Worker's code from the PC).
   - The run refits the headline with its tuned settings, never re-tunes. It stops on purpose when a
     newly removed member has no sector: add it to `references/removed_sectors.csv` (KVUE, the
     first time). Its refit must keep matching the backtest (run as of Jan 2023 it reproduces the
@@ -144,8 +139,8 @@ is merged with CI green (both the CI and Docker workflows).
   tag** (`create_tag(..., exist_ok=True)` silently does nothing): a new data version needs a new
   tag name.
 - **Secrets:** never print, log or commit the Alpha Vantage key, the FRED API key, the Telegram or
-  Hugging Face tokens, or `.env`. Verify a token by asking its service who it belongs to, never by printing it.
-  Request errors can carry the token in their URL: report them by type only.
+  Hugging Face tokens, or `.env`. Verify a token by asking its service who it belongs to, never by
+  printing it. Request errors can carry the token in their URL: report them by type only.
 - **Ruff only checks the folders in `pyproject.toml`'s `include`.** `tests/` (3 Nov) and
   `dashboard/` (5 Nov) were both silently skipped at first. Add every new code folder.
 - **Docker:** `.dockerignore` keeps data, models, logs, `.env`, `CLAUDE.local.md` and `.claude/`
@@ -231,7 +226,7 @@ uv run python -m sp500_momentum.hub pull --revision final-2026-11b   # the data 
 uv run python -m sp500_momentum.notify test [--dry-run] | find-chats                    # Telegram
 uv run streamlit run dashboard/app.py               # the dashboard locally (live: sp500-momentum-winners.streamlit.app)
 uv run mkdocs build --strict                        # the book (CI runs it; published to GitHub Pages from main)
-uv run python -m sp500_momentum.pipeline rebuild-all --tag final-2026-11 [--dry-run]   # #20's rebuild
+uv run python -m sp500_momentum.pipeline rebuild-all --tag <new-tag> [--dry-run]   # a tag never moves: always a new name
 docker build --target test -t sp500-momentum:test . && docker run --rm sp500-momentum:test   # tests in the image
 uv run python -m sp500_momentum.run_notebooks run  # after features build (and train); refreshes figures
 uv run python -m sp500_momentum.run_notebooks run 04  # just one notebook (04: rule grid + model strategies, ~2 min)

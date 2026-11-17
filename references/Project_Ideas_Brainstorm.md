@@ -1735,6 +1735,14 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - Headless Edge's `--virtual-time-budget` hangs on a Streamlit page (it never goes idle); Playwright on the installed Edge, with a timeout, works. The live app sleeps when unused, so the README says it may take a minute.
   - Two agents opened notebooks with the Read tool (outputs shown). The test had already been read once, so nothing depended on it; the rule stands.
 
+### Session 41 — Tuesday, 17 Nov 2026 (closing #20 and #22)
+
+- **Caught up from git, not memory:** #92 (merged 12:29) carried the whole review pass, the README and #85's `final-2026-11b`; the local `87-docs-review` branch matched `main` file for file, so it was deleted.
+- **The Cloudflare trigger, confirmed for real:** the Worker's run started at 03:17:54 UTC and stopped at the due check; GitHub's own schedule ran at 13:35 UTC, over 9 h late.
+- **CLAUDE.md trimmed (your pick: all four stale items and the cosmetic ones):** the done "to check (17 Nov)" replaced by its result; the Alpha Vantage trap cut to three lines (the task is retired); the rebuild command now says `--tag <new-tag>` (copying `final-2026-11` would silently do nothing, since a tag never moves); the opening's #20/#22 clause dropped; three long lines re-wrapped; the README rule's origin story shortened. 248 → 243 lines, no rule changed.
+- **#20 and #22's last boxes checked against the files, then ticked:** no stale number or "preview" text in the README or the book; the README states the problem, the result against SPY in dollars, how to run it, and every link.
+- **Left:** #89 (sources, before 20 Nov), #91 (the dry run's old checklist), #88 and #90 (before the first live picks on 1 Dec), and #23 (your submission).
+
 ---
 
 ## 9. Decisions and Parking Lot
