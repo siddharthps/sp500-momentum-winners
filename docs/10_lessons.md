@@ -44,8 +44,7 @@ lost to the 6-month rule held one month ($12,107 against $29,150).
 
 **5. The S&P 500 is the hardest place to find an edge.** These are the most-watched, most-traded
 stocks in the world. Research finds that much of machine learning's gain in stock picking comes from
-the smallest and most distressed companies: leaving out the smallest alone cuts the payoff by about
-60%.
+the smallest and most distressed companies: leaving them out considerably reduces the payoff.
 
 **6. The test years rewarded riding one trend.** 2023–2026 was dominated by the AI and chip boom. A
 momentum rule is built to keep buying what has been rising, so it rode the boom. A model averaging
@@ -180,8 +179,15 @@ have been used, so each would need new months or a separate earlier period.
 
 The research the book cites.
 
-**Momentum** ([Chapter 1](01_problem.md), §2 and §7; [Chapter 5](05_eda.md), §3.2):
+**Momentum** ([Chapter 1](01_problem.md), §2, §7 and §8; [Chapter 4](04_features.md), §3.5;
+[Chapter 5](05_eda.md), §3.2):
 
+- Asness, C. S., Moskowitz, T. J. and Pedersen, L. H. (2013). Value and momentum everywhere.
+  *Journal of Finance*, 68(3), 929–985.
+- Avramov, D., Chordia, T. and Goyal, A. (2006). Liquidity and autocorrelations in individual stock
+  returns. *Journal of Finance*, 61(5), 2365–2394.
+- Blitz, D., Huij, J. and Martens, M. (2011). Residual momentum. *Journal of Empirical Finance*,
+  18(3), 506–521.
 - Daniel, K. and Moskowitz, T. J. (2016). Momentum crashes. *Journal of Financial Economics*,
   122(2), 221–247.
 - Hong, H. and Stein, J. C. (1999). A unified theory of underreaction, momentum trading, and
@@ -190,8 +196,15 @@ The research the book cites.
   Finance*, 45(3), 881–898.
 - Jegadeesh, N. and Titman, S. (1993). Returns to buying winners and selling losers: implications
   for stock market efficiency. *Journal of Finance*, 48(1), 65–91.
+- Jegadeesh, N. and Titman, S. (2001). Profitability of momentum strategies: an evaluation of
+  alternative explanations. *Journal of Finance*, 56(2), 699–720.
 - Rouwenhorst, K. G. (1998). International momentum strategies. *Journal of Finance*, 53(1),
   267–284.
+
+**Trend filters** ([Chapter 7](07_simulation.md), §3.8):
+
+- Faber, M. T. (2007). A quantitative approach to tactical asset allocation. *Journal of Wealth
+  Management*, Spring 2007.
 
 **Machine learning and fund management** ([Chapter 6](06_modelling.md), §3.5; Sections 2 and 3
 above):

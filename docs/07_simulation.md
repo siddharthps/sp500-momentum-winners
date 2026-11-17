@@ -358,9 +358,8 @@ would need new months or a separate earlier period.
 - **The model strategies have only 36 and 45 months.** Gaps of a few hundred dollars between
   versions can be chance. The conclusion rests on the headline losing to every plain rule in both
   periods.
-- **The trend filter met few downturns,** and most recovered fast. Published tests credit such
-  filters mainly with long bear markets like 2000–2002 and 2008, outside these years: it didn't
-  help *here*.
+- **The trend filter met few downturns,** and most recovered fast. Trend filters are built for long
+  declines, like 2000–2002 and 2008, outside these years: it didn't help *here*.
 - **Some costs aren't modelled:** rebalancing between the parts of a staggered portfolio (small, not
   zero), costs for the equal-weight yardstick (slightly flattering it), taxes, price impact, and
   wider spreads on small trades. The 0.1% a side covers the spread and commissions of a liquid

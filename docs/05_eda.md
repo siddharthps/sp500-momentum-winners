@@ -64,15 +64,14 @@ and next month's returns, averaged over all months.
 - **87 of the 147 features get an IC:** those that vary between stocks on the same date. Most of
   the other 60 are the same for every stock (the market, the economy, breadth) or only on or off
   (the flags).
-- **The best signals are small.** An IC near 0.05, held steadily, is counted as an above-average
-  stock-picking signal. The best here reach about **0.02**, less than half that.
+- **The best signals are small.** The best here reach an IC of about **0.02**.
 - **None is statistically clear on its own.** The strongest is about two standard errors from zero:
   borderline even for a single test, and 87 features were tested.
 
 **Last month's return points the wrong way** (IC −0.021): last month's winners did slightly worse
 the next month. Research has documented this one-month reversal since Jegadeesh (1990), and finds
-it concentrated in small, illiquid stocks. S&P 500 members are large, which fits the weak reversal
-seen here. The strongest features say the same thing: they favour stocks that closed the month
+it concentrated in illiquid stocks. S&P 500 members are among the most liquid, which fits the weak
+reversal seen here. The strongest features say the same thing: they favour stocks that closed the month
 weakly. They are where the close sits in the month's range, and balance of power (the month's
 open-to-close move as a share of its high–low range).
 
