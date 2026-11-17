@@ -54,7 +54,7 @@ You maintain the book for this project: the pages in `docs/` (published as a sit
 
 - **Accuracy against the final outputs.** Every number, count and claim must match the actual
   outputs (`reports/`, notebook results, the data dictionary). The final data is tagged
-  `final-2026-11`. A count that appears on two pages must agree on both: grep the other pages.
+  `final-2026-11b`. A count that appears on two pages must agree on both: grep the other pages.
 - **Holdovers:** "preview" or "still running" notes, dated counts ("9 Nov", "4 Nov snapshot"),
   and stale facts listed in CLAUDE.md's #20 sweep.
 - **New content and caveats** where a first-time reader needs them, grounded in the project or in
