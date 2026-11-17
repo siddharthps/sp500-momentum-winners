@@ -197,8 +197,8 @@ tested on February 2024. [Chapter 6](06_modelling.md) has the details.
   has only about 2 independent periods to be judged on. The plain rule's hold periods, by contrast,
   are all run over the full 2010–2026 span as a description; its best version is still judged only
   on the test years (Section 6).
-- **No 24-month holds.** They're past the range where momentum is known to work (over longer spans,
-  winners tend to fall back). They'd also need long gaps between the training and test periods,
+- **No 24-month holds.** They're past the range where momentum is known to work (beyond a year it fades,
+  and after several years winners tend to fall back). They'd also need long gaps between the training and test periods,
   using up about 4 of the 16 years.
 
 ---
