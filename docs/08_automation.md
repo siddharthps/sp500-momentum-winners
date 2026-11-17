@@ -1,8 +1,7 @@
 # Chapter 8: Automation
 
-> **Parts:** the monthly run (3.1–3.4), Telegram notifications (3.5), data snapshots (3.6), the live
-> dashboard (3.7), the whole workflow in one notebook (3.8), the container (3.9), the run in the
-> cloud (3.10).
+> **Sections:** each run (3.1), what gets published (3.2), who sees what (3.3), running it
+> yourself (3.4), the run in the cloud (3.5).
 
 ## 1. Goal
 
@@ -24,167 +23,108 @@ touched.
 | 4. Pick | The headline model's top 10 and the 6-month rule's top 10 | Both published, labelled |
 | 5. Save | One file of picks per month, and a running record of every pick | The record is what later monitoring reads |
 
-**It runs overnight after each month's last close,** before the next open, so the golden rule still holds: features at the month-end
-close, the trade at the next open. It runs on GitHub's servers (Section 3.10), so it doesn't depend
-on any one computer being on. A missed day is caught up on the next weekday, and a month that's
-already done is never redone by accident.
+**It runs in the night after a month's last close** (the Sunday night, when a month ends at a
+weekend), before the next open, so the golden rule holds: features at the month-end close, the trade
+at the next open. If that run can't finish (prices not yet complete, or a service down), the next
+night tries again, after the open: those picks use the same month-end data, so nothing leaks, but
+they couldn't have been traded, so they're kept in the record and left out of the live result. It
+runs on GitHub's servers (Section 3.5), so it doesn't depend on any one computer being on.
 
 ---
 
 ## 3. What came out
 
-### 3.1 Prices are re-downloaded, never appended
+### 3.1 Each run, step by step
 
-Appending the newest days would be wrong: the adjusted close (used for every return) is recomputed
-backwards at every dividend or split, so old and new days would carry different adjustments. Each
-active stock's whole history is downloaded again (about a minute); removed companies' histories never
-change.
+- **Prices are downloaded whole, not appended.** A dividend or split changes every earlier adjusted
+  price, so new days can't simply be added to old ones. Each active stock's full history is fetched
+  again (about a minute); removed companies' histories don't change.
+- **Nothing is picked until the month is complete.** The run stops, publishes nothing and says why
+  if:
+    - the latest month-end isn't the month's last trading day (the download hasn't caught up; the
+      three holidays that can fall on a month's last weekday are allowed for);
+    - SPY has no close, or fewer than 95% of members have a price;
+    - a member has no sector (a company that has just left the index needs one added by hand);
+    - the feature columns differ from the ones the model was trained on.
+- **The model is refitted, never re-tuned.** Its settings were tuned on 2014–2019 and the model
+  chosen on 2020–2022 (Chapter 6), and they stay frozen. Each month it relearns from every month
+  with a known result, with the backtest's one-month gap. It's the backtest's own code: run as of
+  January 2023, it reproduces the backtest's scores for all 501 members to the last decimal
+  (rechecked on the final data, 16 Nov 2026).
 
-### 3.2 The checks before any pick
+### 3.2 What gets published
 
-The run stops, writes nothing, and says why if:
+Each month, two lists of ten, with their scores: the **headline model's** (the model chosen in
+advance) and the **6-month rule's** (which beat it in every test). Showing only the model would hide
+the project's own finding; showing only the rule would drop the choice made in advance. Side by
+side, they're a live head-to-head.
 
-- **the latest month-end isn't the month's last trading day.** This would mean the download hadn't
-  caught up. Only three exchange holidays can fall on a month's last weekday (Good Friday, Memorial
-  Day and Thanksgiving), and they're allowed for.
-- **SPY has no close for that month,** or fewer than 95% of the month's members have a price;
-- **a member has no sector** (a company that has just left the index needs one added by hand): it
-  would add a feature column the model never saw;
-- **the feature columns differ from the ones the model was tuned on,** in name or order.
+The rule chosen in Chapter 7 (the top 5 by 6-month return, held six months) isn't published. The
+live record compares one thing, how stocks are chosen, so the rule appears in the model's form: ten
+names, held one month. Tracking more rules would make the live record another place to pick a
+winner from.
 
-### 3.3 The model is refitted each month, never re-tuned
+The first file, for October 2026, was made on 5 November: after the open it would have traded at,
+and before the final rebuild. It uses only data to 30 October, so nothing leaks, but it couldn't
+have been traded and doesn't come from the frozen model; its timestamp sets it apart. The first
+truly live picks are made on 1 December 2026.
 
-The headline model's settings were chosen once, on 2014–2022, and stay frozen. Each month it is
-**refitted** on every month whose result is known, with the same one-month gap before the scored
-month as in the backtest. The settings stay as they were, but the model learns from the latest
-years.
+### 3.3 Who sees what
 
-**The refit is the backtest's own code.** Run as of January 2023, it trains on exactly the test
-fold's rows. It reproduces the backtest's January 2023 scores for all 497 members to the last
-decimal, with the same top 10.
-
-### 3.4 Both strategies are published
-
-Each month's file lists the headline model's top 10 (the model chosen in advance) and the 6-month
-rule's top 10 (the stronger strategy in every test), with their scores. Publishing only the model
-would hide the project's own finding; publishing only the rule would drop the choice made in
-advance. Side by side, they start a live head-to-head.
-
-The first file, for the end of October 2026, was made on 5 November, *after* the open it would have
-traded at. It uses only data to 30 October, so nothing leaks, but it couldn't have been traded, and
-its timestamp sets it apart. The first truly live month is made on 1 December 2026.
-
-### 3.5 Part 2: notifications
-
-A scheduled job's most likely failure is a silent one. So every run reports through a **Telegram
-bot**: the project's own account in the Telegram messaging app, which posts the messages below. They
-are split by who they're for:
-
-| Message | Where | When |
+| Where | What | Who |
 | --- | --- | --- |
-| Both strategies' picks, the index changes that month, and the share of members priced | **A public Telegram channel** | Each monthly run |
-| How last month's picks did: each list's return from the next open to the month-end close, against SPY's, and how many of the ten beat it | The same message | From January 2027, once a full month of live picks has passed |
-| Why a run stopped, exactly as its checks put it (for example "no sector for KVUE") | A private Telegram chat | On any failure |
-| The night's Alpha Vantage pull: how many tickers were tried, how they came back, and how many are left; a reminder to retire the job when the queue is empty | The private chat | Each night until the download ends |
+| **Public Telegram channel** | Both lists, the month's index changes and the share of members priced; from January 2027, also how last month's picks did against SPY | Anyone, in a browser |
+| **Private Telegram chat** | Why a run stopped, in its checks' own words, or that publishing failed (the picks are kept) | The project's owner |
+| **[Dashboard](https://sp500-momentum-winners.streamlit.app/)** | This month's picks, the live record (from January 2027), the backtest (as in Chapter 7) and input drift | Anyone |
+| **Public dataset** (Hugging Face) | This project's own numbers: the member table and features without raw prices, model scores, live picks, results | Anyone |
+| **Private dataset** (Hugging Face) | Everything, including the vendors' prices (they may be used but not redistributed) and the trained models | The cloud run, by token |
 
-**The channel is public on purpose.** The picks are already in the public dataset, so it reveals nothing
-new, but Telegram timestamps each post independently: proof the picks existed before their results.
-Anyone can read it in a browser, without an account. Operational alerts would be noise there.
+- **The channel is public on purpose:** Telegram timestamps each post, proof the picks existed
+  before their results. Every picks message says it's research, not advice. The bot only sends,
+  so it needs no server.
+- **Input drift is the one check that works before any live result:** do this month's values of the
+  model's ten most important stock inputs look unlike the training years'? (A Population Stability
+  Index above 0.25 is a major shift.) The dashboard reads only the public dataset and picks up each
+  run within six hours.
+- **The datasets save a rebuild from nothing,** which takes an Alpha Vantage key, a FRED key and
+  twelve nights of downloads. Every upload is scanned for the project's secrets first, because a
+  leaked token can't be removed from a dataset's history. The data this book reports is tagged
+  `final-2026-11b` (an earlier tag, `final-2026-11`, is the rebuild before two data fixes); the
+  monthly uploads don't move it.
 
-Every picks message ends: a research output, not advice; in backtests the model didn't beat the
-plain 6-month rule, and neither clearly beat SPY per unit of risk. The bot only sends, never listens,
-so it needs no server.
+### 3.4 Running it yourself
 
-### 3.6 Part 3: the data snapshots
+- **One notebook walks through the whole workflow** (data, rebuild, predict, simulate, the latest
+  trades) by calling the monthly run's own functions, so it can't drift from what runs unattended.
+  It has no side effects (no message, no upload, no write to the live record), so pressing "run all"
+  can't change the public record. One setting picks the data: local files, the private dataset, or
+  a fresh download. Retuning is off by default, so it runs in about two minutes, not two hours.
+- **A container image** gives anyone the tested environment on any machine with Docker. It's built
+  from the exact package versions the tests passed with, and holds no data or secrets (it's public;
+  they're supplied at run time). Its tests run inside it on every change that could affect it, it's
+  republished each time such a change is accepted, and every build is scanned for known
+  vulnerabilities. It's about 2.9 GB, mostly scientific libraries.
 
-Rebuilding from nothing takes an Alpha Vantage key and about nine nights of downloads, so the data is
-also published as snapshots on Hugging Face. There are two, because the vendors' prices may be used
-but not redistributed:
+### 3.5 The run in the cloud
 
-| | Private | Public |
-| --- | --- | --- |
-| **Contents** | Everything: the downloads, every table, the trained models | This project's own calculations: features and the member table without raw prices, model scores, live picks, results |
-| **Who reads it** | The cloud run and collaborators, by token | Anyone, without an account |
+The first truly live picks come after this project ends, and the record is only worth something if
+no month is missed. So the run lives on GitHub's servers, not on one computer:
 
-Every upload is scanned for the project's secrets first, because a leaked token can't be removed from
-a dataset's history. The final snapshot will be tagged, so the book's numbers trace to their exact
-data.
-
-### 3.7 Part 4: the live dashboard
-
-A public page, **[sp500-momentum-winners.streamlit.app](https://sp500-momentum-winners.streamlit.app/)**,
-shows this month's picks for both strategies, the live record (from January 2027), the backtest (the
-same numbers as Chapter 7), and **input drift**: whether this month's values of the model's ten most
-important stock-level inputs look unlike the training years' (by the Population Stability Index;
-over 0.25 is a major shift). Drift is the one check that works before any live result exists.
-
-It reads only the public snapshot, so it holds no secret, and picks up each monthly run within six
-hours. It's hosted free on Streamlit Community Cloud.
-
-### 3.8 Part 5: the whole workflow in one place
-
-Each earlier step has its own notebook. One more walks through the whole workflow end to end, so a
-reader can see how the parts connect:
-
-| Step | What happens |
-| --- | --- |
-| 1. Data | Where the raw data comes from, chosen by one setting (below) |
-| 2. Transform | The monthly table and the features rebuilt; their size and feature sets shown |
-| 3. Predict | The model refitted with its tuned settings, the latest month-end scored, all the monthly run's checks |
-| 4. Simulate | Both strategies, the rule chosen in Chapter 7, and SPY, on 2020–2022 and the test years |
-| 5. The latest trades | Both strategies' picks, to buy at the next open |
-
-**Three data regimes, one setting:** local files (offline and deterministic, how the published copy
-runs), the private snapshot (no source touched), or a fresh download. None re-downloads the delisted
-companies' prices: they don't change.
-
-**It calls exactly the monthly run's functions,** so it can't drift from what runs unattended, and
-it has **no side effects:** no message, no publishing, no write to the live record. A notebook gets
-rerun casually; the public timeline of picks mustn't change because someone pressed "run all".
-
-**Retuning stays off by default** (close to two hours). The notebook refits with the tuned settings,
-as the live system does, and runs in about two minutes.
-
-### 3.9 Part 6: the container
-
-The whole pipeline also comes as a container image: one command gives anyone the exact environment
-the tests run in, on any machine with Docker.
-
-- **Built from the lock file:** the exact package versions CI tested, down to their checksums.
-- **No data, models or secrets inside,** since the image is public. They're mounted at run time, or
-  pulled from the private snapshot with a token given then.
-- **Tested as it's built:** the test suite runs *inside* the container on every proposed change.
-- **Published on every accepted change** to a public container registry.
-- **Scanned for known vulnerabilities on every build.** What the scan still reports has no published
-  fix yet; it's listed in the build log and judged, not ignored.
-
-The image is about 2.9 GB, mostly the scientific libraries; slimming it wasn't worth the time.
-
-### 3.10 Part 7: the run in the cloud
-
-The live record is only worth something if no month is missed, and the first truly live picks come
-after this project ends. So the monthly run doesn't depend on one computer being on: a scheduled job
-on GitHub's servers runs it.
-
-- **Each night it asks one question first:** are last month's picks in the running
-  record? Usually they are, and it stops within a minute. The first weekday night after a month-end
-  they aren't, so it starts from the private snapshot, downloads fresh prices, and runs the same five
-  steps, with the same code and the model's settings frozen.
-- **It's started on time by a separate alarm clock.** GitHub's own scheduler runs jobs late when
-  it's busy (about seven hours late in its first week here), and its documentation warns that some
-  runs may be dropped: on the first of a month that could mean picks after the open. So a small
-  scheduled script on another service (a Cloudflare Worker) starts the job each night after the
-  close, and GitHub's own schedule stays as a backup an hour later. Whichever runs second finds the
-  month done.
-- **"Done" is read from the running record, which travels with the snapshot,** not from a file on
-  the machine. A fresh machine therefore knows what's been done, a missed day is caught up on the
-  next weekday, and a month is never picked twice.
-- **Downloads are retried,** with longer waits each time, since a shared cloud machine meets more
-  temporary refusals than a home computer. If prices are still incomplete, the month-end checks
-  (Section 3.2) stop the run, nothing is published, and the private chat is told. A failure before
-  the run even starts alerts the chat too.
-- **The tokens live in the repository's secret store,** never in the code or the logs, and the job
-  can only read the repository, not change it.
+- **Each night it first checks whether last month's picks are in the running record.** Usually they
+  are, and it stops within a minute. The night after a month's last close (Section 2) they aren't,
+  so it rebuilds from the private dataset plus fresh prices and runs the five steps.
+- **A separate alarm clock starts it.** GitHub's scheduler can run hours late (about seven in the
+  first week here) or drop a run, so a small script on Cloudflare starts the job each night, with
+  GitHub's own schedule as a backup an hour later. Whichever runs second finds the month done, or
+  tries again if the first failed.
+- **"Done" comes from the running record,** which travels with the dataset, so a fresh machine knows
+  what's been done and a month is never picked twice. A missed night is caught up on a later one,
+  after the open, so those picks stay out of the live result (Section 2).
+- **Failures are loud.** Downloads are retried with longer waits; if prices are still incomplete,
+  the checks stop the run, nothing is published, and the private chat is told. The same happens if
+  the job fails to start or the FRED key is missing.
+- **Its keys** (Hugging Face, Telegram, FRED) live in the repository's secret store, never in the
+  code or the logs, and the job can only read the repository, not change it.
 
 ---
 
@@ -195,7 +135,6 @@ on GitHub's servers runs it.
 | Refit monthly with fixed settings; never re-tune | Fitting uses new data; tuning on live months would quietly turn the live record into another tuning loop |
 | Last month's live result in each message, scored from the next open to the month-end close | That's the honest live record; it's ready on the first weekday of the next month, before the backtest's next-open-to-next-open return could be |
 | A failed message never fails a run | Notifications report on the job; they must never become a reason it fails |
-| Every snapshot versioned; the final one tagged `final-2026-11` | The book's numbers stay traceable to the exact data behind them |
 
 ---
 
@@ -203,14 +142,15 @@ on GitHub's servers runs it.
 
 - **The picks are a research output, not advice.** The backtest found that the model doesn't beat a
   plain 6-month rule, and that nothing chosen in advance clearly beats SPY per unit of risk.
-- **The run depends on free sources** (Wikipedia, Yahoo, FRED), which can change format or limit
-  requests. The checks catch an incomplete month, not every possible error in the data.
-- **The live result is measured slightly differently from the backtest:** from the next open to the
-  following month-end close, rather than to the open after it. The difference is one overnight
-  move, the price of reporting on the first weekday of the month.
+- **The run depends on free sources** (Wikipedia, Yahoo, FRED, whose archive of past versions needs
+  a free key), which can change format or limit requests. The checks catch an incomplete month, not
+  every possible error in the data.
+- **The live result is measured slightly differently from the backtest** (to the month-end close,
+  not the next open): one overnight move, the price of reporting on the first weekday.
 - **The job relies on two outside services staying up:** GitHub, which runs it, and Cloudflare,
-  which starts it. GitHub switches jobs off in quiet public repositories after 60 days; the
-  trigger switches this one back on each night, but the trigger's access token expires within a
-  year and has to be renewed.
-- **New companies need their price history and sector.** Additions to the index are picked up from
-  the current list automatically. Removals need their sector filled in by hand, and the run says so.
+  which starts it. GitHub switches jobs off in quiet public repositories after 60 days; the trigger
+  switches this one back on each night. Its access token expires on 16 Nov 2027: if it isn't
+  renewed, GitHub's own schedule still runs the job, but only until that 60-day switch-off.
+- **Companies that leave the index need their sector added by hand.** Additions are picked up from
+  the current list automatically. Until a removed company's sector is filled in, the run stops and
+  names it.

@@ -10,7 +10,8 @@ the code. Cell and notebook metadata are cleared to keep diffs small.
 After running, every notebook is checked (see `nb.py` for the rules); the run fails if:
 - a cell's text output is longer than MAX_OUTPUT_LINES (a table or log was dumped in full),
 - anything was written to stderr (log lines, progress bars, warnings),
-- an output contains a local path, an e-mail address or the Alpha Vantage key,
+- an output contains a local path, an e-mail address or any key or token from `.env`
+  (`config.SECRET_KEYS`: Alpha Vantage, Telegram, Hugging Face, FRED),
 - the file is over BUDGET_KB (the pre-commit hook's hard limit is 500 KB).
 """
 

@@ -59,37 +59,17 @@ is merged with CI green (both the CI and Docker workflows).
     those; it's the one page of the site that does).
 - Keep `docs/running.md` current (every command and step), and the README short: what the project
   is, the result, links, a short "How to run" and a pointer to the guide (split on 11 Nov; it had
-  grown to ~400 lines).
-
-## Now: the chapter-by-chapter review (temporary, from 7 Nov; remove when it ends)
-
-- **One chapter at a time, in order. Never move on to the next chapter until the user says go.**
-  For each chapter: summarise it in plain words, check it against the code and the data, list
-  suggestions (errors first), and ask which to apply (one prompt). Apply them, build the book, and
-  commit locally, one commit per chapter. **Don't push** until the user asks.
-- **State (10 Nov):** Chapters 1–10 and both appendices are reviewed and merged (Chapter 9 is the
-  new Results chapter; the lessons are Chapter 10). The user has further questions on the docs:
-  keep these rules until those are settled, then remove this section (keep the detail split).
-- **Stacked PRs:** after squash-merging the lower PR, `git rebase --onto origin/main <lower> <upper>`
-  and force-push the upper branch (with lease); GitHub retargets it to `main` when the lower branch
-  is deleted.
+  grown to ~400 lines; redesigned on 17 Nov with a hero chart, a diagram and grouped links).
 - **Detail split (agreed 10 Nov):** a chapter says what was done and why. The proof (evidence,
   factors, per-case checks) goes in decisions.md and the journal, which the book reaches through
   Appendix B. Keep chapters tight. **Decisions tables hold only decisions whose *why* isn't already
-  given in "What came out":** check every row for repeats in each review (Chapter 4 had four).
-- **The ask behind it:** the published book didn't make the setup clear to a first-time reader. Read
-  each chapter as that reader would, not as its author.
-- **For #20's refresh, beyond rerunning the notebooks:**
-  - the README's result table and sizes;
-  - Appendix A (drop `ta_natr`);
-  - (#72 done 16 Nov: the class-B rename; 21st Century Fox priced; Chapters 3 and 10 corrected.)
-  - Chapter 9's numbers (Results) and Chapter 10's;
-  - **then a last sweep of every page** (chapters, appendices, `docs/running.md`, the README, the
-    dashboard text) for holdovers: "preview" notes and "still running", dated counts ("9 Nov",
-    "4 Nov snapshot"), 186 → 185 columns, members per month-end now 498–504 (Chapter 3 says
-    499–504), numbers that appear on two pages agreeing, and one
-    new limitation in Chapters 9 and 10: the rule chosen on 2010–22 isn't tracked live (11 Nov). Then
-    remove this section.
+  given in "What came out".** Read each page as a first-time reader would, not as its author.
+- **Book reviews go one page at a time, in order:** review mode first, every finding checked against
+  the files, the user picks what to apply, then edit mode, one local commit per page. Never move on
+  until the user says go; don't push until asked.
+- **Stacked PRs:** after squash-merging the lower PR, `git rebase --onto origin/main <lower> <upper>`
+  and force-push the upper branch (with lease); GitHub retargets it to `main` when the lower branch
+  is deleted.
 
 ## Traps (don't re-learn these)
 
@@ -156,11 +136,15 @@ is merged with CI green (both the CI and Docker workflows).
   the main version only (its best 2020–22 version was its worst on the test).
 - **Rebuild order:** after new raw data (the AV pull, any download), rerun `monthly build` before
   anything downstream.
-- **The final data** (#20, 16 Nov, tagged `final-2026-11` on Hugging Face) is what the book reports.
-  After any later change to data, features or models, rerun the notebooks and refresh every
-  chapter's numbers together, so the book and the notebooks never drift apart.
-- **Secrets:** never print, log or commit the Alpha Vantage key, the Telegram or Hugging Face
-  tokens, or `.env`. Verify a token by asking its service who it belongs to, never by printing it.
+- **The final data** (16 Nov, tagged `final-2026-11b` on Hugging Face: #85's two data fixes;
+  `final-2026-11` stays as the earlier #20 rebuild) is what the book reports. After any later change
+  to data, features or models, rerun the notebooks and refresh every chapter's numbers together, so
+  the book and the notebooks never drift apart. The README's hero chart is drawn by notebook 05
+  (`plots.hero_chart`), so the front page follows the same rerun. **A push won't move an existing
+  tag** (`create_tag(..., exist_ok=True)` silently does nothing): a new data version needs a new
+  tag name.
+- **Secrets:** never print, log or commit the Alpha Vantage key, the FRED API key, the Telegram or
+  Hugging Face tokens, or `.env`. Verify a token by asking its service who it belongs to, never by printing it.
   Request errors can carry the token in their URL: report them by type only.
 - **Ruff only checks the folders in `pyproject.toml`'s `include`.** `tests/` (3 Nov) and
   `dashboard/` (5 Nov) were both silently skipped at first. Add every new code folder.
@@ -181,7 +165,14 @@ is merged with CI green (both the CI and Docker workflows).
 - **The book site** (GitHub Pages, `.github/workflows/pages.yml`) builds `docs/` with
   `scripts/mkdocs_hooks.py`: chapters keep GitHub-style paths (`../reports/figures/x.png`,
   `../references/...`) and the hook adapts them. Keep writing chapters that way; `--strict` in CI
-  fails on any broken chart or link.
+  fails on any broken chart or link, and on a link to a missing section only because
+  `validation: anchors: warn` is set in `mkdocs.yml` (without it a missing anchor is INFO: a
+  renumbering broke three links unnoticed). The site has no Markdown extensions: **nested lists need
+  a 4-space indent** (2-space sub-items render as siblings).
+- **Claims in prose:** check every absolute word ("before", "never", "every", "only") on the failure
+  path too (a retry, a late run, a missing key), and every plural claim ("the models") for each
+  member. When tightening, a sentence that qualifies a nearby claim is not a duplicate: cutting it
+  turned a hedged claim into a false guarantee (Chapter 8, 16 Nov).
 - **The dashboard** (`dashboard/`, Streamlit Community Cloud from `main`) can't import the package:
   its calculations live in `dashboard/logic.py`, tested against the package where they overlap.
   It reads only the public HF dataset. HF Spaces now need PRO for Streamlit/Docker (only static
@@ -234,7 +225,9 @@ uv run python -m sp500_momentum.features build     # after monthly build
 uv run python -m sp500_momentum.modeling.train run # after features build; ~1¾ h (--n-iter 1: smoke run)
 uv run python -m sp500_momentum.modeling.predict run  # the monthly run (~2 min; --no-download, --force,
                                                       # --from-file, --dry-run-notify, --no-publish)
+uv run python -m sp500_momentum.modeling.predict due  # is last month's picks run due? (reads the record)
 uv run python -m sp500_momentum.hub push --target private|public|both [--tag X] | pull   # HF datasets
+uv run python -m sp500_momentum.hub pull --revision final-2026-11b   # the data the book reports
 uv run python -m sp500_momentum.notify test [--dry-run] | find-chats                    # Telegram
 uv run streamlit run dashboard/app.py               # the dashboard locally (live: sp500-momentum-winners.streamlit.app)
 uv run mkdocs build --strict                        # the book (CI runs it; published to GitHub Pages from main)

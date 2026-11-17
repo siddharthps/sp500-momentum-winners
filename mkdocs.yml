@@ -10,6 +10,10 @@ docs_dir: docs
 # build time, so the chapters keep the paths that work on GitHub (#26).
 hooks:
   - scripts/mkdocs_hooks.py
+# A link to a missing section (#anchor) is only INFO by default, so --strict let three through
+# when Chapter 7 was renumbered (16 Nov, #87). As a warning, --strict fails on it.
+validation:
+  anchors: warn
 theme:
   name: material
 nav:

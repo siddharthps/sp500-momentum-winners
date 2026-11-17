@@ -73,8 +73,9 @@ LIVE_MODEL = MODELS_DIR / "live_headline.joblib"
 LIVE_TOP_N = 10
 LIVE_RULE_SIGNAL = "ret_6m"  # the plain rule published next to the model (decisions.md, 5 Nov)
 LIVE_MIN_PRICED = 0.95  # share of the month's members that must have a month-end price
-# Shown on the public dataset card and the dashboard; changes to "final" in #20.
-DATA_STATUS = "final: every delisted company's prices collected (rebuilt 16 Nov 2026)"
+# Shown on the public dataset card and the dashboard. Not "every delisted company's prices
+# collected": 80 of the 216 tried have no free history (4.5% of member-months unpriced).
+DATA_STATUS = "final: rebuilt 16 Nov 2026 (final-2026-11b)"
 FEATURES_TABLE = PROCESSED_DATA_DIR / "features.parquet"  # the monthly panel + every feature
 
 # GICS sectors for members removed since 2010 (Wikipedia's changes table has none). Written by hand

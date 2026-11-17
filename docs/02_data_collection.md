@@ -27,19 +27,33 @@ Collect everything the project needs, from free sources:
 
 ### 3.1 Membership (Wikipedia)
 
-- The current list comes from Wikipedia's *List of S&P 500 companies*. The history of changes is on a
-  separate page, *Historical components of the S&P 500*.
-- The record is sparse before 2008: 2 changes in the 1970s, 8 in the 1990s, 43 in the 2000s, then
-  **220 in the 2010s** and 142 in the 2020s. That's why the study starts in **2010** (362 changes since).
-- Each removal comes with a free-text reason. These were sorted into buckets (acquired, market cap,
-  spin-off, failed, ticker change) with keyword rules.
+- **Two pages.** Today's list is Wikipedia's *List of S&P 500 companies*. The changes are on
+  *Historical components of the S&P 500*.
+- **The record is sparse before 2008:**
+
+  | Decade | 1970s | 1990s | 2000s | 2010s | 2020s |
+  | --- | --- | --- | --- | --- | --- |
+  | Changes recorded | 2 | 8 | 43 | **220** | 142 |
+
+  The 2010s average about 22 a year. The index didn't stand still before then, so the earlier record
+  is incomplete. That's why the study starts in **2010** (362 changes since).
+- **The removal reasons are approximate.** Each change has one free-text reason, which often
+  describes the company added, not the one removed. Keyword rules sort them into buckets: acquired,
+  market cap, spin-off, failed, ticker change.
 
 ### 3.2 The survivorship gap
 
 321 companies left the index between 2010 and Oct 2026 and aren't members today. Yahoo Finance has
-usable history for only about a third of them:
+usable history for only about a third of them. A series is usable if it passes two checks:
 
-| Why it was removed | Total | Yahoo has a series | Usable after the volume check | Missing |
+1. **It starts before the removal date and has more than one row.** This rules out a 1-row "stub"
+   (Yahoo keeps only the last price of some recent delistings). It also rules out data that starts
+   after the removal (another company reused the ticker). 108 series pass, and all are downloaded.
+2. **It trades like an S&P 500 company.** A later check ([Chapter 3](03_monthly_table.md)) compares
+   its trading volume with a member's. It finds 6 more that belong to a much smaller company using
+   the old ticker, 5 of them for acquired companies. That leaves **102**.
+
+| Recorded reason (approximate) | Total | Yahoo has a series | Usable after the volume check | Missing |
 | --- | --- | --- | --- | --- |
 | Acquired or merged | 150 | 10 | 5 | **145** |
 | Market cap / index rules | 126 | 82 | 81 | 45 |
@@ -49,41 +63,37 @@ usable history for only about a third of them:
 | Other | 5 | 2 | 2 | 3 |
 | **Total** | **321** | **108** | **102** | **219** |
 
-Companies dropped for market cap mostly still trade on smaller indexes, so Yahoo has them.
-**Acquired companies are almost all missing.** That's the gap that matters most for this question
-([Chapter 1](01_problem.md#3-why-its-harder-than-it-looks-survivorship-bias)).
-
-A series counts as usable after two checks:
-
-1. **It starts before the removal date and has more than one row.** That rules out a 1-row "stub"
-   (Yahoo keeps only the last price of some recent delistings) and data that starts after the
-   removal (another company reused the ticker). 108 series pass, and all of them are downloaded.
-2. **It trades like an S&P 500 company.** A later check ([Chapter 3](03_monthly_table.md)) compares
-   each series' trading volume with what a member's would be. It finds 6 more that belong to a much
-   smaller company using the old ticker, 5 of them for acquired companies. That leaves **102**.
-
-The three ticker changes counted as missing aren't real gaps. Each company kept trading under its new
-symbol (Kraft Foods as Mondelez, Willis Towers Watson as WTW, Ceridian as Dayforce), and its history
-continues there.
+- **Companies dropped for market cap** mostly still trade on smaller indexes, so Yahoo has them.
+- **Acquired companies are almost all missing.** That's the gap that matters most for this question
+  ([Chapter 1](01_problem.md#3-why-its-harder-than-it-looks-survivorship-bias)). The five
+  "acquired" companies that pass both checks were in fact dropped for their size on the day of
+  another company's deal. Every true takeover Yahoo had a series for failed the volume check.
+- **The three missing ticker changes aren't real gaps.** Each company kept trading under its new
+  symbol (Kraft Foods as Mondelez, Willis Towers Watson as WTW, Ceridian as Dayforce), and its
+  history continues there.
 
 ### 3.3 Filling the gap: Alpha Vantage
 
-Alpha Vantage's free tier allows only **25 requests a day**. Full daily history is a paid feature, but
-**monthly prices are free, with full history and dividends included**. Monthly prices are enough for
-monthly returns, which is what the strategy trades on.
+Alpha Vantage's free tier allows only **25 requests a day**. Full daily history is paid, but
+**monthly prices are free, with full history and dividends included**. They're enough: the strategy
+trades on monthly returns.
 
 - **Checked against Yahoo:** Coca-Cola's dividend-adjusted prices matched within 0.1% from 2005 to
-  2026. The last prices of Warner Bros. Discovery, AvalonBay and Electronic Arts matched Yahoo exactly.
+  2026. The last prices of Warner Bros. Discovery, AvalonBay and Electronic Arts matched Yahoo
+  exactly.
 - **It has the hard cases:** Twitter, Pioneer Natural Resources, Hologic and Silicon Valley Bank,
   including the March 2023 crash (288.11 → 0.905).
-- **It was collected a little every day.** Each evening from 2 to 13 Nov 2026 an automatic run
-  fetched the next ~23 companies, most important first: failed banks, then acquisitions, then the
-  rest, stopping at the daily limit.
-- **The result: all 216 tried.** 140 have prices, 43 return a different company that now uses the
-  old ticker, and 33 have no data at all. Most of the 76 failures are takeovers (47); the rest are
-  mostly companies dropped for their size (17) and spin-offs (9). The gap is concentrated in the
-  **early years**: 59% of the companies removed in 2010–2013 have no free history, against 13%
-  of those removed since 2022. Those are exactly the companies survivorship bias leaves out.
+- **It was collected a little every day.** Each day from 2 to 13 Nov 2026 (in the evening from
+  3 Nov), an automatic run fetched the next ~23 companies, stopping at the daily limit. The most
+  important came first: failed banks, then acquisitions, then the rest.
+- **All 216 were tried.** 140 return prices, 43 return a different company that now uses the old
+  ticker, and 33 have no data at all. A later check ([Chapter 3](03_monthly_table.md)) finds four
+  of the 140 are other securities too, so 136 are used.
+- **Most of the 80 failures are takeovers (51).** The rest are mostly companies dropped for their
+  size (17) and spin-offs (9).
+- **The gap is concentrated in the early years.** 36 of the 61 companies removed in 2010–2013 have
+  no free history, against 5 of the 89 removed since 2022. Those are exactly the companies
+  survivorship bias leaves out.
 
 ### 3.4 Daily prices (Yahoo Finance)
 
@@ -92,18 +102,18 @@ monthly returns, which is what the strategy trades on.
 | Current members | 503 |
 | Removed members Yahoo has a series for (6 later rejected, Section 3.2) | 108 |
 | Market series | 16 |
-| Kenvue, which left the index in October 2026 | 1 |
+| Kenvue (left the index on 30 Oct 2026): a leftover file, unused; its prices come from Alpha Vantage | 1 |
 | **Total** | **628 series, 3,673,295 daily rows** |
 
 The 16 market series are SPY, the 11 sector funds (technology, financials, energy, …), VIX, the Dow
 Jones, gold and WTI oil.
 
-- **From January 2000.** That's ten years before the first decision in 2010. Every feature is built
-  from monthly bars (Chapter 4), and the slowest monthly indicators need about five years of history
-  before they give a value.
+- **From January 2000**, ten years before the first decision in 2010. Every feature is built from
+  monthly bars (Chapter 4), and the slowest monthly indicator (TRIX) needs about seven years of
+  history before it gives a value.
 - **To the previous day's close**, so a half-finished trading day is never stored.
-- **Prices are kept both raw and dividend-adjusted.** Dividends and splits stay visible, and the
-  price at the next morning's open can be adjusted the same way as the close.
+- **Both raw and dividend-adjusted prices are kept.** Dividends and splits stay visible, and the
+  next morning's open can be adjusted the same way as the close.
 
 ### 3.5 Economic data (FRED)
 
@@ -114,11 +124,16 @@ Six standard US series, from 2005:
 | Core CPI | Inflation, excluding food and energy | Monthly | 1 month after the month it describes |
 | Fed Funds rate | The Federal Reserve's policy rate | Monthly | 1 month after |
 | 1-, 5- and 10-year Treasury yields | Interest rates on government bonds | Daily | The last value before the decision date |
-| Potential GDP | The economy's long-run growth capacity (a projection) | Quarterly | Its own quarter |
+| Potential GDP | The economy's long-run growth capacity (a projection) | Quarterly | Its own quarter, in the version published before the decision |
 
-**Why "used from" matters.** Inflation for July is published in mid-August. A common shortcut copies
-each month's figure onto every day of that month. That lets a model "see" the number about two weeks
-before anyone could. Here, a figure is only used once it would have been public.
+- **Why "used from" matters.** Inflation for July is published in mid-August. A common shortcut
+  copies each month's figure onto every day of that month, which lets a model "see" the number about
+  two weeks before anyone could. Here, a figure is only used once it would have been public.
+- **Revisions.** FRED serves today's revised values, but it also archives each past version.
+  Potential GDP, a projection revised often and by a lot, is read in the version published before
+  each decision.
+- **Core CPI uses today's version.** Only its seasonal adjustment is recalculated each year, a
+  small difference ([Chapter 4](04_features.md)).
 
 ---
 
@@ -126,38 +141,31 @@ before anyone could. Here, a figure is only used once it would have been public.
 
 | Decision | Why |
 | --- | --- |
-| Start in 2010 | The record of index changes is thin before ~2008 |
 | Yahoo first, Alpha Vantage only for the gaps | Yahoo is free and daily. The free Alpha Vantage tier allows 25 requests a day |
-| Monthly prices from Alpha Vantage, not daily | Full daily history is a paid feature. Monthly prices are enough for monthly returns |
 | Fetch failed banks and acquisitions first | Those are the gaps that would flatter a "buy the winners" test most |
-| No large-scale price cross-check of Alpha Vantage | Every price compared so far matched. Any remaining errors would stand out as outliers later |
+| No large-scale price cross-check of Alpha Vantage | Every price compared matched. Any remaining errors would stand out as outliers later |
 | US-focused market series: SPY, Dow, sector funds, gold, oil, 10-year yield | This is a US stock picker. Foreign indexes, Brent oil and Bitcoin would add little |
-| Use each economic figure only after its publication date | Keeps the golden rule: nothing the strategy uses can come from the future |
 
 ---
 
 ## 5. Caveats and traps found
 
-These are the problems found while collecting the data, and how each was handled:
+The problems found while collecting the data, and how each was handled:
 
-- **Reused tickers.** An old ticker can point to a different company today. On Yahoo, `FB` is no longer
-  Meta's history. On Alpha Vantage, `STI` returns a company that took the ticker years after SunTrust
-  left. Every download is checked against the removal date. [Chapter 3](03_monthly_table.md) adds a
-  second check, on trading volume, for the cases this one misses.
-- **Prices after a failure.** After a bank fails, Alpha Vantage keeps reporting over-the-counter penny
-  prices. Signature Bank went from $0.05 to $1.60 in December 2023 (+3,102%). Each delisted company's
-  prices stop after the month it left the index (Chapter 3).
+- **Reused tickers.** An old ticker can point to a different company today. On Yahoo, `FB` is no
+  longer Meta's history. On Alpha Vantage, `STI` returns a company that took the ticker years after
+  SunTrust left. Every download is checked against the removal date, and
+  [Chapter 3](03_monthly_table.md) adds a volume check for the cases this one misses.
+- **Prices after a failure.** After a bank fails, Alpha Vantage keeps reporting over-the-counter
+  penny prices: Signature Bank went from $0.05 to $1.60 in December 2023 (+3,102%). Each delisted
+  company's prices stop after the month it left the index (Chapter 3).
 - **Half-finished trading days.** Gold and oil futures trade overnight, so Yahoo returned today's
   unfinished prices. Only completed days are kept.
-- **Missing inflation figure.** Core CPI has no October 2025 value (the 2025 government shutdown). The
-  previous month's value is carried forward.
-- **Oil below zero.** Oil futures closed at −$37.63 on 20 Apr 2020. That's real, not a data error. Only
-  the month-end value is used, and it was a normal $18.84.
-- **The daily limit is stricter than it looks.** Alpha Vantage's 25 requests seem to count over a rolling
-  24 hours, not per calendar day. Only 9 got through on the first scheduled day. The automatic run
-  moved to the evening, which pushed the finish date back by a day or two.
-- **A run can be cut off halfway.** On 3 Nov the evening run was stopped from outside after saving six
-  companies, but before it had recorded them, so the next run would have spent six of its scarce
-  requests fetching them again. Each company is now recorded the moment it's fetched, and a run first
-  picks up any saved file that isn't recorded yet (checked the same way). An interrupted run now costs
-  at most one request.
+- **Missing inflation figure.** Core CPI has no October 2025 value (the 2025 government shutdown).
+  The previous month's value is carried forward.
+- **Oil below zero.** Oil futures closed at −$37.63 on 20 Apr 2020. That's real, not a data error.
+  Only the month-end value is used, and it was a normal $18.84.
+- **The download's limits.** Alpha Vantage's limit seems to run over a rolling 24 hours. A run cut
+  off halfway loses at most one request.
+- **A gap remains.** 80 of the 216 have no free history, mostly early takeovers.
+  [Chapter 3](03_monthly_table.md) counts it: 4.5% of member-months have no price.
