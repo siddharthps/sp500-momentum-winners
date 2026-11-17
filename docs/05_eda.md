@@ -90,23 +90,25 @@ and are tuned across many successive years.
 ### 3.4 Last month's winners do better in strong markets
 
 On average, the top 10 by last month's return do **slightly worse** than the average member the
-following month: a spread of −0.23% a month, positive in only 47% of months. But the spread moves
+following month: a spread of −0.15% a month, positive in 49% of months. But the spread moves
 with market conditions. The strongest of the 34 market-wide conditions tried (the Dow's returns,
 which track SPY's, are left out):
 
 | Market condition at the decision | Correlation with the winners' next-month spread |
 | --- | --- |
-| SPY's return over the past 6 months | **+0.27** |
+| SPY's return over the past 6 months | **+0.28** |
 | SPY's return over the past 12 months | +0.24 |
-| Share of members in an uptrend (breadth) | +0.19 |
-| Oil's return over the past 6 months | +0.16 |
-| Spread between the best and worst members | −0.13 |
+| Share of members in an uptrend (breadth) | +0.21 |
+| Oil's return over the past 6 months | +0.18 |
+| Spread between the best and worst members | −0.15 |
+| Fed Funds rate | −0.14 |
+| 1-year Treasury yield | −0.13 |
 | SPY's return over the past 3 months | +0.13 |
-| Fed Funds rate | −0.12 |
 
-Over 156 months, a correlation of 0.27 is about three standard errors from zero, though it's the
-largest of 34 tried. And the 6- and 12-month market returns overlap from one month to the next, so
-there are far fewer truly independent months than 156: the pattern is suggestive, not proof.
+Over 156 months, a correlation of 0.28 is about three and a half standard errors from zero, though
+it's the largest of 34 tried. And the 6- and 12-month market returns overlap from one month to the
+next, so there are far fewer truly independent months than 156: the pattern is suggestive, not
+proof.
 Winners kept winning more often after strong markets, when most stocks were rising. That motivated
 testing a market-trend filter ([Chapter 7](07_simulation.md)), declared in advance as a reported
 test, not a candidate. It helped most strategies in 2020–2022, which held a long decline, and hurt
@@ -122,15 +124,16 @@ There are no trading costs yet, and only this one hold period:
 
 | | Yearly return | Volatility | Worst fall | Sharpe ratio |
 | --- | --- | --- | --- | --- |
-| Top 1 | 5.0% | 41.8% | −62% | 0.32 |
-| Top 5 | 11.2% | 27.4% | −44% | 0.52 |
-| **Top 10** | **12.6%** | 23.0% | −39% | 0.63 |
+| Top 1 | 6.3% | 41.5% | −62% | 0.36 |
+| Top 5 | 12.0% | 27.2% | −44% | 0.55 |
+| **Top 10** | **13.4%** | 22.9% | −39% | 0.67 |
 | SPY | 14.3% | 14.8% | −23% | 0.98 |
 | Equal-weight members | 13.5% | 16.1% | −30% | 0.87 |
 
-**Last month's winners trailed SPY even before costs:** the top 10 earned 12.6% a year against 14.3%,
-with half again the volatility and a deeper worst fall. The fewer stocks, the worse: the single best
-stock did worst of all. That fits the negative IC: last month's winners tend to fall back.
+**Last month's winners trailed SPY even before costs:** the top 10 earned 13.4% a year against
+14.3%, with half again the volatility and a deeper worst fall. The fewer stocks, the worse: the
+single best stock did worst of all. That fits the negative IC: last month's winners tend to fall
+back.
 
 ---
 

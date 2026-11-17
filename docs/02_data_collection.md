@@ -82,11 +82,13 @@ monthly returns, which is what the strategy trades on.
 - **It was collected a little every day.** Each day from 2 to 13 Nov 2026 (in the evening from
   3 Nov) an automatic run fetched the next ~23 companies, most important first: failed banks, then
   acquisitions, then the rest, stopping at the daily limit.
-- **The result: all 216 tried.** 140 have prices, 43 return a different company that now uses the
-  old ticker, and 33 have no data at all. Most of the 76 failures are takeovers (47); the rest are
-  mostly companies dropped for their size (17) and spin-offs (9). The gap is concentrated in the
-  **early years**: 33 of the 61 companies removed in 2010–2013 have no free history, against 5 of
-  the 89 removed since 2022. Those are exactly the companies survivorship bias leaves out.
+- **The result: all 216 tried.** 140 return prices, 43 return a different company that now uses
+  the old ticker, and 33 have no data at all. Four of the 140 turn out to be other securities too,
+  found by a later check ([Chapter 3](03_monthly_table.md)), so 136 are used. Most of the 80
+  failures are takeovers (51); the rest are mostly companies dropped for their size (17) and
+  spin-offs (9). The gap is concentrated in the **early years**: 36 of the 61 companies removed in
+  2010–2013 have no free history, against 5 of the 89 removed since 2022. Those are exactly the
+  companies survivorship bias leaves out.
 
 ### 3.4 Daily prices (Yahoo Finance)
 
@@ -117,14 +119,16 @@ Six standard US series, from 2005:
 | Core CPI | Inflation, excluding food and energy | Monthly | 1 month after the month it describes |
 | Fed Funds rate | The Federal Reserve's policy rate | Monthly | 1 month after |
 | 1-, 5- and 10-year Treasury yields | Interest rates on government bonds | Daily | The last value before the decision date |
-| Potential GDP | The economy's long-run growth capacity (a projection) | Quarterly | Its own quarter |
+| Potential GDP | The economy's long-run growth capacity (a projection) | Quarterly | Its own quarter, in the version published before the decision |
 
 **Why "used from" matters.** Inflation for July is published in mid-August. A common shortcut copies
 each month's figure onto every day of that month. That lets a model "see" the number about two weeks
-before anyone could. Here, a figure is only used once it would have been public. One caveat: FRED
-serves today's revised values. Core CPI's seasonal adjustment is recalculated each year, and
-potential GDP is a projection that gets revised ([Chapter 4](04_features.md)). Both differences are
-small.
+before anyone could. Here, a figure is only used once it would have been public.
+
+**Revisions.** FRED serves today's revised values, but it also archives each past version.
+Potential GDP, a projection revised often and by a lot, is read in the version published before
+each decision. Core CPI uses today's version: only its seasonal adjustment is recalculated each
+year, a small difference ([Chapter 4](04_features.md)).
 
 ---
 
@@ -158,5 +162,5 @@ These are the problems found while collecting the data, and how each was handled
   the month-end value is used, and it was a normal $18.84.
 - **The download's limits.** Alpha Vantage's limit seems to run over a rolling 24 hours, and a run
   cut off halfway loses at most one request.
-- **A gap remains.** 76 of the 216 have no free history, mostly early takeovers.
-  [Chapter 3](03_monthly_table.md) counts it: 4.4% of member-months have no price.
+- **A gap remains.** 80 of the 216 have no free history, mostly early takeovers.
+  [Chapter 3](03_monthly_table.md) counts it: 4.5% of member-months have no price.

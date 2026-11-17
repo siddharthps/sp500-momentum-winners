@@ -193,7 +193,7 @@ February 2024. [Chapter 6](06_modelling.md) has the details.
 ## 9. Caveats
 
 - **Free data only.** Some companies that left the index have no free price, mostly takeovers in
-  2010–2015 (4.4% of member-months, [Chapter 3](03_monthly_table.md)). Takeover targets are often
+  2010–2015 (4.5% of member-months, [Chapter 3](03_monthly_table.md)). Takeover targets are often
   recent winners, so the results may still be slightly flattered.
 - **2010–2026 was mostly a rising market.** Any strategy that holds stocks looks good in it. That's why
   the comparison is against SPY and an equal-weight basket, not against zero.

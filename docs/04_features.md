@@ -25,10 +25,10 @@ that month-end's close**, the golden rule from [Chapter 1](01_problem.md#7-the-r
 
 ### 3.1 Why everything is built from monthly bars
 
-Many of the companies that later left the index have only monthly prices: 139 in the table. They
-are Chapter 2's 140 from Alpha Vantage, less DowDuPont, which is priced from its daily history under
-its later ticker. Daily measures, like a 14-day RSI or the share of up days, can't be worked out for
-them.
+Many of the companies that later left the index have only monthly prices: 135 in the table. They
+are Chapter 2's 136 usable from Alpha Vantage, less DowDuPont, which is priced from its daily
+history under its later ticker. Daily measures, like a 14-day RSI or the share of up days, can't
+be worked out for them.
 
 Leaving those values blank would have been worse than it sounds. **"No daily data" happens exactly
 for companies that are later delisted**, mostly acquired. A model would soon learn that a blank
@@ -93,7 +93,7 @@ are differences between the two sector schemes.
 | Inflation used for the August 2026 decision | **July's** figure. August's wasn't published until mid-September |
 | 10-year yield used on 30 Oct 2026 | **29 Oct's** value. A day's yield is published the next day |
 | Fed Funds rate used on 30 Oct 2026 | **September's** figure. October's comes out in November |
-| Share of features filled: Yahoo stocks vs monthly-only stocks | **99.6% vs 98.9%**. The gap is in the slowest indicators (TRIX, the cycle measures, the 36-month risk measures), which need years of history. Monthly-only companies more often have a short history or rows in the early years, and both are known at the decision. Leaving out each stock's first five years in the table and the table's first year, both sources are at least 99.97% filled. So a blank says how long a stock has traded, not whether it later leaves |
+| Share of features filled: Yahoo stocks vs monthly-only stocks | **99.6% vs 99.0%**. The gap is in the slowest indicators (TRIX, the cycle measures, the 36-month risk measures), which need years of history. Monthly-only companies more often have a short history or rows in the early years, and both are known at the decision. Leaving out each stock's first five years in the table and the table's first year, both sources are at least 99.97% filled. So a blank says how long a stock has traded, not whether it later leaves |
 | Strongest link between any single feature and next month's result (2010–2022) | An average rank correlation of **0.023**. That's the size of a weak real signal (Chapter 5); a feature that leaked next month's result would stand far above it |
 
 That last check is also a first, sober look at the results. **No single feature predicts next month's winners
@@ -163,7 +163,9 @@ the modelling step limits extreme values in a consistent way.
 - **Months in the index is capped at 10 years.** The record of index changes is thin before about 2008,
   so a company with no "added" entry is treated as "10 years or more". That's fair to all companies
   alike, but it can't tell a 12-year member from a 40-year one.
-- **Potential GDP is a projection that gets revised,** and only the latest version is available. It's
-  the one economic figure with a mild, accepted look-ahead.
+- **Core inflation uses today's version.** Its seasonal adjustment is recalculated each year, so
+  past months shift slightly: a mild, accepted look-ahead. Potential GDP, revised by far more, is
+  read in the version published before each decision (its 2023 growth: 1.8% as published then,
+  2.6% in today's version).
 - **Some indicators need long warm-ups.** The slowest one (TRIX) is missing for about 6% of rows,
   mostly stocks that listed during the study.

@@ -75,8 +75,15 @@ and âˆ’75% within a month.
 A real S&P 500 company trades far more than $10 million of shares a day. Any series whose typical daily
 trading, over its months as a member, falls below that has its prices thrown out. Six were caught:
 **Compuware, El Paso, Genzyme, King Pharmaceuticals, Smith International and Sunoco**, and sent to
-Alpha Vantage instead. Compuware, El Paso and Genzyme were found there; King Pharmaceuticals, Smith
-International and Sunoco weren't (their tickers are reused there too).
+Alpha Vantage instead. Only Compuware's series there is its own; the others return later companies
+too.
+
+Alpha Vantage's series get the same trading check, plus one more: **a company that was taken over
+can't trade after its deal.** A series that is both too thin and still trading more than about three
+months after its company left the index belongs to someone else. Four are dropped: **El Paso**
+(closing at a few cents), **Genzyme, Millipore and LSI**, which all trade for years after their
+takeovers. That removes 87 early rows' prices. Both tests are needed: Titanium Metals trades thinly
+but is genuine, and its series ends at its deal.
 
 ### 3.5 What happened next (the targets)
 
@@ -107,7 +114,7 @@ at the end of March, the month it left. Stopping in February would turn its **âˆ
 | Month-ends | 202 (Jan 2010 â†’ Oct 2026) |
 | Distinct tickers | 819 |
 | Members per month-end | 498â€“504 |
-| Rows with a price | 95.6% |
+| Rows with a price | 95.5% |
 | Share of rows that beat SPY the next month | 49% |
 
 **Share of members with a price, by year:**
@@ -116,11 +123,11 @@ at the end of March, the month it left. Stopping in February would turn its **âˆ
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 86% | 89% | 92% | 96% | 98% | 99% | 99.6% | 100% | 100% |
 
-**Rows without a price (member-months): 4,456 (4.4%), and no free source can fill them:**
+**Rows without a price (member-months): 4,543 (4.5%), and no free source can fill them:**
 
 | Why there's no price | Member-months |
 | --- | --- |
-| Another company now uses the old ticker on Alpha Vantage | 2,397 |
+| Another company now uses the old ticker on Alpha Vantage | 2,484 |
 | Alpha Vantage has no data | 1,340 |
 | Alpha Vantage covers only part of the company's time in the index | 297 |
 | The buyer kept the target's ticker (Section 3.2) | 261 |
@@ -138,6 +145,7 @@ the early years, where survivorship bias does its work.
 | --- | --- |
 | Walk the changes backwards from today's list | Today's list is accurate. Errors can only come in from the changes, and those can be checked |
 | A $10M daily trading check | It catches wrong-company data that starts *before* the removal date, which the date check misses |
+| On Alpha Vantage, the trading check only together with trading on after a takeover | Either alone drops good data: a thin but genuine target, or a liquid series that carries on under a later company (cut at the removal month anyway) |
 | Kept-ticker cases fixed by choosing each row's price series, not by a rename | A rename would merge two members into one line. Both were members, so both lines stay; only the price series each uses changes |
 | Keep a delisted stock's prices to the end of its removal month | Removes the penny prices that follow a failure, without hiding the crash itself |
 
@@ -145,7 +153,7 @@ the early years, where survivorship bias does its work.
 
 ## 5. Caveats
 
-- **4.4% of member-months have no free price at all** (Section 3.6), mostly takeovers and companies
+- **4.5% of member-months have no free price at all** (Section 3.6), mostly takeovers and companies
   dropped for their size (by recorded reason), in the early years. Results built on the table are
   still slightly flattered by survivorship bias.
 - **Companies with only monthly prices trade at the month-end close, not the next open.** That's a

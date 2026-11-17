@@ -205,7 +205,7 @@ yield from the next day.
 | `fedfunds` | The Fed Funds rate (the previous month's average) |
 | `dgs1`, `dgs5`, `dgs10` | The 1-, 5- and 10-year Treasury yields |
 | `yield_slope_10_1` | The 10-year yield minus the 1-year: the slope of the yield curve |
-| `gdppot_yoy`, `gdppot_qoq` | Growth of potential GDP (the economy's estimated capacity) over a year and a quarter. A projection that gets revised; only the latest version exists, a mild look-ahead accepted and stated in [Chapter 4](04_features.md) |
+| `gdppot_yoy`, `gdppot_qoq` | Growth of potential GDP (the economy's estimated capacity) over a year and a quarter. A projection that gets revised, so each decision uses the version published before it ([Chapter 4](04_features.md)) |
 
 ---
 
