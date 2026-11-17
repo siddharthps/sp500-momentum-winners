@@ -232,6 +232,12 @@ def append_record(record: pd.DataFrame | None, picks: pd.DataFrame) -> pd.DataFr
     return out.reindex(columns=PICK_COLUMNS)
 
 
+def stamp_now() -> str:
+    """When the picks were made: UTC with its zone (ISO 8601), so a PC and a cloud runner write
+    the same thing (#88). `notify.tradeable` reads it against the 09:30 New York open."""
+    return pd.Timestamp.now(tz="UTC").isoformat(timespec="minutes")
+
+
 def done_months(record: pd.DataFrame | None) -> set[pd.Period]:
     """The decision months the running record already has picks for."""
     if record is None or record.empty:
@@ -334,7 +340,7 @@ def _run(download: bool, force: bool, dry_run_notify: bool, publish: bool = True
     rows, scores, pipe, trained_to = refit_and_score(feats, name, params, decision)
     joblib.dump(pipe, LIVE_MODEL)
 
-    made_at = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M")
+    made_at = stamp_now()
     picks = pd.concat(
         [
             top_picks(rows, scores, LIVE_TOP_N, "model"),
