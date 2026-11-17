@@ -1,9 +1,9 @@
 # Running the project
 
-Everything needed to reproduce the project: setup, the data pipeline step by step, the data
-snapshots, Docker, the dashboard, notifications, what to rerun after a change, the notebooks and
-the development workflow. The book's chapters explain *why* each step exists; this page says *how*
-to run it.
+Everything needed to reproduce the project: setup, every pipeline step and command, the monthly
+run in the cloud, the data snapshots, Docker, the dashboard, notifications, what to rerun after a
+change, the notebooks, development and the project's folders. The book's chapters explain *why*
+each step exists; this page says *how* to run it.
 
 **Contents:** [Setup](#setup) · [Data pipeline](#data-pipeline) ·
 [The monthly run in the cloud](#the-monthly-run-in-the-cloud) ·
@@ -20,60 +20,99 @@ Requires [uv](https://docs.astral.sh/uv/) and Python 3.12.
 uv sync
 ```
 
-Copy your Alpha Vantage and FRED keys into `.env` (git-ignored). The FRED key (request it at
-<https://fredaccount.stlouisfed.org/apikeys> after logging in) is needed for the past versions of
-potential GDP; the other FRED series use the keyless CSV endpoint.
+Settings go in `.env` (git-ignored), one `NAME=value` per line:
 
-```text
-ALPHAVANTAGE_API_KEY=your_key_here
-FRED_API_KEY=your_key_here
-```
+| Setting in `.env` | Needed for | Without it |
+| --- | --- | --- |
+| `ALPHAVANTAGE_API_KEY` | Step 4 (`av-pull`) only | Not needed with the private snapshot |
+| `FRED_API_KEY` ([request it](https://fredaccount.stlouisfed.org/apikeys) after logging in) | Step 3b: potential GDP's published versions (one API request; the other FRED series use the keyless CSV endpoint) | `dataset fred` saves the other six series, then stops with an error |
+| `HF_USER`, `HF_TOKEN` | The [data snapshots](#data-snapshots-on-hugging-face) | `hub` commands and `--from-file` stop |
+| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHANNEL_ID`, `TELEGRAM_CHAT_ID` | [Notifications](#telegram-notifications-optional) | Messages are only logged |
 
 ## Data pipeline
 
-| Step | Command | Source | Output |
+| Step | Command | Reads | Writes |
 | --- | --- | --- | --- |
 | 1. Membership | `uv run python -m sp500_momentum.dataset membership` | Wikipedia: current list + "Historical components of the S&P 500" | `data/raw/wikipedia/` |
 | 2. Coverage | `uv run python -m sp500_momentum.dataset coverage` | yfinance | `data/interim/removed_coverage.csv` |
 | 3. Daily prices | `uv run python -m sp500_momentum.dataset yahoo-daily` | yfinance: current members, removed members it covers, SPY, sector ETFs, VIX, Dow, gold, WTI (from 2000) | `data/raw/yahoo/` |
 | 3b. Macro | `uv run python -m sp500_momentum.dataset fred` | FRED: core CPI, Fed Funds, 1/5/10-year yields, potential GDP (from 2005), plus every published version of potential GDP (one API request, `FRED_API_KEY`) | `data/raw/fred/` (`GDPPOT_vintages.csv` for the versions) |
 | 4. Delisted prices | `uv run python -m sp500_momentum.dataset av-pull` | Alpha Vantage (free tier, ~23 tickers/day, resumable) | `data/raw/alphavantage/` |
-| 5. Monthly table | `uv run python -m sp500_momentum.monthly build` | Steps 1–4 | `data/processed/monthly_panel.parquet`, plus every price series in `data/interim/monthly_prices.parquet` (for backtests) |
+| 5. Monthly table | `uv run python -m sp500_momentum.monthly build` | Steps 1–4 | `data/processed/monthly_panel.parquet`; every price series in `data/interim/monthly_prices.parquet` (for backtests); the wrong-security lists `data/interim/yahoo_suspect.csv` and `av_suspect.csv` |
 | 6. Features | `uv run python -m sp500_momentum.features build` | Step 5 + monthly bars, FRED, `references/removed_sectors.csv` | `data/processed/features.parquet` (147 features in named sets) |
-| 7. Models | `uv run python -m sp500_momentum.modeling.train run` | Step 6 | `reports/model_cv_results.csv`, `reports/model_comparison.csv`, `data/processed/model_scores.parquet`, `models/` (~1¾ h; `--n-iter 1` for a quick smoke run) |
-| 8. Monthly run | `uv run python -m sp500_momentum.modeling.predict run` | Steps 1–3 (current members only), 5–6, the step 7 settings | `reports/picks/picks_<YYYY-MM>.csv` (the headline model's and the 6-month rule's top 10), `data/processed/live_picks.csv` (every pick so far), `models/live_headline.joblib` (~2 min; `--no-download` rebuilds from the files on disk; `--force` redoes a month) |
-| Everything (5–7, notebooks, snapshots) | `uv run python -m sp500_momentum.pipeline rebuild-all --tag <name>` | The data on disk | The final rebuild, timed and stopping at the first failure; `--dry-run` lists the steps and the checks to do by hand before and after (~2 h with retraining; `--no-retrain`, `--no-notebooks`, `--no-publish`) |
-| Progress | `uv run python -m sp500_momentum.dataset av-status` | | |
+| 7. Models | `uv run python -m sp500_momentum.modeling.train run` | Step 6 | `reports/model_cv_results.csv`, `reports/model_comparison.csv`, `data/processed/model_scores.parquet`, `models/` (~1¾ h) |
+| 8. Monthly run | `uv run python -m sp500_momentum.modeling.predict run` | Steps 1, 2, 3 (today's members and benchmarks only: `--active-only`), 3b, 5–6, the step 7 settings | `reports/picks/picks_<YYYY-MM>.csv` (the headline model's and the 6-month rule's top 10), `data/processed/live_picks.csv` (every pick so far), `models/live_headline.joblib` (~2 min) |
+| Is the monthly run due? | `uv run python -m sp500_momentum.modeling.predict due` | The running record (from the private snapshot) | Prints `due=true` or `due=false` |
+| Everything (5–7, notebooks, snapshots) | `uv run python -m sp500_momentum.pipeline rebuild-all [--tag <name>]` | The data on disk | The final rebuild, timed and stopping at the first failure (~2 h with retraining) |
+| Alpha Vantage progress | `uv run python -m sp500_momentum.dataset av-status` | The queue and the manifest | Tried, left, days to go |
 
-**Step 3** takes about a minute. It saves one parquet file per ticker (unadjusted OHLC, adjusted
-close, volume, dividends, splits), ending at the previous close. Reruns skip tickers already saved,
-and `--refresh` downloads everything again.
+Their options:
 
-**Step 4** was run once a day (and step 5 after it) until the queue was empty (2–13 Nov 2026;
-216 tickers). The task was then retired; if a ticker ever joins the queue, run `av-pull` by hand. It skips tickers already pulled and stops cleanly when the daily quota
-runs out. Removed members whose yfinance data fails step 5's volume check (another security reused
-the ticker) are added to its queue automatically. On Windows, `scripts/register_av_task.ps1`
-schedules it daily at 21:00 (PC local time) with Task Scheduler, and each run appends to
-`logs/av_pull.log`. To test the setup without using API calls, run
-`scripts/av_pull_daily.ps1 -MaxCalls 0`. That also records any downloaded file the manifest is
-missing, for example after a run was killed (each ticker is recorded as soon as it's fetched).
+| Command | Option | What it does |
+| --- | --- | --- |
+| `dataset yahoo-daily` | `--refresh` | Downloads every ticker again (by default, tickers already saved are skipped) |
+| | `--active-only` | Downloads today's members and the benchmarks again, in full; removed members' files stay (the monthly run uses it) |
+| `dataset av-pull` | `--max-calls N` | At most N calls (default 23); `0` makes no calls |
+| `modeling.train run` | `--n-iter 1` | One try per model: a quick smoke run |
+| | `--models tree,logreg` | Only these models |
+| `modeling.predict run` | `--no-download` | Rebuilds from the files on disk |
+| | `--force` | Redoes a month already done |
+| | `--from-file` | Starts from the private snapshot (with `--no-download`: no sources at all) |
+| | `--dry-run-notify` | Prints the Telegram messages instead of sending them |
+| | `--no-publish` | Skips the upload to both Hugging Face datasets |
+| `modeling.predict due` | `--no-from-hub` | Reads the local running record instead |
+| `pipeline rebuild-all` | `--tag X` | Tags the published snapshots (optional) |
+| | `--no-retrain`, `--no-notebooks`, `--no-publish` | Skips the model search, the notebooks or the upload |
+| | `--dry-run` | Lists the steps and the checks to do by hand |
+| `hub push` | `--target` (`private`, `public` or `both`), `--tag X`, `--status` | Which dataset, a tag, the status shown on the card |
+| `hub pull` | `--revision X` | A tag or commit (default: the latest) |
+| `notify test` | `--dry-run` | Prints instead of sending |
+| `run_notebooks run` | `[prefix]` | Only the notebooks whose name starts with it |
 
-**Step 8, the monthly run,** runs in the cloud: the GitHub Actions workflow
-[`monthly.yml`](../.github/workflows/monthly.yml) starts at 12:00 UTC every weekday, asks
-`predict due` whether last month's picks are in the running record, and only then runs
-`predict run --from-file` (see [The monthly run in the cloud](#the-monthly-run-in-the-cloud)).
-On a PC instead, `scripts/register_monthly_task.ps1` schedules the same run with Task Scheduler
-(task `sp500-momentum-monthly-run`, 07:00 daily, logging to `logs/monthly_run.log`;
-`scripts/monthly_run.ps1 -Force` runs it by hand). **Use one or the other, never both:** each would
-post the picks. It re-downloads the full history of today's members and the benchmarks (the
-adjusted close is recomputed after every dividend, so appending new days would mix two adjustments).
-It refits the headline model with its tuned settings (never re-tuned), and **stops without writing
-anything** when:
+**Step 3** takes about a minute and saves one parquet file per ticker (unadjusted OHLC, adjusted
+close, volume, dividends, splits), ending at the previous close.
 
-- the latest month-end isn't the month's last trading day;
-- SPY or more than 5% of members lack a price;
+**Step 4** ran once a day until the queue was empty (2–13 Nov 2026; 216 tickers); the daily task
+was unregistered on 16 Nov. If a ticker ever joins the queue, run `av-pull` by hand: it skips
+tickers already pulled, stops cleanly when the daily quota runs out, and records each ticker as
+soon as it's fetched. `av-pull --max-calls 0` makes no calls: it shows the progress and records any
+downloaded file the manifest is missing (for example after a run was killed). After new files
+arrive, rerun step 5.
+
+Step 5 checks each series' trading volume:
+
+- a removed member whose Yahoo series fails (another security reused the ticker) joins the Alpha
+    Vantage queue automatically (`data/interim/yahoo_suspect.csv`);
+- an Alpha Vantage series that fails and still trades more than 95 days after a takeover is
+    dropped as another security (`data/interim/av_suspect.csv`), and isn't queued again.
+
+The retired scheduler, for reference: `scripts/register_av_task.ps1` registered the task
+`sp500-momentum-av-pull` (21:00 PC time daily, appending to `logs/av_pull.log`).
+
+**Step 8, the monthly run,** runs in the cloud (see
+[The monthly run in the cloud](#the-monthly-run-in-the-cloud)): a Cloudflare Worker starts
+[`monthly.yml`](../.github/workflows/monthly.yml) at 03:17 UTC every day, with GitHub's own schedule
+at 04:17 UTC on weekdays as a backup. Each run asks `predict due` whether last month's picks are in
+the running record, and runs `predict run --from-file` only if they aren't.
+
+It downloads the full history of today's members and the benchmarks again (the adjusted close is
+recomputed after every dividend, so appending new days would mix two adjustments), then refits the
+headline model with its tuned settings (never re-tuned). It **makes no picks, publishes nothing and
+alerts the private chat** when:
+
+- the latest month-end is in a month that isn't over, or isn't the month's last trading day;
+- SPY, or more than 5% of members, lack a month-end price;
 - a member has no sector (add it to `references/removed_sectors.csv`);
 - the feature columns differ from the tuned model's.
+
+What it downloaded and rebuilt stays on disk. A month already in the record is skipped unless
+`--force`.
+
+**On a PC instead** (retired on 11 Nov 2026): `scripts/register_monthly_task.ps1` registers the
+Task Scheduler task `sp500-momentum-monthly-run` (07:00 PC time daily, logging to
+`logs/monthly_run.log`), and `scripts/monthly_run.ps1 -Force` runs it by hand. **Never run both:**
+the PC script decides "done" from its own picks file, so it can't see a cloud run, and both would
+post the picks.
 
 The picks are a research output, not advice.
 
@@ -84,27 +123,30 @@ doesn't depend on a PC being on. Two triggers start it, because GitHub's own sch
 hours late or be dropped under load (its docs; ~7 h late on 12–13 Nov 2026):
 
 - **A Cloudflare Worker** ([`cloudflare/`](../cloudflare/wrangler.toml)) at 03:17 UTC every day:
-  it re-enables the workflow (GitHub disables workflows in quiet public repositories after 60 days)
-  and dispatches it with `dry_run=false` and `respect_due=true`.
-- **GitHub's schedule** at 04:17 UTC on weekdays, as a backup. Whichever runs second finds the
-  month done.
+  it re-enables the workflow (GitHub disables scheduled workflows in a public repository after 60
+  days without repository activity) and dispatches it with `dry_run=false` and `respect_due=true`.
+- **GitHub's schedule** at 04:17 UTC on weekdays, as a backup. Runs go one at a time, so whichever
+  runs second finds the month done, or tries again if the first failed.
 
 Each run:
 
 1. `predict due` downloads only the running record (`data/processed/live_picks.csv`) from the
-   private snapshot and prints `due=true` if last month's picks aren't in it (weekdays only).
+   private snapshot and prints `due=true` if last month's picks aren't in it (weekdays, by the
+   runner's UTC clock).
 2. If due: `predict run --from-file` pulls the private snapshot, downloads fresh data (Wikipedia,
    Yahoo with paced retries, FRED with retries), rebuilds, checks, makes the picks, posts them to
    Telegram and pushes both Hugging Face datasets. Nothing is committed to the repository.
 3. The month's picks are kept as a run artifact for 90 days; a failed scheduled or
-   Worker-triggered run alerts the private Telegram chat.
+   Worker-triggered run alerts the private Telegram chat. A failure of the Worker itself (an
+   expired token) shows only in its Cloudflare logs; GitHub's backup still runs.
+4. A run after the next open (a missed night caught up later) still records its picks, but they're
+   left out of the live result.
 
 **Secrets.** GitHub (repository → Settings → Secrets and variables → Actions): `HF_USER`,
-`HF_TOKEN` (write), `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHANNEL_ID`, `TELEGRAM_CHAT_ID`, `FRED_API_KEY`
-(without it the download step fails, so no picks are posted; the failure alert still goes out).
-Cloudflare
-(the Worker): `GITHUB_TOKEN`, a fine-grained token for this repository only with Actions read and
-write; it expires within a year, so renew it before then. No Alpha Vantage key is needed: the
+`HF_TOKEN` (write), `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHANNEL_ID`, `TELEGRAM_CHAT_ID` and
+`FRED_API_KEY` (without it the download step fails: no picks are posted, and the failure alert
+still goes out). Cloudflare (the Worker): `GITHUB_TOKEN`, a fine-grained token for this repository
+only, with Actions read and write, expiring 16 Nov 2027. No Alpha Vantage key is needed: the
 delisted companies' prices come with the snapshot.
 
 **The Worker** (Node, with wrangler pinned in `cloudflare/package.json`):
@@ -120,9 +162,9 @@ npx wrangler secret put GITHUB_TOKEN     # then the token (the Worker must exist
 
 On a new Cloudflare account, the first deploy can't attach the daily trigger ("You need a
 workers.dev subdomain"): open **Workers & Pages** in the Cloudflare dashboard once, then deploy
-again. The Worker itself stays private (`workers_dev = false`). The current token expires on
-16 Nov 2027; GitHub e-mails a reminder before then. If it lapses, GitHub's backup schedule still
-starts the run, only less reliably on time.
+again. The Worker itself stays private (`workers_dev = false`). If its token lapses, GitHub's backup
+schedule still starts the run, but less reliably on time, and only until GitHub switches scheduled
+workflows off after 60 days without repository activity.
 
 **By hand** (Actions tab → Monthly run → Run workflow, or the command line). A manual run is a dry
 run by default (messages printed, nothing published); `force` redoes last month's picks:
@@ -143,35 +185,53 @@ redistribution:
 | [`sp500-momentum-winners`](https://huggingface.co/datasets/siddharthps/sp500-momentum-winners) | **public** | What this project computed: features and the member table **without raw price columns**, model scores, the live picks, result tables, with a card naming every source. The dashboard reads this one |
 
 ```bash
-uv run python -m sp500_momentum.hub push --target both           # upload (refuses if a secret from .env is in any file)
-uv run python -m sp500_momentum.hub pull                         # the private snapshot -> data/, models/
-uv run python -m sp500_momentum.modeling.predict run --from-file --no-download   # monthly run, no sources at all
+# upload (refuses if a secret from .env is in any file)
+uv run python -m sp500_momentum.hub push --target both
+# the private snapshot -> data/, models/ (the latest version)
+uv run python -m sp500_momentum.hub pull
+# the data this book reports
+uv run python -m sp500_momentum.hub pull --revision final-2026-11b
+# a full try from the snapshot: no sources, nothing sent or published
+uv run python -m sp500_momentum.modeling.predict run --from-file --no-download \
+    --dry-run-notify --no-publish
 ```
 
-Settings in `.env`: `HF_USER` (the account) and `HF_TOKEN` (a write token). With access to the
-private snapshot, `hub pull` replaces steps 1–4, so `monthly build` onwards runs without any
-download or API key. Without it, the public tables are enough to follow the analysis. Prices can be
-rebuilt with your own access through steps 1–4.
+Settings in `.env`: `HF_USER` (the account) and `HF_TOKEN` (a write token). Without
+`--dry-run-notify` and `--no-publish`, `predict run` is a real monthly run: it posts the picks and
+uploads both datasets, so never run it alongside the cloud one.
+
+The data this book reports is tagged `final-2026-11b` (`final-2026-11` is the earlier rebuild,
+before two data fixes); the latest version moves with each monthly upload. With access to the
+private snapshot, `hub pull` replaces steps 1–4 (with 3b) and 7, so `monthly build` onwards runs
+without any download or API key (the tuned settings in `reports/` are in the repository). Without
+it, the public tables are enough to follow the analysis. Prices can be rebuilt with your own access
+through steps 1–4.
 
 ## Docker
 
 The [`Dockerfile`](../Dockerfile) builds the pipeline from uv's lock file (Python 3.12, TA-Lib from
 its prebuilt wheel). It holds no data, models or secrets: mount them, or pull the private snapshot
-with a token at run time. CI builds it and runs the tests inside it on every pull request that can
-change it (the build, the dependencies, the code, tests, notebooks, or the files the pipeline reads;
-docs-only changes skip it). Each such merge to `main` publishes it to GitHub Container Registry.
+with a token at run time. The Docker workflow (not a required check) builds it and runs the tests
+inside it on every pull request that can change it (the build, the dependencies, the code, tests,
+notebooks, or the files the pipeline reads; docs-only changes skip it). Each such merge to `main`
+publishes it to GitHub Container Registry.
 
 ```bash
-docker pull ghcr.io/siddharthps/sp500-momentum-winners:latest      # or: docker build -t sp500-momentum .
-docker run --rm ghcr.io/siddharthps/sp500-momentum-winners           # the final rebuild's steps (dry run)
-docker run --rm --env-file .env -v "$PWD/data:/app/data" -v "$PWD/models:/app/models" -v "$PWD/reports:/app/reports" \
-  ghcr.io/siddharthps/sp500-momentum-winners sp500_momentum.modeling.predict run --no-publish
+# the image (or build it: docker build -t sp500-momentum .)
+docker pull ghcr.io/siddharthps/sp500-momentum-winners:latest
+# the final rebuild's steps (dry run)
+docker run --rm ghcr.io/siddharthps/sp500-momentum-winners
+# the monthly run on your mounted data, sending and publishing nothing
+docker run --rm --env-file .env -v "$PWD/data:/app/data" -v "$PWD/models:/app/models" \
+    -v "$PWD/reports:/app/reports" ghcr.io/siddharthps/sp500-momentum-winners \
+    sp500_momentum.modeling.predict run --dry-run-notify --no-publish
 ```
 
-Any project module runs as `docker run <image> <module> [args]`. The image is about 2.9 GB, mostly
-the scientific stack. A vulnerability scan (Trivy) reports high and critical findings in the build
-log. The base image's Debian packages are updated at build time, so what remains has no fix
-published yet.
+Any project module runs as `docker run <image> <module> [args]`. Without `--dry-run-notify` and
+`--no-publish`, the monthly run above would be a real one (never alongside the cloud one). The image
+is about 2.9 GB, mostly the scientific stack. A vulnerability scan (Trivy) reports high and
+critical findings in the build log. The base image's Debian packages are updated at build time, so
+most of what remains has no fix published yet.
 
 ## Live dashboard
 
@@ -179,16 +239,17 @@ published yet.
 Streamlit app ([`dashboard/`](../dashboard/README.md)), hosted free on Streamlit Community Cloud
 from this repository's `main` branch. It may take ~30 s to wake if nobody has visited for a while.
 It has five tabs: the overview, this month's picks, the live record, the backtest, and model
-monitoring (input drift). It reads only the public dataset, so it holds no token.
+monitoring (input drift). It reads only the public dataset, so it holds no token. It rereads the
+public dataset every six hours, so a new month shows within six hours.
 `uv run streamlit run dashboard/app.py` runs it locally.
 
 ## Telegram notifications (optional)
 
 The monthly picks go to a public channel,
 [t.me/s/sp500_momentum_picks](https://t.me/s/sp500_momentum_picks) (readable in a browser, no
-account needed; the first real post is on 1 Dec 2026). Failure alerts and the nightly Alpha Vantage
-summary go to a private chat. Without these settings, every message is only logged, and nothing
-fails.
+account needed; the first real post is on 1 Dec 2026). Failure alerts and the Alpha Vantage summary
+after each `av-pull` go to a private chat. Without these settings, every message is only logged,
+and nothing fails.
 
 1. In Telegram, message **@BotFather**, send `/newbot`, and copy the **token** it gives you.
 2. Send your new bot any message (this opens your private chat with it).
@@ -214,61 +275,69 @@ Each step reads only the outputs of the steps before it:
 
 ```text
 membership ─► coverage ─► yahoo-daily ─┐
-                  │                    ├─► monthly build ─► features build ─► models ─► simulation
-                  └─► av-pull (daily) ─┘        │
-fred ──────────────────────────────────────────┼──────────────► (features build)
-                                                └─► yahoo_suspect.csv ─► av-pull queue
+                  │                    ├─► monthly build ─► features build ─► models ─► notebooks
+                  └─► av-pull (by hand)┘        │                                           │
+fred ──────────────────────────────────────────┼──────────────► (features build)        hub push
+                                                ├─► yahoo_suspect.csv ─► av-pull queue
+                                                └─► av_suspect.csv (Alpha Vantage series dropped)
 ```
 
 If something earlier changes, rerun from the first affected step, then everything after it:
 
 | What changed | Rerun from |
 | --- | --- |
-| Wikipedia refreshed, or a membership repair in `config.py` (`RENAMES`, `MISSING_ADDS`, `REASON_OVERRIDES`) | `coverage` → `yahoo-daily` → `monthly build` → `features build` → models |
+| Wikipedia refreshed (`membership`) | `coverage` → `yahoo-daily` → `av-pull` (if the queue grew) → `monthly build` → … |
+| A removal reason (`REASON_OVERRIDES`) | `coverage` → `av-pull` (if the queue grew) → `monthly build` → … |
+| A rename or missing addition (`RENAMES`, `MISSING_ADDS`) | `monthly build` → … |
 | A price override for a takeover where the buyer kept the ticker (`PRICE_OVERRIDES`) | `monthly build` → … |
 | `PRICE_START`, or price data re-downloaded | `yahoo-daily --refresh` → `monthly build` → … |
 | New Alpha Vantage data (`av-pull`) | `monthly build` → `features build` → … |
 | Volume threshold (`MIN_MEMBER_DOLLAR_VOLUME`) | `monthly build` (rewrites the suspect list, which changes the AV queue) → … |
+| The wrong-security test for Alpha Vantage (`AV_MAX_DAYS_AFTER_TAKEOVER`, `TRADING_DAYS_PER_MONTH`) | `monthly build` → … |
 | Hold periods, the delisting cutoff or the targets (`monthly.py`) | `monthly build` → … |
 | A FRED series or its publication lag (`FRED_SERIES`) | `fred` → `features build` → … |
+| A revised series read point-in-time (`FRED_VINTAGES`) | `fred` → `features build` → … |
 | Sectors (`references/removed_sectors.csv`, `SECTOR_ETF`) or any feature (`features.py`) | `features build` → … |
-| The rule grid, the strategy versions or their costs (`RULE_LOOKBACKS`, `RULE_TOP_NS`, `COST_PER_SIDE`, `RULE_CHECK_FROM`, `START_DOLLARS`, `BUFFER_MULTIPLE`, `INVERSE_VOL_FEATURE`, `TREND_MONTHS`, `backtest.py`, `diagnostics.py`) | `run_notebooks run 04`, `run 05` and `run 06` |
+| The rule grid, the strategy versions or their costs (`RULE_LOOKBACKS`, `RULE_TOP_NS`, `COST_PER_SIDE`, `RULE_CHECK_FROM`, `START_DOLLARS`, `BUFFER_MULTIPLE`, `INVERSE_VOL_FEATURE`, `TREND_MONTHS`, `backtest.py`, `diagnostics.py`) | `run_notebooks run` (00 and 03–06 all use the simulation code), then `hub push --target public` (the dashboard's tables) |
 | The model setup or the models (`modeling/prep.py`, `models.py`, `evaluate.py`, `train.py`), or anything that changes the features | `modeling.train run` → `run_notebooks run` |
 | Anything above, or the analysis or charts (`eda.py`, `plots.py`) | … → `run_notebooks run` (refreshes the notebooks and `reports/figures/`) |
+
+Then `hub push --target both`, so the snapshots and the dashboard match.
 
 Raw files are never edited by hand, so every output can be rebuilt from the downloads.
 
 ## Notebooks
 
-The notebooks show each step's results. They call the package's functions and hold no logic of their
-own. They're committed **with their outputs**, so the tables and charts can be read on GitHub without
-the data:
+The notebooks show each step's results. They call the package's functions and hold no logic of
+their own. They're committed **with their outputs**, so the tables and charts can be read on GitHub
+without the data:
 
 | Notebook | What it shows |
 | --- | --- |
-| [`00_run_all`](../notebooks/00_run_all.ipynb) | **The whole workflow end to end**, one call per step: data (regime `local`, `hub` or `download`), transform, predict (refit with the tuned settings and the monthly run's checks), simulate (both strategies, the chosen rule and SPY on 2020–2022 and the test years), the latest trades. The same functions as the monthly run, with no side effects (no message, no publishing, no live record). About two minutes |
-| [`01_data`](../notebooks/01_data.ipynb) | Membership, the survivorship gap, the Alpha Vantage progress, prices, FRED, the monthly table and the feature sets |
-| [`02_features_eda`](../notebooks/02_features_eda.ipynb) | The target, each feature's signal (2010–2022 only), its stability, duplicates, market regimes, and a preview of the plain rule |
+| [`00_run_all`](../notebooks/00_run_all.ipynb) | **The whole workflow end to end**, one call per step: data (regime `local`, `hub` or `download`), transform, predict (refit with the tuned settings and the monthly run's checks), simulate (both strategies, the chosen rule and SPY on 2020–2022 and the test years), the latest trades, and how it runs unattended. The same functions as the monthly run, with no side effects (no message, no publishing, no live record). About two minutes |
+| [`01_data`](../notebooks/01_data.ipynb) | Membership, the survivorship gap, what the Alpha Vantage pull found, prices, FRED, the monthly table and the feature sets |
+| [`02_features_eda`](../notebooks/02_features_eda.ipynb) | The target, the signal of the 87 features that vary between stocks (2010–2022 only), its stability, exact duplicates, when last month's winners do well (market regimes), and a first look at the plain rule |
 | [`03_models`](../notebooks/03_models.ipynb) | The folds, each model's tuned setting (2014–19), the comparison on 2020–22 where the headline is chosen, the single test (2023 on), the model rule columns and what the headline looks at. Reads the training step's outputs |
-| [`04_simulation`](../notebooks/04_simulation.ipynb) | Backtests. Part 1: the baseline grid (60 rules: look-back × top N × hold, staggered, 10 bps a side) vs SPY and equal weight, and the best rule chosen on decisions 2010–2022 and followed through the test years. Part 2: the models traded (1-month hold; equal or inverse-vol weights, with or without a 2N hold buffer) vs SPY and the rules, in dollars from $10,000, for 2020–2022 and the test years. About two minutes |
+| [`04_simulation`](../notebooks/04_simulation.ipynb) | Backtests. Part 1: the baseline grid (60 rules: look-back × top N × hold, staggered, 10 bps a side) vs SPY and equal weight, and the best rule chosen on decisions 2010–2022 and followed through the test years. Part 2: the models traded (1-month hold; equal or inverse-vol weights, with or without a 2N hold buffer) vs SPY and the rules, in dollars from $10,000, for 2020–2022 and the test years, every model for reference, and a simpler $100-per-pick cross-check. About two minutes |
 | [`05_risk`](../notebooks/05_risk.ipynb) | The paths: $10,000 month by month, falls from the peak, and rolling 12-month returns minus SPY's, for 2020–2022 and the test years, plus the rules from 2010. The SPY trend filter applied to every strategy, with its average effect. About two minutes |
 | [`06_diagnostics`](../notebooks/06_diagnostics.ipynb) | Why the headline model loses: what each strategy buys, hit rates by market regime, sector and year with month-level margins of error, the worst picks, and hypotheses for future work. Descriptive only |
 
-They're only ever run by this command, top to bottom in a fresh kernel, so the stored outputs always
-match the code. They show summaries, never raw tables (full results are saved under `reports/`).
-After running, the command checks every output and **fails** if:
-
-- a cell prints more than 50 lines;
-- anything was written to stderr (logs, progress bars, warnings);
-- an output contains a local path, an e-mail address or the API key;
-- a notebook is over 300 KB.
-
-Charts are written to `reports/figures/`:
+Run them only with:
 
 ```bash
 uv run python -m sp500_momentum.run_notebooks run        # all notebooks (after features build)
 uv run python -m sp500_momentum.run_notebooks run 02     # just 02_features_eda
 ```
+
+This runs them top to bottom in a fresh kernel, so the stored outputs always match the code, and
+writes the charts to `reports/figures/`. The notebooks show summaries, never raw tables (full
+results are saved under `reports/`). After running, the command checks every output and **fails**
+if:
+
+- a cell prints more than 50 lines;
+- anything was written to stderr (logs, progress bars, warnings);
+- an output contains a local path, an e-mail address or any key or token from `.env`;
+- a notebook is over 300 KB.
 
 ## Development
 
@@ -279,15 +348,17 @@ uv run pytest                  # tests (offline)
 uv run ruff check              # lint
 uv run ruff format             # format
 uv run mkdocs serve            # preview the book at http://127.0.0.1:8000
-uv run mkdocs build --strict   # the book build CI runs (fails on any broken chart or link)
+uv run mkdocs build --strict   # the book build CI runs (fails on a broken chart or link, or a
+                               # link to a missing section)
 ```
 
 **Workflow.** Work is tracked as GitHub issues, grouped into milestones (one per phase) and shown on
 the project board. Each issue gets its own branch (`<issue>-<short-name>`, e.g. `10-eda`) and is
 merged into `main` through a pull request whose description says `Closes #<issue>`. CI (GitHub
-Actions: ruff check, ruff format --check, pytest, the book build) runs on every push and pull
-request. `main` is protected: changes arrive only through pull requests, CI must pass, merges are
-squashed, and force-pushes or deleting `main` are blocked.
+Actions: ruff check, ruff format --check, pytest, the book build) runs on every pull request and
+every push to `main`. `main` is protected: changes arrive only through pull requests, CI must pass
+on an up-to-date branch, and force-pushes or deleting `main` are blocked. Pull requests are
+squash-merged.
 
 **The docs agent.** A Claude Code subagent, `docs-editor` (`.claude/agents/docs-editor.md`),
 maintains this book and the README, one page per run: in *edit mode* it makes a given change, and
@@ -303,20 +374,27 @@ root, a git-ignored local file, to become issues. It leaves its changes uncommit
 ├── docs               <- The project book (one chapter per step) and this guide (MkDocs)
 ├── data
 │   ├── external       <- Data from third-party sources
-│   ├── interim        <- Intermediate data (e.g. yfinance coverage of removed members)
+│   ├── interim        <- Intermediate data (e.g. yfinance coverage of removed members, the
+│   │                     wrong-security lists)
 │   ├── processed      <- Final modelling tables
 │   └── raw            <- Downloads, one folder per source (never edited by hand)
-├── models             <- Trained models and predictions
-├── notebooks          <- 00_run_all (the whole workflow), 01_data … 06_diagnostics (executed, with outputs)
-├── references         <- Decision log, brainstorm and dated working journal
-├── reports/figures    <- Generated charts (reports/picks: the monthly picks)
-├── scripts            <- Task Scheduler setup: the daily Alpha Vantage run and the monthly run
+├── models             <- Trained models (each tuned model and the live refit)
+├── notebooks          <- 00_run_all (the whole workflow), 01_data … 06_diagnostics (executed,
+│                         with outputs)
+├── references         <- Decision log, brainstorm and dated working journal, and the removed
+│                         members' sectors (removed_sectors.csv)
+├── reports            <- Result tables (*.csv), charts (figures/), the monthly picks (picks/)
+├── scripts            <- Task Scheduler setup (retired: the Alpha Vantage pull and the PC monthly
+│                         run) and the book's build hook (mkdocs_hooks.py)
+├── cloudflare         <- The Worker that starts the monthly run (wrangler, offline tests)
+├── .claude            <- The docs agent and its guard hook
 ├── logs               <- Run logs (git-ignored)
 ├── tests              <- pytest tests (offline, no network)
 ├── dashboard          <- The Streamlit dashboard (reads only the public dataset)
 ├── mkdocs.yml         <- The book website's build
 ├── Dockerfile         <- The pipeline image (built from the lock file; no data or secrets)
-├── .github/workflows  <- CI (lint, format, tests, book), Docker build and publish, the book site
+├── .github/workflows  <- CI (lint, format, tests, book), Docker build and publish, the book site,
+│                         the monthly run
 ├── .pre-commit-config.yaml <- Checks run on every commit (ruff, large files, private keys)
 └── sp500_momentum     <- Source code
     ├── config.py      <- Paths, study settings, membership repairs, price overrides, FRED lags
@@ -324,13 +402,15 @@ root, a git-ignored local file, to become issues. It leaves its changes uncommit
     ├── sources/       <- One module per data source: wikipedia, yahoo, alphavantage, fred
     ├── membership.py  <- Point-in-time membership and repairs to Wikipedia's changes
     ├── monthly.py     <- The monthly member table: prices, past and forward returns
-    ├── features.py    <- Features from monthly bars (TA-Lib, risk, ranks, market, macro) and feature sets
+    ├── features.py    <- Features from monthly bars (TA-Lib, risk, ranks, market, macro) and
+    │                     feature sets
     ├── eda.py         <- Exploratory analysis: summary tables, IC, stability, plain-rule preview
-    ├── backtest.py    <- `pred*` rule columns, staggered-portfolio simulation with costs, the rule grid,
-    │                     strategy versions (weighting, buffer, trend filter), dollar paths
+    ├── backtest.py    <- `pred*` rule columns, staggered-portfolio simulation with costs, the rule
+    │                     grid, strategy versions (weighting, buffer, trend filter), dollar paths
     ├── diagnostics.py <- What the picks look like and where they win or lose (month-level margins)
     ├── monitoring.py  <- Input drift (PSI), the live record, strategy returns for the dashboard
-    ├── pipeline.py    <- The whole workflow as five calls (the run-all notebook)
+    ├── pipeline.py    <- The whole workflow as five calls (the run-all notebook), and rebuild-all
+    ├── retries.py     <- Retries with longer waits (Wikipedia, FRED)
     ├── notify.py      <- Telegram: picks to the public channel, alerts to a private chat
     ├── hub.py         <- Hugging Face: the private snapshot, the public derived dataset
     ├── plots.py       <- Chart style (validated palette) and the charts

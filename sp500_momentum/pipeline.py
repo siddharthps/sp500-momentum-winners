@@ -106,7 +106,8 @@ def rebuild_steps(
     tag: str = "", retrain_models: bool = True, notebooks: bool = True, publish: bool = True
 ) -> list[tuple[str, object]]:
     """The final rebuild, in order: (name, function) pairs. Each step reads only what the steps
-    before it wrote, so the order is the README's "Rerunning after a change" chain."""
+    before it wrote, so the order is the running guide's "Rerunning after a change" chain
+    (docs/running.md)."""
     from sp500_momentum import features, hub, monthly, run_notebooks
     from sp500_momentum.config import DATA_STATUS, START_DATE
 
