@@ -1708,6 +1708,33 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - **Headline, chosen on 2020–22: `xgb_reg` again** (selection score 0.501; was 0.523). So the side run's flip to `xgb` came from the Alpha Vantage fix alone, and adding point-in-time GDP flipped it back: another sign of how close the candidates are.
   - **The test (read once, notebook 03):** the conclusion stands. The 6-month rule is unchanged and still best (precision 52.9% vs a 45.1% base rate). The headline still doesn't beat the base rate (43.6% vs 45.1%; was 45.1%). Every model is still below the 6-month rule.
 
+### Session 40 — Monday–Tuesday, 16–17 Nov 2026 (#87: the book review pass, the refresh to `final-2026-11b`, the README)
+
+- **#85 shipped:** PR #86 merged (closing #84). Both Hugging Face datasets were pushed as `final-2026-11b`. A manual dry run of the monthly workflow (17 Nov, 02:01 UTC) confirmed the `FRED_API_KEY` secret: it fetched all 51 published versions of potential GDP.
+- **Every page reviewed with the docs agent** (review → my check against the files → your choice → edit), refreshed to `final-2026-11b`, one local commit each. The corrections that changed what the book says:
+  - Chapter 6: on 2020–22 **two** models beat a random pick, not four; on the test the headline did *worse* than random (43.6% vs 45.1%). The tuning table's "median" was a selection score compared with a raw rate.
+  - Chapter 7: the best model on the test is the neural network (Sharpe 0.97), not the random forest (now last). The bottom line became "**the model chosen in advance** adds nothing…", because two unchosen models beat the 6-month rule per unit of risk (0.97, 0.92 vs 0.84).
+  - Chapter 9: "tied SPY on risk" → "the same Sharpe ratio" (volatility 43% vs 12%). The $59.4 chart and the $59,209 table told apart.
+  - Chapter 10: the five momentum papers looked up on Crossref and cited; #85 stated in the data limits.
+  - Appendix A: definitions rewritten from the code that builds each column (e.g. `downside_vol_12m` is the spread with gains as zero, not of the losing months). Index: "every delisted company's prices collected" was false (80 of 216 have none).
+  - Running guide: every command checked against the typer code; two example commands would have published and posted.
+- **Rechecked, not assumed:** the live refit as of January 2023 reproduces the backtest's scores for all 501 members exactly on the final data.
+- **Wording pass (your request):** Chapter 8 §3 rewritten (1,877 → 1,153 words); Chapters 1–7 restructured. Every number compared mechanically before and after; each difference explained.
+- **README redesigned to your structure:** the question as a subtitle, badges, a hero chart (drawn by notebook 05, so rebuilds refresh it), "The project" with a Mermaid diagram, the findings, Explore, Run it yourself, Acknowledgements (Ivan Brigida, Alexey Grigorev). "ML", not "AI": the model is gradient boosting.
+- **`DATA_STATUS` fixed and pushed** to the public dataset, so the live dashboard no longer overstates the data.
+- **Chapter 7's cross-check, moved here from the chapter** (simple $100-per-pick vs the full simulation, test years, yearly return): the headline 5.9% vs 5.2%, the 6-month rule 24.5% vs 33.0%, the chosen rule 42.1% vs 60.7%. Same ranking; only compounding differs.
+- **New issues:** #88 (live record: UTC vs Central), #90 (a failed upload makes later runs post the same picks again), both before 1 Dec; #89 (uncited research claims) and #91 (stale dry-run checklist), before 20 Nov.
+- **Traps:**
+  - `mkdocs build --strict` let broken section links through (missing anchors are INFO). Fixed with `validation: anchors: warn`, tested with a broken link.
+  - Fact-by-fact checks passed "runs before the next open"; the failure path (a retry the next night) breaks it. Check every absolute claim on its failure path.
+  - A "duplicate" cut removed the only qualifier of a nearby claim.
+  - With no Markdown extensions, 2-space nested lists render flat on the site; use 4.
+  - Plural claims ("the models lost") must hold for each member.
+  - `hub push --tag` won't move an existing tag (`exist_ok=True`): re-tagging silently does nothing.
+  - An agent's *correction* can be wrong too (`retries.py`'s callers): verify fixes, not just findings.
+  - Headless Edge's `--virtual-time-budget` hangs on a Streamlit page (it never goes idle); Playwright on the installed Edge, with a timeout, works. The live app sleeps when unused, so the README says it may take a minute.
+  - Two agents opened notebooks with the Read tool (outputs shown). The test had already been read once, so nothing depended on it; the rule stands.
+
 ---
 
 ## 9. Decisions and Parking Lot
@@ -1746,6 +1773,12 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 | 2 Nov 2026 | **Monthly table repairs:** date-windowed `RENAMES`, `MISSING_ADDS`, ticker cleaning, and a $10M median dollar-volume check that drops yfinance series belonging to another security (those go to the AV queue) | Wikipedia misses renames, so stocks counted as members too early (META from 2010). Tickers get reused (Q, UA, SUN), so a flat alias map gives wrong prices |
 | 16 Nov 2026 | **Wrong-security Alpha Vantage series dropped (#85):** illiquid (under $10M a day over member months) **and** an acquired company still trading over 95 days after leaving. Catches EP, GENZ, MIL, LSI (87 rows); spares TIE | The table priced four early members from other companies. Adopted on the reasoning; a deterministic control showed the model changes come from the fix |
 | 16 Nov 2026 | **Potential GDP point-in-time (#85):** each decision uses the version published before it (FRED API, `FRED_API_KEY`) | Today's version carries later revisions (2023: 2.62% vs 1.80% then): a look-ahead that was fixable |
+| 11 Nov 2026 | **The monthly run in GitHub Actions (#39):** `predict due` reads "done" from the running record in the private snapshot; `predict run --from-file` only when last month's picks are missing; manual runs are dry runs; the local task retired | The live record is the one untouched test, and its first live month (1 Dec) comes after submission |
+| 11 Nov 2026 | **The live record tracks two lists:** the headline model and the 6-month top 10 held one month; the chosen rule isn't tracked live | They differ only in how stocks are chosen; tracking more rules would make the live record another place to choose from |
+| 16 Nov 2026 | **A Cloudflare Worker starts the monthly run (#76):** 03:17 UTC daily (re-enable, then dispatch); GitHub's schedule at 04:17 UTC weekdays as a backup | GitHub ran the schedule ~7 h late on 12–13 Nov, and its docs say scheduled runs can be dropped |
+| 16 Nov 2026 | **The final rebuild (#20):** five indicator copies dropped (147 features), the status set to final | The book reports one complete run |
+| 16 Nov 2026 | **The book reports `final-2026-11b` (#85):** both datasets; `final-2026-11` stays in the history as the rebuild before two data fixes | The fixes changed the data, so the reported version needs its own name (a push won't move an existing tag) |
+| 17 Nov 2026 | **Book review pass (#87):** every page refreshed and checked against the files; "the model chosen in advance" as the bottom line; broken section links fail the build; README redesigned | The book and front page must match the final data, and every claim hold on its failure path |
 
 ### Parking lot (ideas to keep but not pursue now)
 

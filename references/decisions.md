@@ -570,7 +570,17 @@ a stock is the month's top gainer.
   - `eda.regime_correlations` refuses columns that vary across stocks on a date (the sector fund's return had been read as a market condition).
   - #84: the notebooks' "preview" banners removed.
 - **Outcome (real rebuild, both fixes).** The table changed only through the 87 rows (and the top-decile flags they shift, all before May 2014). The headline chosen on 2020–22 is `xgb_reg` again, so the side run's flip came from the Alpha Vantage fix alone. On the test, read once, the conclusion stands: the 6-month rule is still best (52.9% precision vs a 45.1% base rate), and the headline still doesn't beat the base rate (43.6%).
+- **Published as `final-2026-11b`** (16 Nov, both datasets; checked on Hugging Face: the tag points at each dataset's latest commit). `final-2026-11` stays as the rebuild before these two fixes; the book reports `-11b`. A new name, because `hub push --tag` doesn't move an existing tag.
 - **Process breach, recorded.** The side run's test tables were seen once, by accident (the Read tool shows notebook outputs). The adopt decision came before, and no choice used them.
+
+**The book review pass and the README (16–17 Nov, #87)**
+
+- **The bottom line names the model chosen in advance.** "The models add nothing" was no longer true per unit of risk: the neural network (Sharpe 0.97) and the decision tree (0.92) beat the 6-month rule (0.84) on the test, but neither was chosen before it. Chapters 7, 9 and 10 and the README say so, with "picking one now would be choosing on the test" beside the names.
+- **Broken section links fail the book build** (`validation: anchors: warn` in mkdocs.yml): `--strict` reported a missing anchor only as INFO, so a renumbering broke three links without failing CI.
+- **README structure (your calls):** the question as a subtitle; badges; one hero chart (the rule, SPY and the ML model, linear dollars, the "only tied per unit of risk" twist in its title); "The project" in two sentences with a Mermaid diagram; the findings as three lines and a table; Explore grouped by intent with a dashboard screenshot; a two-line Run it yourself (my recommendation, kept: reproducibility visible at a glance); Acknowledgements. The rule section, data sources and the long How to run were dropped: the book and the running guide carry them.
+- **"ML", not "AI"** (your catch): the model is gradient boosting on tabular features; "AI" would oversell it.
+- **The hero chart is drawn by the pipeline** (`plots.hero_chart`, notebook 05), so a rebuild refreshes the front page with the book.
+- **`DATA_STATUS`: "final: rebuilt 16 Nov 2026 (final-2026-11b)"**, no longer "every delisted company's prices collected" (80 of the 216 tried have no free history). Pushed to the public dataset on 17 Nov (your call, against my "let the 1 Dec run carry it"), so the live dashboard shows it now.
 
 **Tooling:** Cookiecutter Data Science v2.3.0 layout, uv, Python 3.12, pytest, ruff. No Makefile
 (Windows), so each step is a command in `sp500_momentum.dataset`.
