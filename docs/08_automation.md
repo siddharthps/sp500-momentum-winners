@@ -24,9 +24,12 @@ touched.
 | 4. Pick | The headline model's top 10 and the 6-month rule's top 10 | Both published, labelled |
 | 5. Save | One file of picks per month, and a running record of every pick | The record is what later monitoring reads |
 
-**It runs overnight after each month's last close,** before the next open, so the golden rule still
-holds: features at the month-end close, the trade at the next open. It runs on GitHub's servers
-(Section 3.10), so it doesn't depend on any one computer being on.
+**It runs in the night after a month's last close** (the Sunday night, when a month ends at a
+weekend), before the next open, so the golden rule holds: features at the month-end close, the trade
+at the next open. If that run can't finish (prices not yet complete, or a service down), the next
+night tries again, after the open: those picks use the same month-end data, so nothing leaks, but
+they couldn't have been traded, so they're kept in the record and left out of the live result. It
+runs on GitHub's servers (Section 3.10), so it doesn't depend on any one computer being on.
 
 ---
 
@@ -179,9 +182,9 @@ after this project ends. So the monthly run doesn't depend on one computer being
 on GitHub's servers runs it.
 
 - **Each night it asks one question first:** are last month's picks in the running
-  record? Usually they are, and it stops within a minute. The first weekday night after a month-end
-  they aren't, so it starts from the private snapshot, downloads fresh prices, and runs the same
-  five steps, with the same code and the model's settings frozen.
+  record? Usually they are, and it stops within a minute. The night after a month's last close
+  (Section 2) they aren't, so it starts from the private snapshot, downloads fresh prices, and runs
+  the same five steps, with the same code and the model's settings frozen.
 - **It's started on time by a separate alarm clock.** GitHub's own scheduler runs jobs late when
   it's busy (about seven hours late in its first week here), and its documentation warns that some
   runs may be dropped: on the first of a month that could mean picks after the open. So a small
@@ -190,7 +193,8 @@ on GitHub's servers runs it.
   month done.
 - **"Done" is read from the running record, which travels with the snapshot,** not from a file on
   the machine. A fresh machine therefore knows what's been done, a missed day is caught up on the
-  next weekday, and a month is never picked twice.
+  next weekday, and a month is never picked twice. A catch-up comes after the open, so its picks
+  are kept but left out of the live result (Section 2).
 - **Downloads are retried,** with longer waits each time, since a shared cloud machine meets more
   temporary refusals than a home computer. If prices are still incomplete, the month-end checks
   (Section 3.2) stop the run, nothing is published, and the private chat is told. A failure before
