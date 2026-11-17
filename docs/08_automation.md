@@ -120,6 +120,9 @@ no month is missed. So the run lives on GitHub's servers, not on one computer:
 - **"Done" comes from the running record,** which travels with the dataset, so a fresh machine knows
   what's been done and a month is never picked twice. A missed night is caught up on a later one,
   after the open, so those picks stay out of the live result (Section 2).
+- **The picks are recorded before they're posted.** The running record is uploaded first, and the
+  picks go to the public channel only once it's there. If that upload fails, nothing is posted, the
+  private chat is told, and the next night tries again, so a month is posted at most once.
 - **Failures are loud.** Downloads are retried with longer waits; if prices are still incomplete,
   the checks stop the run, nothing is published, and the private chat is told. The same happens if
   the job fails to start or the FRED key is missing.

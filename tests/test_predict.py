@@ -157,3 +157,54 @@ def test_is_due_catches_up_later_in_the_month():
     # A January run looks for December's picks across the year boundary.
     assert pr.is_due(_record("2026-11-30"), pd.Timestamp("2027-01-04"))
     assert not pr.is_due(_record("2026-12-31"), pd.Timestamp("2027-01-04"))
+
+
+# --- #90: the picks are posted publicly at most once a month ------------------------------------
+
+
+class _Calls:
+    def __init__(self, fail_on=()):
+        self.log, self.fail_on = [], set(fail_on)
+
+    def push(self, target):
+        self.log.append(f"push {target}")
+        if target in self.fail_on:
+            raise ConnectionError("upload failed")
+
+    def post(self, message, dry_run):
+        self.log.append("post")
+
+    def alert(self, message, dry_run):
+        self.log.append("alert")
+
+
+def _run(calls, publish=True):
+    return pr.record_then_post("picks", publish, False, calls.push, calls.post, calls.alert)
+
+
+def test_record_first_then_post_then_public():
+    calls = _Calls()
+    assert _run(calls)
+    assert calls.log == ["push private", "post", "push public"]
+
+
+def test_failed_record_means_no_post_and_the_next_run_posts_once():
+    first = _Calls(fail_on={"private"})
+    assert not _run(first)
+    assert first.log == ["push private", "alert"]  # told privately, nothing posted
+    second = _Calls()  # the next night's run finds the month not done, and works
+    assert _run(second)
+    posts = (first.log + second.log).count("post")
+    assert posts == 1
+
+
+def test_failed_public_upload_still_posts_once():
+    calls = _Calls(fail_on={"public"})
+    assert _run(calls)  # the month is recorded, so it's posted; only the dashboard lags
+    assert calls.log == ["push private", "post", "push public", "alert"]
+
+
+def test_without_publishing_it_just_posts():
+    calls = _Calls()
+    assert _run(calls, publish=False)
+    assert calls.log == ["post"]

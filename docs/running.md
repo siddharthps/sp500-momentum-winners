@@ -134,8 +134,12 @@ Each run:
    private snapshot and prints `due=true` if last month's picks aren't in it (weekdays, by the
    runner's UTC clock).
 2. If due: `predict run --from-file` pulls the private snapshot, downloads fresh data (Wikipedia,
-   Yahoo with paced retries, FRED with retries), rebuilds, checks, makes the picks, posts them to
-   Telegram and pushes both Hugging Face datasets. Nothing is committed to the repository.
+   Yahoo with paced retries, FRED with retries), rebuilds, checks and makes the picks. It then
+   uploads the private snapshot (which holds the running record), and **only once that's done**
+   posts the picks to Telegram and uploads the public dataset. If the private upload fails, nothing
+   is posted: the private chat is told and the next run retries, so a month is posted at most once.
+   If only the public upload fails, the dashboard lags until the next upload. Nothing is committed
+   to the repository.
 3. The month's picks are kept as a run artifact for 90 days; a failed scheduled or
    Worker-triggered run alerts the private Telegram chat. A failure of the Worker itself (an
    expired token) shows only in its Cloudflare logs; GitHub's backup still runs.
