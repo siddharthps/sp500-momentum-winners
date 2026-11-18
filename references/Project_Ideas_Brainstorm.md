@@ -1770,6 +1770,11 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
     - **Services:** the book site 200; the dashboard 200 once Streamlit's cookie handshake is followed (a 303 loop without cookies is that handshake, not an outage); the public dataset has both tags; the monthly workflow's last three runs (Worker and schedule) succeeded.
     - **Left:** #23 (the submission). Four local branches (#56, #57, #58, #61) are leftovers of merged PRs.
 
+- **The README's final review (docs-editor, review mode, read as a first-time visitor; your picks).** All 13 numbers match the test-years rows of `strategies_2020_2026.csv` and Chapters 7 and 9; every local link and image exists. A logged-out link check (curl) found the **project board private**, so its README link was a 404 for every visitor: made public (your call, as recommended); it holds only this public repo's issue titles and statuses.
+    - **Trap: one name, two rules.** The README's "simple rule" is the chosen rule (top 5, held 6 months), but the dashboard and Telegram publish the 6-month rule in the model's form (top 10, held 1 month), so "picks from both strategies" pointed readers at the wrong rule; the README's own screenshot shows the difference. Reworded, with the alt text.
+    - **Applied:** SPY defined at first use; a one-line caveat that most of the gain came from a handful of AI and memory-chip stocks in one 2025-26 burst (Chapter 9 §3.2) and 45 months is short; "Run it yourself" now links the notebooks (committed with outputs) and says a rebuild needs free FRED and Alpha Vantage keys (twelve nights of pulls).
+    - **Not applied (your picks):** the table's "chosen in advance" labels and defined terms, the specific volatility figures, "normally posted", a not-advice line and the Docker wording. The Acknowledgements stay (added on purpose in #92; the no-course rule is for the book).
+
 ---
 
 ## 9. Decisions and Parking Lot
@@ -1815,6 +1820,7 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 | 16 Nov 2026 | **The book reports `final-2026-11b` (#85):** both datasets; `final-2026-11` stays in the history as the rebuild before two data fixes | The fixes changed the data, so the reported version needs its own name (a push won't move an existing tag) |
 | 17 Nov 2026 | **Book review pass (#87):** every page refreshed and checked against the files; "the model chosen in advance" as the bottom line; broken section links fail the build; README redesigned | The book and front page must match the final data, and every claim hold on its failure path |
 | 17 Nov 2026 | **The book stays on Material for MkDocs (#82, closed as not planned)** | Zensical can't run the build hook that adds the charts (a staging script would be needed), it's still 0.x, and Material keeps building after its May 2027 end of life |
+| 17 Nov 2026 | **The project board is public** | The README links to it; private, it was a 404 for every visitor, and it holds only this public repo's issue titles and statuses |
 
 ### Parking lot (ideas to keep but not pursue now)
 
