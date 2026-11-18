@@ -29,9 +29,13 @@ flowchart LR
 
 ## The findings
 
-- **The simple rule won on money:** $10,000 became **$59,209**, against $19,650 in SPY.
+- **The simple rule won on money:** $10,000 became **$59,209**, against $19,650 in SPY (a fund
+  that tracks the S&P 500).
 - **Not on risk:** it swung almost four times as much; per unit of risk it only tied SPY.
 - **The machine-learning model lost to both:** $10,000 became **$12,107**.
+- **A caveat:** most of the rule's gain came from a handful of AI and memory-chip stocks in one
+  burst in late 2025 and 2026, a theme it caught rather than a steady edge, and 45 months is a
+  short test.
 
 | $10,000 over the test years (2023–2026, 45 months, after costs) | Became | Sharpe ratio* | Worst fall |
 | --- | --- | --- | --- |
@@ -54,12 +58,13 @@ flowchart LR
 ### See it live
 
 - **[Live dashboard](https://sp500-momentum-winners.streamlit.app/)** (may take a minute to wake
-  up): this month's picks from both strategies, the live record (from January 2027), the backtest
-  and model monitoring.
+  up): this month's top 10 from the model and from the 6-month rule, each held one month so the
+  two compete like for like (the rule in the table above isn't tracked live), the live record
+  (from January 2027), the backtest and model monitoring.
 - **[Monthly picks on Telegram](https://t.me/s/sp500_momentum_picks)**: posted the night after each
   month's last close; readable in a browser, no account needed.
 
-![The live dashboard: this month's picks from the model and the simple rule](reports/figures/readme_dashboard.png)
+![The live dashboard: this month's top 10 from the model and from the 6-month rule](reports/figures/readme_dashboard.png)
 
 ### Use the data
 
@@ -77,8 +82,11 @@ flowchart LR
 
 ## Run it yourself
 
-Needs [uv](https://docs.astral.sh/uv/) and Python 3.12. `uv sync` installs everything; the
-**[running guide](docs/running.md)** has every step, from the raw data to the monthly run.
+Needs [uv](https://docs.astral.sh/uv/) and Python 3.12; `uv sync` installs everything. The
+[notebooks](notebooks/) are committed with their outputs, so the analysis can be read without
+running anything. A full rebuild from the sources needs free FRED and Alpha Vantage keys (Alpha
+Vantage's free tier took twelve nights of daily pulls). The **[running guide](docs/running.md)**
+has every step, from the raw data to the monthly run.
 
 ## Acknowledgements
 
