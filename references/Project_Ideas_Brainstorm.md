@@ -1777,6 +1777,12 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 
 - **The reference notes checked for personal information (your request).** Both tracked `.md` files scanned (a script that prints only categories, line numbers and masked snippets): no `.env` secret, token pattern, personal e-mail, phone number, address or chat id; no personal-life or career details; no copied chat messages. Hits that are fine: `HF_USER` (the public account name in every dataset URL), the PC's time zone (also in the public code), and "CV" (cross-validation). One change: the 4 Nov note about a logged local path quoted that path itself, now `C:\Users\<user>\...`. Both files stay public (your call, as recommended): decisions.md is the README's decision log, and this journal is Appendix B's working record.
 
+- **The last look at every file (your request: anything fallen through the cracks).** Every tracked file listed by its last change; clean: no untracked files and no tracked file matching an ignore rule; `uv.lock` current; no TODOs, no "until #N" wording, no leftover preview text; every documented `python -m` command and flag exists (a script checked them against the typer apps); Docker's path filter and `.dockerignore` right; the image pulls anonymously; licence, metadata, dashboard README and the Oct picks file fine.
+    - **Fixed: `.gitignore`.** `.claude/settings.local.json` (Claude Code's local permissions) was ignored only by a global git config, so a clone elsewhere could commit it. The repo's rule now covers it.
+    - **GitHub settings (your calls, as recommended):** secret scanning, push protection and Dependabot alerts turned on (they were off). Secret scanning: 0 alerts across the history. The About box rewritten project-first, with the book as its website and eight topics.
+    - **Dependabot's first two alerts, fixed:** soupsieve 3.0.4 -> 4.1.1 (high: a polynomial-time denial of service in a CSS combinator; via BeautifulSoup in yfinance and nbconvert) and tornado 6.6 -> 6.6.1 (low: an open redirect; via the Jupyter kernel). Both transitive, upgraded alone (`uv lock --upgrade-package`); 231 tests pass; a smoke test ran BeautifulSoup selectors and a Jupyter kernel. Neither touches a calculation, so no rerun. The dashboard's requirements pin neither.
+    - **Retired scripts deleted (your call, as recommended):** the four PowerShell scripts for the Alpha Vantage task and the PC monthly run. `monthly_run.ps1` still worked, so re-registering it would have posted the picks twice. The running guide now says they're in the git history.
+
 ---
 
 ## 9. Decisions and Parking Lot
@@ -1823,6 +1829,8 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
 | 17 Nov 2026 | **Book review pass (#87):** every page refreshed and checked against the files; "the model chosen in advance" as the bottom line; broken section links fail the build; README redesigned | The book and front page must match the final data, and every claim hold on its failure path |
 | 17 Nov 2026 | **The book stays on Material for MkDocs (#82, closed as not planned)** | Zensical can't run the build hook that adds the charts (a staging script would be needed), it's still 0.x, and Material keeps building after its May 2027 end of life |
 | 17 Nov 2026 | **The project board is public** | The README links to it; private, it was a 404 for every visitor, and it holds only this public repo's issue titles and statuses |
+| 17 Nov 2026 | **GitHub secret scanning, push protection and Dependabot alerts on** | Free for public repos; they guard the history and the dependencies between the pre-commit and Trivy checks |
+| 17 Nov 2026 | **The retired PowerShell schedulers deleted** | One still worked, and a second scheduler would post the picks twice; the git history keeps them |
 
 ### Parking lot (ideas to keep but not pursue now)
 

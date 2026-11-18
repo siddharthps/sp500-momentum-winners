@@ -86,8 +86,8 @@ Step 5 checks each series' trading volume:
 - an Alpha Vantage series that fails and still trades more than 95 days after a takeover is
     dropped as another security (`data/interim/av_suspect.csv`), and isn't queued again.
 
-The retired scheduler, for reference: `scripts/register_av_task.ps1` registered the task
-`sp500-momentum-av-pull` (21:00 PC time daily, appending to `logs/av_pull.log`).
+The retired scheduler (the Windows task `sp500-momentum-av-pull`, 21:00 PC time daily) and its
+scripts were removed on 17 Nov 2026; they remain in the git history.
 
 **Step 8, the monthly run,** runs in the cloud (see
 [The monthly run in the cloud](#the-monthly-run-in-the-cloud)): a Cloudflare Worker starts
@@ -108,11 +108,9 @@ alerts the private chat** when:
 What it downloaded and rebuilt stays on disk. A month already in the record is skipped unless
 `--force`.
 
-**On a PC instead** (retired on 11 Nov 2026): `scripts/register_monthly_task.ps1` registers the
-Task Scheduler task `sp500-momentum-monthly-run` (07:00 PC time daily, logging to
-`logs/monthly_run.log`), and `scripts/monthly_run.ps1 -Force` runs it by hand. **Never run both:**
-the PC script decides "done" from its own picks file, so it can't see a cloud run, and both would
-post the picks.
+**Not on a PC.** The run first lived in the Windows task `sp500-momentum-monthly-run`, retired on
+11 Nov 2026; its scripts were removed on 17 Nov 2026 (they remain in the git history). **Never
+schedule it in a second place:** a second scheduler would post the picks again.
 
 The picks are a research output, not advice.
 
@@ -388,8 +386,7 @@ root, a git-ignored local file, to become issues. It leaves its changes uncommit
 ├── references         <- Decision log, brainstorm and dated working journal, and the removed
 │                         members' sectors (removed_sectors.csv)
 ├── reports            <- Result tables (*.csv), charts (figures/), the monthly picks (picks/)
-├── scripts            <- Task Scheduler setup (retired: the Alpha Vantage pull and the PC monthly
-│                         run) and the book's build hook (mkdocs_hooks.py)
+├── scripts            <- The book's build hook (mkdocs_hooks.py)
 ├── cloudflare         <- The Worker that starts the monthly run (wrangler, offline tests)
 ├── .claude            <- The docs agent and its guard hook
 ├── logs               <- Run logs (git-ignored)
