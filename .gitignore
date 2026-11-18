@@ -204,6 +204,10 @@ cython_debug/
 # notes, code_issues.local.md (#81)
 *.local.md
 
+# Claude Code's per-machine settings (local permissions). It was ignored only by a global git
+# config; the repo's own rule keeps it out of any clone.
+.claude/settings.local.json
+
 # Cloudflare Worker tooling (#76)
 cloudflare/node_modules/
 cloudflare/.wrangler/
