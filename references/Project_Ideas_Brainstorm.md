@@ -821,7 +821,7 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
   - 6 figures in `reports/figures/` (25–69 KB each).
 - **Rule kept:** feature signal, stability, correlations and regimes use decisions up to **2022 only** (`RESEARCH_END` in config, with the split now in `SPLIT`). The target description and the plain-rule preview cover every year.
 - **Caught along the way:**
-  - **A privacy leak.** `config.py` logged `PROJ_ROOT path is C:\Users\Siddharth\...` on import (a template default), which would have been saved into the public notebook outputs. Removed. All outputs were scanned: no local paths, no names.
+  - **A privacy leak.** `config.py` logged `PROJ_ROOT path is C:\Users\<user>\...` on import (a template default), which would have been saved into the public notebook outputs. Removed. All outputs were scanned: no local paths, no names.
   - **A wrong claim in my own chart subtitle.** I had drafted "below 50% in most years" before checking. The data says the opposite for 2010–16. Fixed to match the data, and every later claim was checked against the outputs first.
   - **Chart problems, found by looking at the charts** (the skill's step 7): overlapping end labels, a legend covering dots, decimal years on an axis, duplicate signals shown as separate bars, code names instead of readable ones. All fixed, and the charts were checked again.
   - A font warning ("semibold" missing) was being saved into the outputs. The title weight is now bold.
@@ -1774,6 +1774,8 @@ The **whole flow carries over**: the named feature sets, time split, `pred` rule
     - **Trap: one name, two rules.** The README's "simple rule" is the chosen rule (top 5, held 6 months), but the dashboard and Telegram publish the 6-month rule in the model's form (top 10, held 1 month), so "picks from both strategies" pointed readers at the wrong rule; the README's own screenshot shows the difference. Reworded, with the alt text.
     - **Applied:** SPY defined at first use; a one-line caveat that most of the gain came from a handful of AI and memory-chip stocks in one 2025-26 burst (Chapter 9 §3.2) and 45 months is short; "Run it yourself" now links the notebooks (committed with outputs) and says a rebuild needs free FRED and Alpha Vantage keys (twelve nights of pulls).
     - **Not applied (your picks):** the table's "chosen in advance" labels and defined terms, the specific volatility figures, "normally posted", a not-advice line and the Docker wording. The Acknowledgements stay (added on purpose in #92; the no-course rule is for the book).
+
+- **The reference notes checked for personal information (your request).** Both tracked `.md` files scanned (a script that prints only categories, line numbers and masked snippets): no `.env` secret, token pattern, personal e-mail, phone number, address or chat id; no personal-life or career details; no copied chat messages. Hits that are fine: `HF_USER` (the public account name in every dataset URL), the PC's time zone (also in the public code), and "CV" (cross-validation). One change: the 4 Nov note about a logged local path quoted that path itself, now `C:\Users\<user>\...`. Both files stay public (your call, as recommended): decisions.md is the README's decision log, and this journal is Appendix B's working record.
 
 ---
 
